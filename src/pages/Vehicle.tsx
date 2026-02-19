@@ -107,36 +107,7 @@ const Vehicle: React.FC<VehicleProps> = ({ onLogout = () => { }, theme = 'light'
 
                 {/* Scrollable Content */}
                 <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
-                    {/* Stats Summary (Optional Enhancement) */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-slate-500 text-sm font-medium">Total Véhicules</span>
-                                <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600">
-                                    <span className="material-symbols-outlined">directions_car</span>
-                                </div>
-                            </div>
-                            <p className="text-2xl font-black text-slate-900 dark:text-white">1,248</p>
-                        </div>
-                        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-slate-500 text-sm font-medium">En Service</span>
-                                <div className="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600">
-                                    <span className="material-symbols-outlined">check_circle</span>
-                                </div>
-                            </div>
-                            <p className="text-2xl font-black text-slate-900 dark:text-white">856</p>
-                        </div>
-                        <div className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-slate-500 text-sm font-medium">Maintenance</span>
-                                <div className="w-10 h-10 rounded-full bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center text-amber-600">
-                                    <span className="material-symbols-outlined">build</span>
-                                </div>
-                            </div>
-                            <p className="text-2xl font-black text-slate-900 dark:text-white">42</p>
-                        </div>
-                    </div>
+                   
                     {/* Modernized Table Card */}
                     <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
                         <div className="overflow-x-auto">
