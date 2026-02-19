@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import ApiService from "../services/ApiService";
 import Swal from "sweetalert2";
 import { ToastContainer, toast } from "react-toastify";
@@ -14,11 +14,9 @@ interface DriversProps {
 
 export default function Drivers({ onLogout = () => {}, theme = 'light', toggleTheme = () => {} }: DriversProps) {
     const [utilisateur, setutilisateur] = useState<any>([]);
-    const [curentData, setCurentData] = useState<any>([]);
     const [inputValue, setInputValue] = useState<string>("");
     const [pagination, setpagination] = useState<any>([]);
     const [load, setLoad] = useState<boolean>(true);
-    const [loading, setLoading] = useState<boolean>(false);
     const [meta, setMeta] = useState<any>(null); // To store pagination meta data
 
     const Api = new ApiService();
@@ -315,9 +313,9 @@ export default function Drivers({ onLogout = () => {}, theme = 'light', toggleTh
                             <div className="flex gap-1 overflow-x-auto max-w-[500px]">
                                 {pagination.map((item: any, index: number) => {
                                     // Skip first and last if they are just "Previous" and "Next" text buttons without clear visual indication in UI design, 
-                                    // but UI design shows arrows. Laravel pagination usually gives "Previous" and "Next" labels.
+
                                     // We will use standard rendering but style them
-                                    const isNav = item.label.includes('Previous') || item.label.includes('Next') || item.label.includes('&laquo;') || item.label.includes('&raquo;');
+                                    
                                     const label = item.label.replace('&laquo; Previous', 'chevron_left').replace('Next &raquo;', 'chevron_right').replace('chevron_left', '<').replace('chevron_right', '>');
                                     
                                     // Handle Previous/Next icons
@@ -352,7 +350,7 @@ export default function Drivers({ onLogout = () => {}, theme = 'light', toggleTh
                                             onClick={() => item.url && getAllutilisateur(item.url, true)}
                                             className={`w-8 h-8 flex items-center justify-center rounded-lg border ${item.active ? 'bg-primary text-white border-primary' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800'} text-xs font-medium transition-colors`}
                                         >
-                                            <span dangerouslySetInnerHTML={{ __html: item.label }}></span>
+                                            <span dangerouslySetInnerHTML={{ __html: label }}></span>
                                         </button>
                                     );
                                 })}

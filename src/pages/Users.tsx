@@ -331,7 +331,7 @@ const Users: React.FC<UsersProps> = ({ onLogout, theme, toggleTheme }) => {
                                     value={formik.values.nom_utilisateur}
                                     className="w-full mt-1 p-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white"
                                 />
-                                {formik.errors.nom_utilisateur ? <div className="text-red-500 text-xs">{formik.errors.nom_utilisateur}</div> : null}
+                                {formik.errors.nom_utilisateur ? <div className="text-red-500 text-xs">{String(formik.errors.nom_utilisateur)}</div> : null}
                             </div>
                             <div>
                                 <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Description</label>
@@ -342,7 +342,7 @@ const Users: React.FC<UsersProps> = ({ onLogout, theme, toggleTheme }) => {
                                     value={formik.values.description}
                                     className="w-full mt-1 p-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white"
                                 />
-                                {formik.errors.description ? <div className="text-red-500 text-xs">{formik.errors.description}</div> : null}
+                                {formik.errors.description ? <div className="text-red-500 text-xs">{String(formik.errors.description)}</div> : null}
                             </div>
                             <button
                                 type="submit"

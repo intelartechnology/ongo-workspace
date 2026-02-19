@@ -1,4 +1,4 @@
-import React from 'react';
+
 import moment from 'moment';
 import "./CourseDetailsModal.css";
 
@@ -7,7 +7,49 @@ const ExtrackTime = (dateTimeString: string) => {
   return moment(dateTimeString).format("HH:mm");
 };
 
-const CourseDetailsModal = ({ selectedCourse, closeDetails }) => {
+interface Vehicule {
+  modele: string;
+  matricule: string;
+  updated_at: string;
+  lat: number;
+  lng: number;
+}
+
+interface Chauffeur {
+  nom: string;
+  prenom: string;
+  telephone: string;
+  balance: number;
+  statut: string;
+  vehicules: Vehicule[];
+}
+
+interface Attribution {
+  id: number;
+  statut: string;
+  chauffeurs: Chauffeur;
+}
+
+interface Course {
+  id: number;
+  attributions: Attribution[];
+  lieu_depart: string;
+  lieu_arrive: string;
+  montant: number;
+  categorie_vehicule: {
+    libelle: string;
+  };
+  date_depart: string;
+  heure_depart: string;
+  statut: string;
+}
+
+interface CourseDetailsModalProps {
+  selectedCourse: Course | null;
+  closeDetails: () => void;
+}
+
+const CourseDetailsModal: React.FC<CourseDetailsModalProps> = ({ selectedCourse, closeDetails }) => {
   if (!selectedCourse) return null;
 
   return (
@@ -59,7 +101,7 @@ const CourseDetailsModal = ({ selectedCourse, closeDetails }) => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                      {selectedCourse.attributions.map((attribution) => (
+                      {selectedCourse.attributions.map((attribution: Attribution) => (
                         <tr 
                           key={attribution.id} 
                           className={`group hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors ${

@@ -11,6 +11,7 @@ import { type RootState } from './store'
 import { LOGOUT_ACTION } from './store/authReducers'
 import './App.css'
 import Rase from './pages/Rase'
+import Vehicle from './pages/Vehicle'
 
 // Protected Route Component
 const ProtectedRoute = ({ children, isAuthenticated }: { children: React.ReactNode, isAuthenticated: boolean }) => {
@@ -78,6 +79,14 @@ function App() {
           element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>
               <Rase onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/vehicles"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <Vehicle onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
             </ProtectedRoute>
           }
         />

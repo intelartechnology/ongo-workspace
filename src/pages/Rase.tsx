@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from "react";
-import moment from "moment";
+import { useEffect, useState } from "react";
+
 import ApiService from "../services/ApiService";
-import Swal from "sweetalert2";
+
 import { ToastContainer, toast } from "react-toastify";
-import Helpers from "../functions/helpers";
+
 import Loading from "../components/Loading";
 import MainLayout from "./MainLayout";
 import CourseDetailsModal from "./components/CourseDetailsModal";
@@ -30,7 +30,7 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
     const [isDetailOpen, setIsDetailOpen] = useState<boolean>(false);
 
     const Api = new ApiService();
-    const _helpersInstance = new Helpers();
+
 
     const notify = (title: string, type: string) => {
         if (type === "success") {
@@ -73,6 +73,7 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
         if (dateDebut) postData.debut = dateDebut;
         if (dateFin) postData.fin = dateFin;
         if (statut !== "Tous les statuts") postData.statut = statut;
+        if (search) postData.search = search;
         
         // If searching by text (ID, Code, Client)
         // Note: The original code had separate search logic. 
@@ -130,10 +131,7 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
         }
     };
 
-    const ExtrackTime = (dateTimeString: string) => {
-        if (!dateTimeString) return "N/A";
-        return moment(dateTimeString).format("HH:mm");
-    };
+
 
     return (
         <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
