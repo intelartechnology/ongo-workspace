@@ -1,0 +1,8 @@
+.confirmed-row {
+  background-color: #dcfce7; /* A light green for confirmed status */
+}
+
+/* Optional: Add a dark mode equivalent if needed, assuming a dark mode class on a parent element */
+.dark .confirmed-row {
+  background-color: #14532d; /* A darker green for dark mode */
+}

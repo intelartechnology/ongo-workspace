@@ -1,0 +1,208 @@
+import React from 'react';
+import moment from 'moment';
+import "./CourseDetailsModal.css";
+
+const ExtrackTime = (dateTimeString: string) => {
+  if (!dateTimeString) return "N/A";
+  return moment(dateTimeString).format("HH:mm");
+};
+
+const CourseDetailsModal = ({ selectedCourse, closeDetails }) => {
+  if (!selectedCourse) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md animate-in fade-in duration-300">
+      <div className="bg-white dark:bg-slate-900 w-full max-w-6xl max-h-[90vh] rounded-2xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 flex flex-col">
+        
+        {/* HEADER */}
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 sticky top-0 z-10">
+          <div>
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary">directions_car</span>
+              Détails de la course #{selectedCourse.id}
+            </h3>
+            <p className="text-xs text-slate-500 mt-1 font-medium uppercase tracking-wider">Consultation des attributions et du trajet</p>
+          </div>
+          <button
+            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all text-slate-500 hover:text-slate-900 dark:hover:text-white"
+            onClick={closeDetails}
+          >
+            <span className="material-symbols-outlined">close</span>
+          </button>
+        </div>
+
+        {/* BODY - SCROLLABLE */}
+        <div className="overflow-y-auto flex-1 p-6 space-y-8">
+          
+          {/* SECTION 1: ATTRIBUTIONS */}
+          <section>
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="text-sm font-bold text-slate-400 uppercase tracking-widest">Chauffeurs Sollicités</h4>
+              <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-bold">
+                {selectedCourse.attributions?.length || 0} Attribution(s)
+              </span>
+            </div>
+
+            <div className="rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+              <div className="overflow-x-auto">
+                {selectedCourse.attributions && selectedCourse.attributions.length > 0 ? (
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50 dark:bg-slate-800/50">
+                        <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase">Chauffeur</th>
+                        <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase">Véhicule</th>
+                        <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase text-center">Balance</th>
+                        <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase">Mise à jour</th>
+                        <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase text-center">Statut</th>
+                        <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase">Position</th>
+                        <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase">Statut du chauffeur</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                      {selectedCourse.attributions.map((attribution) => (
+                        <tr 
+                          key={attribution.id} 
+                          className={`group hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors ${
+                            attribution.statut === 'CONFIRMEE' ? 'confirmed-row' : ''
+                          }`}
+                        >
+                          <td className="px-4 py-4">
+                            <div className="flex flex-col">
+                              <span className="text-sm font-bold text-slate-900 dark:text-white">
+                                {attribution.chauffeurs?.nom} {attribution.chauffeurs?.prenom}
+                              </span>
+                              <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+                                {attribution.chauffeurs?.telephone || "N/A"}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-4">
+                            <div className="flex flex-col">
+                              <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                                {attribution.chauffeurs?.vehicules?.[0]?.modele || "N/A"}
+                              </span>
+                              <span className="text-[10px] font-mono bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded w-fit mt-1">
+                                {attribution.chauffeurs?.vehicules?.[0]?.matricule || "N/A"}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-4 text-center">
+                            <span className={`text-sm font-bold ${attribution.chauffeurs?.balance < 0 ? "text-red-500" : "text-green-600"}`}>
+                              {attribution.chauffeurs?.balance?.toLocaleString()} <small>FCFA</small>
+                            </span>
+                          </td>
+                          <td className="px-4 py-4">
+                            <div className="text-[11px] leading-tight text-slate-500">
+                              <div className="font-bold text-slate-700 dark:text-slate-300">
+                                {moment(attribution.chauffeurs?.vehicules?.[0]?.updated_at).fromNow()}
+                              </div>
+                              <div>{moment(attribution.chauffeurs?.vehicules?.[0]?.updated_at).format("DD MMM YYYY")}</div>
+                              <div className="opacity-70">{ExtrackTime(attribution.chauffeurs?.vehicules?.[0]?.updated_at)}</div>
+                            </div>
+                          </td>
+                          <td className="px-4 py-4 text-center">
+                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                              attribution.statut === "CONFIRMEE" 
+                                ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" 
+                                : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                            }`}>
+                              {attribution.statut}
+                            </span>
+                          </td>
+                          <td className="px-4 py-4">
+                             <div className="flex items-center gap-1 text-[11px] font-mono text-slate-500">
+                               <span className="material-symbols-outlined text-sm">location_on</span>
+                               {attribution.chauffeurs?.vehicules?.[0]?.lat?.toFixed(4)} / {attribution.chauffeurs?.vehicules?.[0]?.lng?.toFixed(4)}
+                             </div>
+                          </td>
+                          <td>
+                              {attribution.chauffeurs?.statut || "N/A"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <div className="p-12 text-center">
+                    <span className="material-symbols-outlined text-4xl text-slate-300">person_off</span>
+                    <p className="mt-2 text-slate-500 font-medium">Aucun chauffeur attribué pour le moment</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
+
+          {/* SECTION 2: COURSE SUMMARY */}
+          <section>
+            <h4 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Détails du Trajet & Facturation</h4>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+                <p className="text-[10px] font-bold text-slate-500 uppercase mb-2">Itinéraire</p>
+                <div className="space-y-2">
+                  <div className="flex gap-2 items-start">
+                    <span className="size-2 mt-1.5 rounded-full bg-blue-500 shrink-0"></span>
+                    <p className="text-xs font-bold text-slate-700 dark:text-slate-200 leading-tight">
+                      {selectedCourse.lieu_depart}
+                    </p>
+                  </div>
+                  <div className="flex gap-2 items-start">
+                    <span className="size-2 mt-1.5 rounded-full bg-red-500 shrink-0"></span>
+                    <p className="text-xs font-bold text-slate-700 dark:text-slate-200 leading-tight">
+                      {selectedCourse.lieu_arrive}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-center">
+                <p className="text-[10px] font-bold text-slate-500 uppercase mb-2">Prix de la course</p>
+                <p className="text-2xl font-black text-red-500">
+                  {selectedCourse.montant?.toLocaleString()} <span className="text-sm">FCFA</span>
+                </p>
+                <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase">{selectedCourse.categorie_vehicule?.libelle}</p>
+              </div>
+
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+                <p className="text-[10px] font-bold text-slate-500 uppercase mb-2">Planification</p>
+                <div className="flex items-center gap-3">
+                   <div className="p-2 bg-white dark:bg-slate-700 rounded-lg shadow-sm shrink-0">
+                      <span className="material-symbols-outlined text-primary">calendar_today</span>
+                   </div>
+                   <div>
+                      <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{selectedCourse.date_depart}</p>
+                      <p className="text-xs font-medium text-slate-500">{selectedCourse.heure_depart}</p>
+                   </div>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 flex flex-col justify-center items-center">
+                <p className="text-[10px] font-bold text-slate-500 uppercase mb-2">État Actuel</p>
+                <span className="px-4 py-1.5 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-black uppercase tracking-tighter">
+                  {selectedCourse.statut}
+                </span>
+              </div>
+
+            </div>
+          </section>
+        </div>
+
+        {/* FOOTER */}
+        <div className="p-6 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex justify-end gap-3 sticky bottom-0">
+          <button
+            className="px-6 py-2.5 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
+            onClick={closeDetails}
+          >
+            Fermer l'aperçu
+          </button>
+          <button className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-500/20 transition-all flex items-center gap-2">
+            <span className="material-symbols-outlined text-sm">chat</span>
+            Contacter Chauffeur
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default CourseDetailsModal;
