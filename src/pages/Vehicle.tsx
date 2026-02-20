@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import MainLayout from './MainLayout';
 import ApiService from '../services/ApiService';
 import moment from 'moment';
@@ -16,6 +17,7 @@ const Vehicle: React.FC<VehicleProps> = ({ onLogout = () => { }, theme = 'light'
     const [paginationprev, setPaginationPrev] = useState<string | null>(null);
     const [pagination, setPagination] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState<string>('');
+    const navigate = useNavigate();
 
     const Api = new ApiService();
 
@@ -61,8 +63,8 @@ const Vehicle: React.FC<VehicleProps> = ({ onLogout = () => { }, theme = 'light'
     };
 
     const setCurrentCar = (vehicle: any) => {
-        console.log("Setting current car for modification:", vehicle);
-        // Implement logic to set the current vehicle for editing, e.g., open a modal or navigate
+        sessionStorage.setItem(`vehicle_edit_${vehicle.id}`, JSON.stringify(vehicle));
+        navigate(`/vehicles/edit/${vehicle.id}`);
     };
 
     const ExtrackTime = (timestamp: string) => {
@@ -107,7 +109,7 @@ const Vehicle: React.FC<VehicleProps> = ({ onLogout = () => { }, theme = 'light'
 
                 {/* Scrollable Content */}
                 <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
-                   
+
                     {/* Modernized Table Card */}
                     <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
                         <div className="overflow-x-auto">

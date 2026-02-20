@@ -74,9 +74,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, user, onLogout }) 
             `}>
                 <div className="p-6 flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
-                        <div className="bg-primary size-10 rounded-lg flex items-center justify-center text-white shadow-lg shadow-primary/20">
-                            <span className="material-symbols-outlined">local_taxi</span>
-                        </div>
+                        <img src="/logo.png" alt="Ongo 237" className="h-10 w-auto object-contain" />
                         <div>
                             <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white leading-none">Ongo 237</h1>
                             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-wider font-semibold">Super Admin</p>

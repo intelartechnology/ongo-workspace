@@ -12,6 +12,9 @@ import { LOGOUT_ACTION } from './store/authReducers'
 import './App.css'
 import Rase from './pages/Rase'
 import Vehicle from './pages/Vehicle'
+import CourseDetailPage from './pages/CourseDetailPage'
+import CoursePrintPage from './pages/CoursePrintPage'
+import VehicleEditPage from './pages/VehicleEditPage'
 
 // Protected Route Component
 const ProtectedRoute = ({ children, isAuthenticated }: { children: React.ReactNode, isAuthenticated: boolean }) => {
@@ -87,6 +90,23 @@ function App() {
           element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>
               <Vehicle onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/courses/:id"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <CourseDetailPage onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/courses/:id/print" element={<CoursePrintPage />} />
+        <Route
+          path="/vehicles/edit/:id"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <VehicleEditPage onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
             </ProtectedRoute>
           }
         />

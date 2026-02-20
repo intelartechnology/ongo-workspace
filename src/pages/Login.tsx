@@ -87,11 +87,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 <div className="mx-auto w-full max-w-sm lg:max-w-md">
                     {/* Logo & Heading */}
                     <div className="flex items-center gap-2 mb-8 lg:mb-10">
-                        <div className="bg-primary p-2 rounded-lg">
-                            <svg className="size-6 text-white" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M13.8261 30.5736C16.7203 29.8826 20.2244 29.4783 24 29.4783C27.7756 29.4783 31.2797 29.8826 34.1739 30.5736C36.9144 31.2278 39.9967 32.7669 41.3563 33.8352L24.8486 7.36089C24.4571 6.73303 23.5429 6.73303 23.1514 7.36089L6.64374 33.8352C8.00331 32.7669 11.0856 31.2278 13.8261 30.5736Z" fill="currentColor"></path>
-                            </svg>
-                        </div>
+                        <img src="/logo.png" alt="Ongo 237" className="h-10 w-auto object-contain" />
                         <span className="text-xl font-bold tracking-tight text-gray-900 dark:text-white">Ongo 237</span>
                     </div>
                     <div className="mb-6 lg:mb-8">
@@ -156,9 +152,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 <div className="relative z-10 max-w-lg text-center">
                     <div className="mb-8 inline-flex items-center justify-center p-4 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-2xl">
                         <div className="bg-white p-6 rounded-xl">
-                            <svg className="size-16 text-primary" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M13.8261 30.5736C16.7203 29.8826 20.2244 29.4783 24 29.4783C27.7756 29.4783 31.2797 29.8826 34.1739 30.5736C36.9144 31.2278 39.9967 32.7669 41.3563 33.8352L24.8486 7.36089C24.4571 6.73303 23.5429 6.73303 23.1514 7.36089L6.64374 33.8352C8.00331 32.7669 11.0856 31.2278 13.8261 30.5736Z" fill="currentColor"></path>
-                            </svg>
+                            <img src="/logo.png" alt="Ongo 237" className="size-16 object-contain" />
                         </div>
                     </div>
                     <h2 className="text-4xl font-black text-white mb-4 leading-tight">Fast, Reliable, & Efficient</h2>
