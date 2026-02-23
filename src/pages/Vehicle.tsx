@@ -19,7 +19,7 @@ const Vehicle: React.FC<VehicleProps> = ({ onLogout = () => { }, theme = 'light'
     const [searchTerm, setSearchTerm] = useState<string>('');
     const navigate = useNavigate();
 
-    const Api = new ApiService();
+    const Api = React.useMemo(() => new ApiService(), []);
 
     const getAllVehicles = async (url: string, isPag: boolean, search: string = '') => {
         setLoading(true);

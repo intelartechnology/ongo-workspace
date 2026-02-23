@@ -9,6 +9,68 @@ import Loading from "../components/Loading";
 import MainLayout from "./MainLayout";
 import CourseDetailsModal from "./components/CourseDetailsModal";
 
+interface Categorie {
+    id: number;
+    libelle: string;
+    image: string;
+    description: string;
+    sub_description: string;
+    base_price: number;
+    km_price: number;
+    created_at: string;
+    updated_at: string;
+}
+
+interface Chauffeur {
+    id: number;
+    nom: string;
+    prenom: string;
+    telephone: string;
+    email: string;
+    photo: string;
+    note: number;
+    role_id: number;
+    created_at: string;
+    updated_at: string;
+    balance: number;
+    cashBalance: number;
+    casDeposit: number;
+    is_agence: boolean;
+    device: {
+        id: number;
+        user_id: number;
+        device_token: string;
+        platform: string;
+        created_at: string;
+        updated_at: string;
+    };
+}
+
+interface Vehicle {
+    id: number;
+    uuid: string;
+    matricule: string;
+    carte: string | null;
+    modele: string;
+    image: string | null;
+    lat: number;
+    lng: number;
+    lat_1000_floor: number;
+    ville: string;
+    position: string;
+    categorie_id: number;
+    chauffeur_id: number;
+    statut: string;
+    note: number;
+    created_at: string;
+    updated_at: string;
+    is_online: number;
+    color: string;
+    is_favorite: number;
+    chauffeur: Chauffeur;
+    categorie: Categorie;
+}
+
 interface Client {
     id: number;
     prenom: string;
@@ -192,39 +254,29 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
         setIsReattributionModalOpen(false);
         setCourseToReattribute(null);
     };
+  const getFilter = async (val: any, url: string, isPag: boolean) => {
+    console.log("data availlable");
+    console.log(val);
 
-    const searchVehiclesAndDrivers = useCallback(async () => {
-        setLoading(true);
-        try {
-            const [vehiclesRes, chauffeursRes] = await Promise.all([
-                Api.getData(`list-vehicle?search=${searchTerm}`),
-                Api.getData(`list-chauffeur?search=${searchTerm}`)
-            ]);
+    setLoading(true);
 
-            if (vehiclesRes.data.success) {
-                setVehicles(vehiclesRes.data.data.data);
-            } else {
-                notify("Erreur lors du chargement des véhicules", "error");
-            }
-
-            if (chauffeursRes.data.success) {
-                setChauffeurs(chauffeursRes.data.data.data);
-            } else {
-                notify("Erreur lors du chargement des chauffeurs", "error");
-            }
-        } catch (error) {
-            console.error(error);
+    await Api.getDatawithPagination(url + "/" + val, isPag)
+      .then(({ data }) => {
+        if (data.success) {
+            console.log(data.data.data)
+          setLoading(false);
+          setVehicles(data.data.data);
+        } else {
+          notify(data.message, "error");
+        }
+      })
+      .catch((err) => {
             notify("Erreur serveur lors de la recherche", "error");
-        } finally {
-            setLoading(false);
-        }
-    }, [Api, searchTerm, notify]);
+      });
+  };
+ 
 
-    useEffect(() => {
-        if (isReattributionModalOpen) {
-            searchVehiclesAndDrivers();
-        }
-    }, [isReattributionModalOpen, searchVehiclesAndDrivers]);
+
 
     const handleSelectAttribution = (item: any, type: "vehicle" | "chauffeur") => {
         setSelectedAttribution(item);
@@ -232,6 +284,9 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
     };
 
     const handleReattribution = async () => {
+        console.log(courseToReattribute)
+        console.log(selectedAttribution)
+      
         if (!courseToReattribute || !selectedAttribution) {
             notify("Veuillez sélectionner une course et une attribution.", "error");
             return;
@@ -239,12 +294,13 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
 
         setLoading(true);
         try {
+
             const payload = {
                 course_id: courseToReattribute.id,
-                attribution_id: selectedAttribution.id,
-                attribution_type: attributionType,
+                chauffeur_id: selectedAttribution.chauffeur_id,
+                vehicule_id: selectedAttribution.id,
             };
-            const { data } = await Api.postData("reattribute-course", payload);
+            const { data } = await Api.postData("attribuer-course", payload);
             if (data.success) {
                 notify("Course réattribuée avec succès!", "success");
                 closeReattributionModal();
@@ -563,7 +619,7 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
             {/* Reattribution Modal */}
             {isReattributionModalOpen && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white dark:bg-slate-900 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                    <div className="bg-white dark:bg-slate-900 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
                         <div className="flex justify-between items-center p-4 border-b border-slate-200 dark:border-slate-700">
                             <h3 className="text-xl font-bold text-slate-900 dark:text-white">Réattribuer la Course #{courseToReattribute?.id}</h3>
                             <button onClick={closeReattributionModal} className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">
@@ -581,7 +637,13 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                 />
                                 <button
-                                    onClick={searchVehiclesAndDrivers}
+                                   onClick={() =>
+                                          getFilter(
+                                            searchTerm,
+                                            "vehicule/vehicule-filtre",
+                                            false
+                                          )
+                                        }
                                     className="mt-2 w-full py-2 px-4 bg-primary text-white font-semibold rounded-md hover:bg-primary/90 transition-colors"
                                 >
                                     Rechercher
@@ -600,11 +662,20 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
                                                 {vehicles.map((vehicle) => (
                                                     <div
                                                         key={vehicle.id}
-                                                        className={`p-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 ${selectedAttribution?.id === vehicle.id && attributionType === "vehicle" ? "bg-blue-100 dark:bg-blue-900/30" : ""}`}
+                                                        className={`p-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 ${selectedAttribution?.id === vehicle.id && attributionType === "vehicle" ? "bg-blue-200 dark:bg-blue-800/50 ring-2 ring-blue-500" : ""}`}
                                                         onClick={() => handleSelectAttribution(vehicle, "vehicle")}
                                                     >
-                                                        <p className="font-medium">{vehicle.marque} {vehicle.modele} ({vehicle.immatriculation})</p>
-                                                        <p className="text-sm text-slate-500">Catégorie: {vehicle.categorie_vehicule?.libelle || "N/A"}</p>
+                                                        <div className="flex items-center justify-between">
+                                                            <p className="font-medium text-slate-900 dark:text-white">{vehicle.marque} {vehicle.modele} ({vehicle.matricule})</p>
+                                                            <span className={`px-2 py-1 rounded-full text-xs font-semibold ${vehicle.statut === "LIBRE" ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400" : "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400"}`}>
+                                                                {vehicle.statut}
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-sm text-slate-500 dark:text-slate-400">Catégorie: {vehicle.categorie?.libelle || "N/A"} - Couleur: {vehicle.color || "N/A"}</p>
+                                                        {vehicle.chauffeur && (
+                                                            <p className="text-sm text-slate-500 dark:text-slate-400">Chauffeur: {vehicle.chauffeur.prenom} {vehicle.chauffeur.nom} ({vehicle.chauffeur.telephone})</p>
+                                                        )}
+                                                        <p className="text-sm text-slate-500 dark:text-slate-400">Ville: {vehicle.ville || "N/A"}</p>
                                                     </div>
                                                 ))}
                                             </div>
@@ -613,26 +684,7 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
                                         )}
                                     </div>
 
-                                    {/* Chauffeurs List */}
-                                    <div>
-                                        <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-2">Chauffeurs</h4>
-                                        {chauffeurs.length > 0 ? (
-                                            <div className="border border-slate-200 dark:border-slate-700 rounded-md max-h-48 overflow-y-auto">
-                                                {chauffeurs.map((chauffeur) => (
-                                                    <div
-                                                        key={chauffeur.id}
-                                                        className={`p-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 ${selectedAttribution?.id === chauffeur.id && attributionType === "chauffeur" ? "bg-blue-100 dark:bg-blue-900/30" : ""}`}
-                                                        onClick={() => handleSelectAttribution(chauffeur, "chauffeur")}
-                                                    >
-                                                        <p className="font-medium">{chauffeur.prenom} {chauffeur.nom}</p>
-                                                        <p className="text-sm text-slate-500">Téléphone: {chauffeur.telephone}</p>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <p className="text-slate-500 dark:text-slate-400">Aucun chauffeur trouvé.</p>
-                                        )}
-                                    </div>
+                                 
                                 </div>
                             )}
                         </div>
