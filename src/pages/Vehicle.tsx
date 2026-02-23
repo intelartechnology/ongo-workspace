@@ -95,14 +95,8 @@ const Vehicle: React.FC<VehicleProps> = ({ onLogout = () => { }, theme = 'light'
                                 />
                                 <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
                             </div>
-                            <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors" onClick={handleExport}>
-                                <span className="material-symbols-outlined text-[20px]">file_download</span>
-                                Exporter
-                            </button>
-                            <button className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors shadow-sm" onClick={handleAddVehicle}>
-                                <span className="material-symbols-outlined text-[20px]">add</span>
-                                Ajouter un véhicule
-                            </button>
+                           
+                         
                         </div>
                     </div>
                 </header>

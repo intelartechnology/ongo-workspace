@@ -5,6 +5,7 @@ import { ToastContainer, toast } from "react-toastify";
 import Helpers from "../functions/helpers";
 import Loading from "../components/Loading";
 import MainLayout from "./MainLayout";
+import { useNavigate } from 'react-router-dom';
 
 interface DriversProps {
     onLogout?: () => void;
@@ -18,6 +19,7 @@ export default function Drivers({ onLogout = () => {}, theme = 'light', toggleTh
     const [pagination, setpagination] = useState<any>([]);
     const [load, setLoad] = useState<boolean>(true);
     const [meta, setMeta] = useState<any>(null); // To store pagination meta data
+   const navigate = useNavigate();
 
     const Api = new ApiService();
     const _helpersInstance = new Helpers();
@@ -150,10 +152,10 @@ export default function Drivers({ onLogout = () => {}, theme = 'light', toggleTh
                     <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Gestion des Chauffeurs</h2>
                     <p className="text-sm text-slate-500">Gérez et suivez l'activité de vos chauffeurs en temps réel.</p>
                 </div>
-                <a href="#/add-chauffeur" className="bg-primary hover:bg-primary/90 text-white px-6 py-2.5 rounded-lg font-semibold flex items-center gap-2 transition-all shadow-lg shadow-primary/20">
+                <button onClick={() => navigate('/add-driver')} className="bg-primary hover:bg-primary/90 text-white px-6 py-2.5 rounded-lg font-semibold flex items-center gap-2 transition-all shadow-lg shadow-primary/20">
                     <span className="material-symbols-outlined">add</span>
                     Ajouter un chauffeur
-                </a>
+                </button>
             </header>
 
             {/* Main Workspace */}

@@ -15,6 +15,8 @@ import Vehicle from './pages/Vehicle'
 import CourseDetailPage from './pages/CourseDetailPage'
 import CoursePrintPage from './pages/CoursePrintPage'
 import VehicleEditPage from './pages/VehicleEditPage'
+import DriversRequest from './pages/DriversRequest'
+import AddDriver from './pages/AddDriver'
 
 // Protected Route Component
 const ProtectedRoute = ({ children, isAuthenticated }: { children: React.ReactNode, isAuthenticated: boolean }) => {
@@ -107,6 +109,22 @@ function App() {
           element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>
               <VehicleEditPage onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/requests"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <DriversRequest onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/add-driver"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <AddDriver onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
             </ProtectedRoute>
           }
         />

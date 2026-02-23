@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import GoogleMapReact from "google-map-react";
 
 import ApiService from "../services/ApiService";
@@ -9,6 +9,51 @@ import Loading from "../components/Loading";
 import MainLayout from "./MainLayout";
 import CourseDetailsModal from "./components/CourseDetailsModal";
 
+interface Client {
+    id: number;
+    prenom: string;
+    nom: string;
+    telephone: string;
+    // Add other client properties if they exist in the API response
+}
+
+interface CategorieVehicule {
+    id: number;
+    libelle: string;
+    // Add other category properties
+}
+
+interface Course {
+    id: number;
+    code: string;
+    type: string;
+    client: Client;
+    categorie_vehicule: CategorieVehicule;
+    lieu_depart: string;
+    lieu_arrive: string;
+    date_depart: string;
+    heure_depart: string;
+    montant: string; // Assuming montant can be a string with currency
+    is_paid: boolean;
+    transaction_type: string;
+    statut: string;
+    // Add other course properties
+}
+
+interface PaginationLink {
+    url: string | null;
+    label: string;
+    active: boolean;
+}
+
+interface Meta {
+    current_page: number;
+    from: number;
+    to: number;
+    total: number;
+    last_page: number;
+}
+
 interface RaseProps {
     onLogout?: () => void;
     theme?: 'light' | 'dark';
@@ -16,10 +61,10 @@ interface RaseProps {
 }
 
 export default function Rase({ onLogout = () => { }, theme = 'light', toggleTheme = () => { } }: RaseProps) {
-    const [courses, setCourses] = useState<any>([]);
+    const [courses, setCourses] = useState<Course[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
-    const [pagination, setPagination] = useState<any>([]);
-    const [meta, setMeta] = useState<any>(null);
+    const [pagination, setPagination] = useState<PaginationLink[]>([]);
+    const [meta, setMeta] = useState<Meta | null>(null);
 
     // Filter states
     const [dateDebut, setDateDebut] = useState<string>("");
@@ -27,31 +72,31 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
     const [statut, setStatut] = useState<string>("Tous les statuts");
     const [search, setSearch] = useState<string>("");
 
-    const [selectedCourse, setSelectedCourse] = useState<any>(null);
+    const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
     const [isDetailOpen, setIsDetailOpen] = useState<boolean>(false);
 
     const [isMapOpen, setIsMapOpen] = useState<boolean>(false);
-    const [selectedMapCourse, setSelectedMapCourse] = useState<any>(null);
+    const [selectedMapCourse, setSelectedMapCourse] = useState<Course | null>(null);
 
-    const Api = new ApiService();
+    const Api = useMemo(() => new ApiService(), []);
 
 
-    const notify = (title: string, type: string) => {
+    const notify = useCallback((title: string, type: string) => {
         if (type === "success") {
             toast.success(title);
         } else if (type === "error") {
             toast.error(title);
         }
-    };
+    }, []);
 
-    const fetchCourses = async (url: string = "list-course-dash", isPag: boolean = false) => {
+    const fetchCourses = useCallback(async (url: string = "list-course-dash", isPag: boolean = false) => {
         setLoading(true);
         try {
             const { data } = await Api.getDatawithPagination(url, isPag);
             if (data.success) {
                 console.log(data);
-                setCourses(data.data.data);
-                setPagination(data.data.links);
+                setCourses(data.data.data as Course[]);
+                setPagination(data.data.links as PaginationLink[]);
                 setMeta({
                     current_page: data.data.current_page,
                     from: data.data.from,
@@ -68,27 +113,22 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
         } finally {
             setLoading(false);
         }
-    };
+    }, [Api, notify]);
 
-    const handleFilter = async () => {
+    const handleFilter = useCallback(async () => {
         setLoading(true);
-        const postData: any = {};
+        const postData: { debut?: string; fin?: string; statut?: string; search?: string } = {};
 
         if (dateDebut) postData.debut = dateDebut;
         if (dateFin) postData.fin = dateFin;
         if (statut !== "Tous les statuts") postData.statut = statut;
         if (search) postData.search = search;
 
-        // If searching by text (ID, Code, Client)
-        // Note: The original code had separate search logic. 
-        // We might need to combine or handle separately depending on API.
-        // Assuming 'filter-course' endpoint handles date and status.
-
         try {
             const { data } = await Api.postData("filter-course", postData);
             if (data.success) {
-                setCourses(data.data.data);
-                setPagination(data.data.links);
+                setCourses(data.data.data as Course[]);
+                setPagination(data.data.links as PaginationLink[]);
                 setMeta({
                     current_page: data.data.current_page,
                     from: data.data.from,
@@ -105,13 +145,13 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
         } finally {
             setLoading(false);
         }
-    };
+    }, [Api, dateDebut, dateFin, statut, search, notify]);
 
     useEffect(() => {
         fetchCourses();
-    }, []);
+    }, [fetchCourses]);
 
-    const openDetails = (course: any) => {
+    const openDetails = (course: Course) => {
         setSelectedCourse(course);
         setIsDetailOpen(true);
     };
@@ -121,7 +161,7 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
         setSelectedCourse(null);
     };
 
-    const openMap = (course: any) => {
+    const openMap = (course: Course) => {
         setSelectedMapCourse(course);
         setIsMapOpen(true);
     };
@@ -129,6 +169,95 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
     const closeMap = () => {
         setIsMapOpen(false);
         setSelectedMapCourse(null);
+    };
+
+    // Reattribution Modal States and Functions
+    const [isReattributionModalOpen, setIsReattributionModalOpen] = useState<boolean>(false);
+    const [courseToReattribute, setCourseToReattribute] = useState<Course | null>(null);
+    const [vehicles, setVehicles] = useState<any[]>([]); // Define a proper interface for Vehicle
+    const [chauffeurs, setChauffeurs] = useState<any[]>([]); // Define a proper interface for Chauffeur
+    const [searchTerm, setSearchTerm] = useState<string>("");
+    const [selectedAttribution, setSelectedAttribution] = useState<any>(null); // Can be Vehicle or Chauffeur
+    const [attributionType, setAttributionType] = useState<"vehicle" | "chauffeur">("vehicle");
+
+    const openReattributionModal = (course: Course) => {
+        setCourseToReattribute(course);
+        setIsReattributionModalOpen(true);
+        setSelectedAttribution(null); // Reset selected attribution
+        setSearchTerm(""); // Reset search term
+        setAttributionType("vehicle"); // Default to vehicle
+    };
+
+    const closeReattributionModal = () => {
+        setIsReattributionModalOpen(false);
+        setCourseToReattribute(null);
+    };
+
+    const searchVehiclesAndDrivers = useCallback(async () => {
+        setLoading(true);
+        try {
+            const [vehiclesRes, chauffeursRes] = await Promise.all([
+                Api.getData(`list-vehicle?search=${searchTerm}`),
+                Api.getData(`list-chauffeur?search=${searchTerm}`)
+            ]);
+
+            if (vehiclesRes.data.success) {
+                setVehicles(vehiclesRes.data.data.data);
+            } else {
+                notify("Erreur lors du chargement des véhicules", "error");
+            }
+
+            if (chauffeursRes.data.success) {
+                setChauffeurs(chauffeursRes.data.data.data);
+            } else {
+                notify("Erreur lors du chargement des chauffeurs", "error");
+            }
+        } catch (error) {
+            console.error(error);
+            notify("Erreur serveur lors de la recherche", "error");
+        } finally {
+            setLoading(false);
+        }
+    }, [Api, searchTerm, notify]);
+
+    useEffect(() => {
+        if (isReattributionModalOpen) {
+            searchVehiclesAndDrivers();
+        }
+    }, [isReattributionModalOpen, searchVehiclesAndDrivers]);
+
+    const handleSelectAttribution = (item: any, type: "vehicle" | "chauffeur") => {
+        setSelectedAttribution(item);
+        setAttributionType(type);
+    };
+
+    const handleReattribution = async () => {
+        if (!courseToReattribute || !selectedAttribution) {
+            notify("Veuillez sélectionner une course et une attribution.", "error");
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const payload = {
+                course_id: courseToReattribute.id,
+                attribution_id: selectedAttribution.id,
+                attribution_type: attributionType,
+            };
+            const { data } = await Api.postData("reattribute-course", payload);
+            if (data.success) {
+                notify("Course réattribuée avec succès!", "success");
+                closeReattributionModal();
+                fetchCourses(); // Refresh courses
+            } else {
+                notify(data.message || "Erreur lors de la réattribution de la course", "error");
+            }
+        } catch (error) {
+            console.error(error);
+            notify("Erreur serveur lors de la réattribution", "error");
+        } finally {
+            setLoading(false);
+        }
     };
 
     const getStatusBadge = (status: string) => {
@@ -159,7 +288,7 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
                             <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Gestion des Courses</h2>
                             <p className="text-slate-500 dark:text-slate-400 text-sm">Gérez et suivez toutes les activités des courses sur la plateforme en temps réel.</p>
                         </div>
-                        <div className="flex items-center gap-3">
+                       {/*  <div className="flex items-center gap-3">
                             <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
                                 <span className="material-symbols-outlined text-[20px]">file_download</span>
                                 Exporter
@@ -168,7 +297,7 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
                                 <span className="material-symbols-outlined text-[20px]">picture_as_pdf</span>
                                 Imprimer PDF
                             </button>
-                        </div>
+                        </div> */}
                     </div>
                 </header>
 
@@ -215,7 +344,7 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
                                         <option value="EN ATTENTE">En attente</option>
                                     </select>
                                 </div>
-                                <div className="space-y-1.5">
+                              {/*   <div className="space-y-1.5">
                                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Recherche</label>
                                     <div className="relative">
                                         <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[18px]">search</span>
@@ -226,7 +355,7 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
                                             onChange={(e) => setSearch(e.target.value)}
                                         />
                                     </div>
-                                </div>
+                                </div> */}
                                 <div>
                                     <button
                                         className="w-full py-2 bg-primary/10 text-primary font-bold rounded-lg text-sm hover:bg-primary/20 transition-colors h-[38px] flex items-center justify-center gap-2"
@@ -300,35 +429,37 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
                                                         <td className="px-4 py-4 whitespace-nowrap">
                                                             {getStatusBadge(course.statut)}
                                                         </td>
-                                                        <td className="px-4 py-4 whitespace-nowrap sticky right-0 bg-white dark:bg-slate-900">
-                                                            <div className="flex items-center gap-2">
+                                                        <td className="px-4 py-4 text-sm text-slate-700 dark:text-slate-300 whitespace-nowrap sticky right-0 bg-white dark:bg-slate-900">
+                                                            <div className="flex items-center space-x-2">
                                                                 <button
-                                                                    className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                                                                    className="flex items-center gap-1 px-3 py-1 rounded-md text-sm font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900"
                                                                     onClick={() => openDetails(course)}
-                                                                    title="Détails"
                                                                 >
-                                                                    <span className="material-symbols-outlined text-[20px]">visibility</span>
+                                                                    <span className="material-symbols-outlined text-[18px]">info</span>
+                                                                    Détails
                                                                 </button>
                                                                 <button
-                                                                    className="p-1.5 rounded-lg text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                                                                    className="flex items-center gap-1 px-3 py-1 rounded-md text-sm font-medium bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900"
                                                                     onClick={() => openMap(course)}
-                                                                    title="Voir sur la carte"
                                                                 >
-                                                                    <span className="material-symbols-outlined text-[20px]">map</span>
+                                                                    <span className="material-symbols-outlined text-[18px]">map</span>
+                                                                    Carte
                                                                 </button>
-                                                                <button
-                                                                    className="p-1.5 rounded-lg text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
+                                                                  <button   className="p-1.5 rounded-lg text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
                                                                     onClick={() => {
                                                                         sessionStorage.setItem(`course_detail_${course.id}`, JSON.stringify(course));
                                                                         window.open(`/courses/${course.id}`, "_blank");
                                                                     }}
                                                                     title="Voir les détails complets"
                                                                 >
-                                                                    <span className="material-symbols-outlined text-[20px]">open_in_new</span>
+                                                                    <span className="material-symbols-outlined text-[20px]">open_in_new</span> </button>
+                                                                <button
+                                                                    className="flex items-center gap-1 px-3 py-1 rounded-md text-sm font-medium bg-yellow-100 text-yellow-700 hover:bg-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:hover:bg-yellow-900"
+                                                                    onClick={() => openReattributionModal(course)}
+                                                                >
+                                                                    <span className="material-symbols-outlined text-[18px]">swap_horiz</span>
+                                                                    Réattribuer
                                                                 </button>
-                                                                {/* <button className="p-1.5 rounded-lg text-primary hover:bg-primary/10 transition-colors" title="Appeler">
-                                                                    <span className="material-symbols-outlined text-[20px]">call</span>
-                                                                </button> */}
                                                             </div>
                                                         </td>
                                                     </tr>
@@ -424,6 +555,101 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
                         {/* Map */}
                         <div className="h-[520px] w-full">
                             <CourseMap course={selectedMapCourse} />
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Reattribution Modal */}
+            {isReattributionModalOpen && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white dark:bg-slate-900 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                        <div className="flex justify-between items-center p-4 border-b border-slate-200 dark:border-slate-700">
+                            <h3 className="text-xl font-bold text-slate-900 dark:text-white">Réattribuer la Course #{courseToReattribute?.id}</h3>
+                            <button onClick={closeReattributionModal} className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">
+                                <span className="material-symbols-outlined">close</span>
+                            </button>
+                        </div>
+                        <div className="p-4 space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Rechercher Véhicule ou Chauffeur</label>
+                                <input
+                                    type="text"
+                                    className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-primary focus:border-primary"
+                                    placeholder="Nom, Prénom, Marque, Modèle..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                                <button
+                                    onClick={searchVehiclesAndDrivers}
+                                    className="mt-2 w-full py-2 px-4 bg-primary text-white font-semibold rounded-md hover:bg-primary/90 transition-colors"
+                                >
+                                    Rechercher
+                                </button>
+                            </div>
+
+                            {loading ? (
+                                <Loading />
+                            ) : (
+                                <div className="space-y-4">
+                                    {/* Vehicles List */}
+                                    <div>
+                                        <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-2">Véhicules</h4>
+                                        {vehicles.length > 0 ? (
+                                            <div className="border border-slate-200 dark:border-slate-700 rounded-md max-h-48 overflow-y-auto">
+                                                {vehicles.map((vehicle) => (
+                                                    <div
+                                                        key={vehicle.id}
+                                                        className={`p-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 ${selectedAttribution?.id === vehicle.id && attributionType === "vehicle" ? "bg-blue-100 dark:bg-blue-900/30" : ""}`}
+                                                        onClick={() => handleSelectAttribution(vehicle, "vehicle")}
+                                                    >
+                                                        <p className="font-medium">{vehicle.marque} {vehicle.modele} ({vehicle.immatriculation})</p>
+                                                        <p className="text-sm text-slate-500">Catégorie: {vehicle.categorie_vehicule?.libelle || "N/A"}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <p className="text-slate-500 dark:text-slate-400">Aucun véhicule trouvé.</p>
+                                        )}
+                                    </div>
+
+                                    {/* Chauffeurs List */}
+                                    <div>
+                                        <h4 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mb-2">Chauffeurs</h4>
+                                        {chauffeurs.length > 0 ? (
+                                            <div className="border border-slate-200 dark:border-slate-700 rounded-md max-h-48 overflow-y-auto">
+                                                {chauffeurs.map((chauffeur) => (
+                                                    <div
+                                                        key={chauffeur.id}
+                                                        className={`p-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 ${selectedAttribution?.id === chauffeur.id && attributionType === "chauffeur" ? "bg-blue-100 dark:bg-blue-900/30" : ""}`}
+                                                        onClick={() => handleSelectAttribution(chauffeur, "chauffeur")}
+                                                    >
+                                                        <p className="font-medium">{chauffeur.prenom} {chauffeur.nom}</p>
+                                                        <p className="text-sm text-slate-500">Téléphone: {chauffeur.telephone}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <p className="text-slate-500 dark:text-slate-400">Aucun chauffeur trouvé.</p>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                        <div className="p-4 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-2">
+                            <button
+                                onClick={closeReattributionModal}
+                                className="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 font-semibold rounded-md hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors"
+                            >
+                                Annuler
+                            </button>
+                            <button
+                                onClick={handleReattribution}
+                                disabled={!selectedAttribution}
+                                className={`px-4 py-2 ${selectedAttribution ? "bg-primary hover:bg-primary/90" : "bg-gray-400 cursor-not-allowed"} text-white font-semibold rounded-md transition-colors`}
+                            >
+                                Confirmer Réattribution
+                            </button>
                         </div>
                     </div>
                 </div>

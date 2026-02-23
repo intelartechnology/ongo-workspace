@@ -15,27 +15,27 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, user, onLogout }) 
         {
             title: 'Pilotage',
             items: [
-                { icon: 'bar_chart', label: 'Statistiques', path: '/stats' },
+           /*      { icon: 'bar_chart', label: 'Statistiques', path: '/stats' },
                 { icon: 'visibility', label: 'Aperçu', path: '/overview' },
                 { icon: 'map', label: 'Map', path: '/map' },
-                { icon: 'navigation', label: 'Race Position', path: '/race-position' },
+                { icon: 'navigation', label: 'Race Position', path: '/race-position' }, */
             ]
         },
         {
             title: 'Utilisateurs',
             items: [
                 { icon: 'group', label: 'Utilisateurs', path: '/users' },
-                { icon: 'admin_panel_settings', label: 'Administrateurs', path: '/admins' },
+             /*    { icon: 'admin_panel_settings', label: 'Administrateurs', path: '/admins' },
                 { icon: 'business_center', label: 'Commerciaux', path: '/sales' },
-                { icon: 'handshake', label: 'Partenaires', path: '/partners' },
+                { icon: 'handshake', label: 'Partenaires', path: '/partners' }, */
             ]
         },
         {
             title: 'Exploitation',
             items: [
                 { icon: 'directions_car', label: 'Courses', path: '/courses' },
-                { icon: 'event_available', label: 'Réservation', path: '/reservations' },
-                { icon: 'location_on', label: 'Location', path: '/rentals' },
+              /*   { icon: 'event_available', label: 'Réservation', path: '/reservations' },
+                { icon: 'location_on', label: 'Location', path: '/rentals' }, */
             ]
         },
         {
@@ -44,16 +44,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, user, onLogout }) 
                 { icon: 'car_rental', label: 'Véhicules', path: '/vehicles' },
                 { icon: 'person_outline', label: 'Chauffeurs', path: '/drivers' },
                 { icon: 'person_search', label: 'Demandes', path: '/requests' },
-                { icon: 'category', label: 'Modèles', path: '/models' },
+             /*    { icon: 'category', label: 'Modèles', path: '/models' }, */
             ]
-        },
+        }/* ,
         {
             title: 'Support & Litiges',
             items: [
                 { icon: 'warning', label: 'Litiges', path: '/disputes' },
                 { icon: 'help', label: 'Raisons', path: '/reasons' },
             ]
-        }
+        } */
     ];
 
     return (
