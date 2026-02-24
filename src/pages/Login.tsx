@@ -64,8 +64,9 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     notify(response.data.message || "Erreur lors de la connexion", "error");
                 }
             } catch (error: any) {
+           
                 setLoading(false);
-                const errorMsg = error.response?.data?.message || "Nom d'utilisateur ou mot de passe incorrect";
+                const errorMsg = error.response?.data?.message || "Erreur lors de la connexion";
                 notify(errorMsg, "error");
             }
         },
