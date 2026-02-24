@@ -47,15 +47,8 @@ const Vehicle: React.FC<VehicleProps> = ({ onLogout = () => { }, theme = 'light'
         setSearchTerm(event.target.value);
     };
 
-    const handleExport = () => {
-        // Implement export logic here, e.g., call an API to download a file
-        console.log("Exporting vehicles...");
-    };
 
-    const handleAddVehicle = () => {
-        // Implement logic to navigate to add vehicle page or open a modal
-        console.log("Adding new vehicle...");
-    };
+
 
     const toggleActivate = (id: number) => {
         console.log(`Toggling activation for vehicle ID: ${id}`);

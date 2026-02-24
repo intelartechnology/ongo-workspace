@@ -9,44 +9,9 @@ import Loading from "../components/Loading";
 import MainLayout from "./MainLayout";
 import CourseDetailsModal from "./components/CourseDetailsModal";
 
-interface Categorie {
-    id: number;
-    libelle: string;
-    image: string;
-    description: string;
-    sub_description: string;
-    base_price: number;
-    km_price: number;
-    created_at: string;
-    updated_at: string;
-}
+ 
 
-interface Chauffeur {
-    id: number;
-    nom: string;
-    prenom: string;
-    telephone: string;
-    email: string;
-    photo: string;
-    note: number;
-    role_id: number;
-    created_at: string;
-    updated_at: string;
-    balance: number;
-    cashBalance: number;
-    casDeposit: number;
-    is_agence: boolean;
-    device: {
-        id: number;
-        user_id: number;
-        device_token: string;
-        platform: string;
-        created_at: string;
-        updated_at: string;
-    };
-}
-
-interface Vehicle {
+/* interface Vehicle {
     id: number;
     uuid: string;
     matricule: string;
@@ -69,7 +34,7 @@ interface Vehicle {
     is_favorite: number;
     chauffeur: Chauffeur;
     categorie: Categorie;
-}
+} */
 
 interface Client {
     id: number;
@@ -95,11 +60,11 @@ interface Course {
     lieu_arrive: string;
     date_depart: string;
     heure_depart: string;
-    montant: string; // Assuming montant can be a string with currency
+    montant: number;
     is_paid: boolean;
     transaction_type: string;
     statut: string;
-    // Add other course properties
+    attributions: any[];
 }
 
 interface PaginationLink {
@@ -145,6 +110,7 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
 
     const notify = useCallback((title: string, type: string) => {
         if (type === "success") {
+            setSearch("");
             toast.success(title);
         } else if (type === "error") {
             toast.error(title);
@@ -157,7 +123,11 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
             const { data } = await Api.getDatawithPagination(url, isPag);
             if (data.success) {
                 console.log(data);
-                setCourses(data.data.data as Course[]);
+                const normalized = (data.data.data as any[]).map((c: any) => ({
+                    ...c,
+                    montant: Number(c.montant),
+                }));
+                setCourses(normalized as Course[]);
                 setPagination(data.data.links as PaginationLink[]);
                 setMeta({
                     current_page: data.data.current_page,
@@ -189,7 +159,11 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
         try {
             const { data } = await Api.postData("filter-course", postData);
             if (data.success) {
-                setCourses(data.data.data as Course[]);
+                const normalized = (data.data.data as any[]).map((c: any) => ({
+                    ...c,
+                    montant: Number(c.montant),
+                }));
+                setCourses(normalized as Course[]);
                 setPagination(data.data.links as PaginationLink[]);
                 setMeta({
                     current_page: data.data.current_page,
@@ -237,7 +211,6 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
     const [isReattributionModalOpen, setIsReattributionModalOpen] = useState<boolean>(false);
     const [courseToReattribute, setCourseToReattribute] = useState<Course | null>(null);
     const [vehicles, setVehicles] = useState<any[]>([]); // Define a proper interface for Vehicle
-    const [chauffeurs, setChauffeurs] = useState<any[]>([]); // Define a proper interface for Chauffeur
     const [searchTerm, setSearchTerm] = useState<string>("");
     const [selectedAttribution, setSelectedAttribution] = useState<any>(null); // Can be Vehicle or Chauffeur
     const [attributionType, setAttributionType] = useState<"vehicle" | "chauffeur">("vehicle");
@@ -271,7 +244,7 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
         }
       })
       .catch((err) => {
-            notify("Erreur serveur lors de la recherche", "error");
+            notify("Erreur serveur lors de la recherche" + err, "error");
       });
   };
  

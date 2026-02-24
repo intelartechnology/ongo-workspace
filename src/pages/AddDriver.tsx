@@ -11,18 +11,20 @@ interface AddDriverProps {
 }
 
 interface DriverFormData {
+  modele: string | number | readonly string[] | undefined;
   nom: string;
   prenom: string;
   email: string;
   telephone: string;
   cni: string;
   matricule: string;
-  modele_id: string;
-  categorie_id: string;
+  modele_id: string | number;
+  categorie_id: string | number;
 }
 
 const AddDriver: React.FC<AddDriverProps> = ({ onLogout, theme, toggleTheme }) => {
   const [formData, setFormData] = useState<DriverFormData>({
+    modele: '',
     nom: '',
     prenom: '',
     email: '',
@@ -152,6 +154,7 @@ const AddDriver: React.FC<AddDriverProps> = ({ onLogout, theme, toggleTheme }) =
       if (data.success) {
         notify("Chauffeur ajouté avec succès", "success");
         setFormData({
+          modele: '',
           nom: '',
           prenom: '',
           email: '',
