@@ -60,6 +60,7 @@ export default function VehicleEditPage({
                 setVehicle(data);
                 reset({
                     matricule: data.matricule,
+                    modele: data.modele,
                     color: data.color,
                     ville: data.ville,
                     categorie: data.categorie_id,
@@ -101,6 +102,7 @@ export default function VehicleEditPage({
             );
             const payload = {
                 matricule: formData.matricule,
+                modele: formData.modele,
                 color: formData.color,
                 ville: formData.ville,
                 vehicule_id: vehicle.id,
@@ -271,6 +273,22 @@ export default function VehicleEditPage({
                                                 />
                                                 {errors.matricule && (
                                                     <p className="text-xs text-red-500">{errors.matricule.message as string}</p>
+                                                )}
+                                            </div>
+
+                                            {/* Modèle */}
+                                            <div className="space-y-2">
+                                                <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                                                    Modèle
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    placeholder="Ex: Toyota Avensis"
+                                                    className="w-full rounded-lg border border-slate-200 dark:border-slate-700 dark:bg-slate-800 focus:border-primary focus:ring-1 focus:ring-primary transition-all text-sm py-2.5 px-3"
+                                                    {...register("modele", { required: "Modèle obligatoire" })}
+                                                />
+                                                {errors.modele && (
+                                                    <p className="text-xs text-red-500">{errors.modele.message as string}</p>
                                                 )}
                                             </div>
 

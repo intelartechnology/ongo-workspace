@@ -46,7 +46,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 };
 
                 const response = await Api.postData('utilisateur/loginDash', formData);
-
+                console.log(response);
                 if (response.data.success) {
                     const userData = response.data.data;
 

@@ -4,8 +4,9 @@ class ApiService {
     private api: AxiosInstance;
 
     constructor() {
-        // Base URL should ideally be an environment variable
+        // Base URL should ideally be an environment variable http://localhost:8000/
         this.api = axios.create({
+            //baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api/',
             baseURL: import.meta.env.VITE_API_URL || 'https://api.ongo237.com/api/',
             headers: {
                 'Content-Type': 'application/json',

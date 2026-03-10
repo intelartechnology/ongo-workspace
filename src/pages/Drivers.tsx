@@ -283,9 +283,12 @@ export default function Drivers({ onLogout = () => {}, theme = 'light', toggleTh
                                                                     Activer
                                                                 </button>
                                                             )}
-                                                            <a href={"#/driver-detail/" + item.id} className="text-primary hover:bg-primary/10 px-3 py-1.5 rounded-lg text-sm font-bold transition-colors">
+                                                            <button 
+                                                                onClick={() => navigate("/driver-detail/" + item.id)} 
+                                                                className="text-primary hover:bg-primary/10 px-3 py-1.5 rounded-lg text-sm font-bold transition-colors"
+                                                            >
                                                                 Détail
-                                                            </a>
+                                                            </button>
                                                         </div>
                                                     </td>
                                                 </tr>
