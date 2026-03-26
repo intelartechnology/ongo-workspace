@@ -6,7 +6,7 @@ class ApiService {
     constructor() {
         // Base URL should ideally be an environment variable http://localhost:8000/
         this.api = axios.create({
-            //baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api/',
+           // baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api/',
             baseURL: import.meta.env.VITE_API_URL || 'https://api.ongo237.com/api/',
             headers: {
                 'Content-Type': 'application/json',
@@ -43,6 +43,11 @@ class ApiService {
     }
 
     public async postData(url: string, data: any): Promise<AxiosResponse> {
+        if (data instanceof FormData) {
+            return this.api.post(url, data, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+        }
         return this.api.post(url, data);
     }
 

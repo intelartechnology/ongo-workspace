@@ -28,6 +28,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, user, onLogout }) 
              /*    { icon: 'admin_panel_settings', label: 'Administrateurs', path: '/admins' },
                 { icon: 'business_center', label: 'Commerciaux', path: '/sales' },
                 { icon: 'handshake', label: 'Partenaires', path: '/partners' }, */
+                 { icon: 'handshake', label: 'Partenaires', path: '/partners' },
             ]
         },
         {
@@ -36,6 +37,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, user, onLogout }) 
                 { icon: 'directions_car', label: 'Courses', path: '/courses' },
               /*   { icon: 'event_available', label: 'Réservation', path: '/reservations' },
                 { icon: 'location_on', label: 'Location', path: '/rentals' }, */
+            ]
+        },
+        {
+            title: 'Location',
+            items: [
+                { icon: 'calendar_month', label: 'Réservations', path: '/rentals' },
+                { icon: 'car_rental', label: 'Véhicules Location', path: '/rental-vehicles' },
+                { icon: 'category', label: 'Catégories', path: '/rental-categories' },
             ]
         },
         {

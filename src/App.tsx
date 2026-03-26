@@ -18,11 +18,35 @@ import VehicleEditPage from './pages/VehicleEditPage'
 import DriversRequest from './pages/DriversRequest'
 import AddDriver from './pages/AddDriver'
 import DriverDetail from './pages/DriverDetail'
-
+import Partners from './pages/Partners'
+import PartnerAdd from './pages/PartnerAdd'
+import PartnerFleet from './pages/PartnerFleet'
+import PartnerLogin from './pages/partner/Login'
+import PartnerDashboard from './pages/partner/Dashboard'
+import PartnerCourses from './pages/partner/Courses'
+import CourseDetail from './pages/partner/CourseDetail'
+import PartnerVehicles from './pages/partner/Vehicles'
+import Rentals from './pages/rentals/Rentals'
+import RentalDetail from './pages/rentals/RentalDetail'
+import RentalVehicles from './pages/rentals/RentalVehicles'
+import AddRentalVehicle from './pages/rentals/AddRentalVehicle'
+import RentalCategories from './pages/rentals/RentalCategories'
+import AddRentalCategory from './pages/rentals/AddRentalCategory'
 // Protected Route Component
 const ProtectedRoute = ({ children, isAuthenticated }: { children: React.ReactNode, isAuthenticated: boolean }) => {
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />
+  }
+  return <>{children}</>
+}
+
+// Partner Protected Route Component
+const PartnerProtectedRoute = ({ children, isAuthenticated, user }: { children: React.ReactNode, isAuthenticated: boolean, user: any }) => {
+  if (!isAuthenticated) {
+    return <Navigate to="/partner/login" replace />
+  }
+  if (!user?.is_partner) {
+    return <Navigate to="/partner/login" replace />
   }
   return <>{children}</>
 }
@@ -145,7 +169,131 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route
+          path="/partners"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <Partners onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/partners/add"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <PartnerAdd onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/partners/:id/fleet"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <PartnerFleet onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Admin Rental Management Routes */}
+        <Route
+          path="/rentals"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <Rentals onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/rentals/:id"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <RentalDetail onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/rental-vehicles"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <RentalVehicles onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/rental-vehicles/add"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <AddRentalVehicle onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/rental-vehicles/edit/:id"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <AddRentalVehicle onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/rental-categories"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <RentalCategories onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/rental-categories/add"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <AddRentalCategory onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/rental-categories/edit/:id"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <AddRentalCategory onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Partner Flow Routes */}
+        <Route path="/partner/login" element={isAuthenticated ? <Navigate to="/partner/dashboard" replace /> : <PartnerLogin />} />
+        <Route
+          path="/partner/dashboard"
+          element={
+            <PartnerProtectedRoute isAuthenticated={isAuthenticated} user={useSelector((state: RootState) => state.auth.user)}>
+              <PartnerDashboard onLogout={handleLogout} user={useSelector((state: RootState) => state.auth.user)} />
+            </PartnerProtectedRoute>
+          }
+        />
+        <Route
+          path="/partner/courses"
+          element={
+            <PartnerProtectedRoute isAuthenticated={isAuthenticated} user={useSelector((state: RootState) => state.auth.user)}>
+              <PartnerCourses onLogout={handleLogout} user={useSelector((state: RootState) => state.auth.user)} />
+            </PartnerProtectedRoute>
+          }
+        />
+        <Route
+          path="/partner/courses/:id"
+          element={
+            <PartnerProtectedRoute isAuthenticated={isAuthenticated} user={useSelector((state: RootState) => state.auth.user)}>
+              <CourseDetail onLogout={handleLogout} user={useSelector((state: RootState) => state.auth.user)} />
+            </PartnerProtectedRoute>
+          }
+        />
+        <Route
+          path="/partner/vehicles"
+          element={
+            <PartnerProtectedRoute isAuthenticated={isAuthenticated} user={useSelector((state: RootState) => state.auth.user)}>
+              <PartnerVehicles onLogout={handleLogout} user={useSelector((state: RootState) => state.auth.user)} />
+            </PartnerProtectedRoute>
+          }
+        />
       </Routes>
     </div>
   )
