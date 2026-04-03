@@ -2,9 +2,80 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import PartnerLayout from '../../components/partner/PartnerLayout';
 import ApiService from '../../services/ApiService';
+import GoogleMapReact from 'google-map-react';
+
+// Helper components for Google Maps
+const CourseMarker: React.FC<{ lat: number; lng: number; label: string; color: string }> = ({ label, color }) => (
+    <div className="relative -translate-x-1/2 -translate-y-full flex flex-col items-center animate-in zoom-in duration-500">
+        <div className="bg-white/95 backdrop-blur px-3 py-1.5 rounded-lg shadow-xl border border-outline-variant/10 text-[10px] font-black mb-1 whitespace-nowrap text-primary uppercase tracking-wider">
+            {label}
+        </div>
+        <div className="w-4 h-4 rounded-full border-2 border-white shadow-lg flex items-center justify-center" style={{ backgroundColor: color }}>
+             <div className="w-1.5 h-1.5 rounded-full bg-white/50"></div>
+        </div>
+    </div>
+);
+
+const CourseMap: React.FC<{ course: any }> = ({ course }) => {
+    let departCoords: [number, number] = [0, 0];
+    let arriveeCoords: [number, number] = [0, 0];
+
+    try {
+        if (course.latLngDepart) departCoords = JSON.parse(course.latLngDepart);
+        if (course.latLngArriver) arriveeCoords = JSON.parse(course.latLngArriver);
+    } catch (e) {
+        console.warn("Error parsing coordinates:", e);
+    }
+
+    const defaultCenter = { lat: 3.848, lng: 11.502 }; // Yaoundé
+    const center = departCoords[0] ? { lat: (departCoords[0] + (arriveeCoords[0] || departCoords[0]))/2, lng: (departCoords[1] + (arriveeCoords[1] || departCoords[1]))/2 } : defaultCenter;
+
+    return (
+        <div className="w-full h-full grayscale-[0.2] brightness-[1.05]">
+            <GoogleMapReact
+                bootstrapURLKeys={{ key: "AIzaSyCoK5wBInRF7Uj6jx8AEt1t4UrqiQPFKxs" }}
+                center={center}
+                defaultZoom={13}
+                options={{
+                    disableDefaultUI: true,
+                    styles: [
+                        {
+                            "featureType": "all",
+                            "elementType": "geometry",
+                            "stylers": [{ "color": "#f5f5f5" }]
+                        },
+                        {
+                            "featureType": "water",
+                            "elementType": "geometry",
+                            "stylers": [{ "color": "#e9e9e9" }]
+                        }
+                    ]
+                }}
+            >
+                {departCoords[0] !== 0 && (
+                    <CourseMarker
+                        lat={departCoords[0]}
+                        lng={departCoords[1]}
+                        label="DÉPART"
+                        color="#0061A4"
+                    />
+                )}
+                {arriveeCoords[0] !== 0 && (
+                    <CourseMarker
+                        lat={arriveeCoords[0]}
+                        lng={arriveeCoords[1]}
+                        label="ARRIVÉE"
+                        color="#BA1A1A"
+                    />
+                )}
+            </GoogleMapReact>
+        </div>
+    );
+};
 
 interface Course {
     id: number;
+    code: string;
     lieu_depart: string;
     lieu_arrive: string;
     montant: number;
@@ -19,6 +90,10 @@ interface Course {
         prenom: string;
         telephone: string;
         email: string;
+    };
+    categorie_vehicule?: {
+        id: number;
+        libelle: string;
     };
     attributions?: Array<{
         id: number;
@@ -67,11 +142,22 @@ const CourseDetail: React.FC<PartnerCourseDetailProps> = ({ onLogout, user }) =>
         }
     };
 
+    const handlePrint = () => {
+        if (course) {
+            sessionStorage.setItem(`course_detail_${id}`, JSON.stringify(course));
+            window.open(`/courses/${id}/print`, '_blank');
+        }
+    };
+
     if (loading) {
         return (
             <PartnerLayout user={user} onLogout={onLogout}>
-                <div className="flex items-center justify-center min-h-[60vh]">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                <div className="flex flex-col items-center justify-center min-h-[70vh]">
+                     <div className="relative w-20 h-20">
+                        <div className="absolute inset-0 rounded-full border-4 border-primary/10"></div>
+                        <div className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
+                    </div>
+                    <p className="mt-6 text-outline font-medium animate-pulse">Chargement de la course...</p>
                 </div>
             </PartnerLayout>
         );
@@ -81,13 +167,16 @@ const CourseDetail: React.FC<PartnerCourseDetailProps> = ({ onLogout, user }) =>
         return (
             <PartnerLayout user={user} onLogout={onLogout}>
                 <div className="flex flex-col items-center justify-center min-h-[60vh] text-on-surface-variant">
-                    <span className="material-symbols-outlined text-6xl mb-4">error</span>
-                    <h2 className="text-xl font-bold">Course non trouvée</h2>
+                    <div className="w-20 h-20 rounded-full bg-error/10 flex items-center justify-center text-error mb-6">
+                        <span className="material-symbols-outlined text-4xl">warning</span>
+                    </div>
+                    <h2 className="text-2xl font-black text-on-surface">Course introuvable</h2>
+                    <p className="text-outline mt-2 mb-8">La course que vous recherchez n'existe pas ou a été supprimée.</p>
                     <button 
                         onClick={() => navigate('/partner/courses')}
-                        className="mt-4 px-6 py-2 bg-primary text-on-primary rounded-full font-bold"
+                        className="px-8 py-3 bg-primary text-on-primary rounded-2xl font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-transform"
                     >
-                        Retour aux courses
+                        Retour à la liste
                     </button>
                 </div>
             </PartnerLayout>
@@ -96,263 +185,342 @@ const CourseDetail: React.FC<PartnerCourseDetailProps> = ({ onLogout, user }) =>
 
     const driver = course.attributions?.[0]?.chauffeurs;
 
+    const getStatusStyle = (status: string) => {
+        switch (status) {
+            case 'TERMINEE': return 'bg-green-500/10 text-green-600 border border-green-500/20';
+            case 'ANNULEE': return 'bg-error/10 text-error border border-error/20';
+            case 'EN_COURS': return 'bg-primary/10 text-primary border border-primary/20';
+            default: return 'bg-outline/10 text-outline border border-outline/20';
+        }
+    };
+
     return (
         <PartnerLayout user={user} onLogout={onLogout}>
-            <div className="pb-12">
-                {/* Hero Header Section */}
-                <div className="mb-8 flex flex-wrap items-end justify-between gap-6">
-                    <div>
-                        <div className="flex items-center gap-3 mb-2">
-                            <span className={`px-3 py-1 text-xs font-bold rounded-full uppercase tracking-wider ${
-                                course.statut === 'TERMINEE' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
-                            }`}>
-                                {course.statut}
-                            </span>
-                            <span className="text-on-surface-variant text-sm font-medium">Recorded on {course.date_depart}</span>
-                        </div>
-                        <h1 className="text-4xl font-extrabold tracking-tight text-on-surface">Course ID: {course.id}</h1>
-                        <p className="mt-2 text-on-surface-variant flex items-center gap-2">
-                            <span className="material-symbols-outlined text-sm">location_on</span>
-                            {course.lieu_depart} <span className="material-symbols-outlined text-xs">arrow_forward</span> {course.lieu_arrive}
-                        </p>
-                    </div>
-                    <div className="text-right">
-                        <p className="text-sm font-medium text-on-surface-variant mb-1 uppercase tracking-widest">Total Amount</p>
-                        <div className="text-4xl font-black text-primary">{course.montant} FCFA</div>
-                    </div>
-                </div>
-
-                {/* Tab Navigation */}
-                <div className="flex gap-8 border-b border-outline-variant/20 mb-8 overflow-x-auto">
-                    <button 
-                        onClick={() => setActiveTab('details')}
-                        className={`pb-4 text-sm font-bold whitespace-nowrap transition-colors ${activeTab === 'details' ? 'text-primary border-b-2 border-primary' : 'text-on-surface-variant hover:text-primary'}`}
-                    >
-                        Trip Details
-                    </button>
-                    <button 
-                        onClick={() => setActiveTab('client')}
-                        className={`pb-4 text-sm font-bold whitespace-nowrap transition-colors ${activeTab === 'client' ? 'text-primary border-b-2 border-primary' : 'text-on-surface-variant hover:text-primary'}`}
-                    >
-                        Client Info
-                    </button>
-                    <button 
-                        onClick={() => setActiveTab('driver')}
-                        className={`pb-4 text-sm font-bold whitespace-nowrap transition-colors ${activeTab === 'driver' ? 'text-primary border-b-2 border-primary' : 'text-on-surface-variant hover:text-primary'}`}
-                    >
-                        Driver Info
-                    </button>
-                    <button 
-                        onClick={() => setActiveTab('review')}
-                        className={`pb-4 text-sm font-bold whitespace-nowrap transition-colors ${activeTab === 'review' ? 'text-primary border-b-2 border-primary' : 'text-on-surface-variant hover:text-primary'}`}
-                    >
-                        Review
-                    </button>
-                </div>
-
-                {/* Bento Content Grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Left/Middle Column */}
-                    <div className="lg:col-span-2 space-y-6">
-                        {activeTab === 'details' && (
-                            <>
-                                {/* Map Section Placeholder */}
-                                <div className="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm ring-1 ring-outline-variant/10">
-                                    <div className="p-6 flex justify-between items-center border-b border-surface-container">
-                                        <h3 className="font-headline font-bold text-lg">Route Visualization</h3>
-                                        <button className="text-primary text-sm font-semibold flex items-center gap-1">
-                                            <span className="material-symbols-outlined text-sm">fullscreen</span>
-                                            Expand Map
-                                        </button>
-                                    </div>
-                                    <div className="h-96 relative bg-surface-container flex items-center justify-center">
-                                        <span className="material-symbols-outlined text-6xl text-outline-variant/30">map</span>
-                                        <div className="absolute top-4 left-4 space-y-2">
-                                            <div className="bg-white/90 backdrop-blur p-3 rounded-lg shadow-md max-w-xs ring-1 ring-black/5">
-                                                <div className="flex items-start gap-3">
-                                                    <div className="mt-1 w-2 h-2 rounded-full bg-blue-600"></div>
-                                                    <div>
-                                                        <p className="text-[10px] uppercase font-bold text-slate-400 leading-none mb-1">Pickup</p>
-                                                        <p className="text-xs font-bold text-on-surface">{course.lieu_depart}</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="bg-white/90 backdrop-blur p-3 rounded-lg shadow-md max-w-xs ring-1 ring-black/5">
-                                                <div className="flex items-start gap-3">
-                                                    <div className="mt-1 w-2 h-2 rounded-full bg-red-600"></div>
-                                                    <div>
-                                                        <p className="text-[10px] uppercase font-bold text-slate-400 leading-none mb-1">Destination</p>
-                                                        <p className="text-xs font-bold text-on-surface">{course.lieu_arrive}</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Timeline Section */}
-                                <div className="bg-white rounded-xl shadow-sm ring-1 ring-outline-variant/10 p-8">
-                                    <h3 className="font-headline font-bold text-xl mb-8">Course Timeline</h3>
-                                    <div className="relative flex justify-between items-start">
-                                        <div className="absolute top-5 left-0 w-full h-0.5 bg-surface-container-high z-0"></div>
-                                        
-                                        <div className="relative z-10 flex flex-col items-center gap-3 max-w-[150px] text-center">
-                                            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-on-primary shadow-lg ring-4 ring-white">
-                                                <span className="material-symbols-outlined text-base">near_me</span>
-                                            </div>
-                                            <div>
-                                                <p className="text-xs font-bold text-on-surface">Requested</p>
-                                                <p className="text-[10px] text-on-surface-variant font-medium">{course.heure_depart}</p>
-                                            </div>
-                                        </div>
-
-                                        <div className="relative z-10 flex flex-col items-center gap-3 max-w-[150px] text-center">
-                                            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-on-primary shadow-lg ring-4 ring-white">
-                                                <span className="material-symbols-outlined text-base">directions_car</span>
-                                            </div>
-                                            <div>
-                                                <p className="text-xs font-bold text-on-surface">Trip Started</p>
-                                                <p className="text-[10px] text-on-surface-variant font-medium">---</p>
-                                            </div>
-                                        </div>
-
-                                        <div className="relative z-10 flex flex-col items-center gap-3 max-w-[150px] text-center">
-                                            <div className="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center text-white shadow-lg ring-4 ring-white">
-                                                <span className="material-symbols-outlined text-base">check_circle</span>
-                                            </div>
-                                            <div>
-                                                <p className="text-xs font-bold text-on-surface">Completed</p>
-                                                <p className="text-[10px] text-on-surface-variant font-medium">---</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </>
-                        )}
-
-                        {activeTab === 'client' && (
-                            <div className="bg-surface-container-lowest rounded-xl p-8 shadow-sm ring-1 ring-outline-variant/10">
-                                <h3 className="font-headline font-bold text-xl mb-6">Client Information</h3>
-                                {course.client ? (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-                                                <span className="material-symbols-outlined text-primary text-3xl">person</span>
-                                            </div>
-                                            <div>
-                                                <p className="text-xs font-bold text-on-surface-variant uppercase">Full Name</p>
-                                                <p className="text-lg font-bold text-on-surface">{course.client.prenom} {course.client.nom}</p>
-                                            </div>
-                                        </div>
-                                        <div className="space-y-4">
-                                            <div>
-                                                <p className="text-xs font-bold text-on-surface-variant uppercase">Phone Number</p>
-                                                <p className="text-on-surface font-semibold">{course.client.telephone}</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-xs font-bold text-on-surface-variant uppercase">Email Address</p>
-                                                <p className="text-on-surface font-semibold">{course.client.email || 'N/A'}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <p className="text-on-surface-variant">No client information available</p>
-                                )}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 font-body animate-in fade-in duration-700">
+                
+                {/* --- HERO HEADER --- */}
+                <div className="relative mb-12 p-8 rounded-[2rem] bg-gradient-to-br from-primary to-primary-fixed overflow-hidden shadow-2xl shadow-primary/30">
+                    <div className="absolute top-0 right-0 w-1/3 h-full bg-white/5 skew-x-[-20deg] translate-x-20"></div>
+                    <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-white/5 rounded-full blur-3xl"></div>
+                    
+                    <div className="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-end gap-8">
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-2 text-white/70 text-xs font-black uppercase tracking-[0.2em]">
+                                <button onClick={() => navigate('/partner/courses')} className="hover:text-white transition-colors">Courses</button>
+                                <span className="material-symbols-outlined text-[12px]">chevron_right</span>
+                                <span className="text-white">Détails de la course</span>
                             </div>
-                        )}
-
-                        {activeTab === 'driver' && (
-                            <div className="bg-surface-container-lowest rounded-xl p-8 shadow-sm ring-1 ring-outline-variant/10">
-                                <h3 className="font-headline font-bold text-xl mb-6">Driver Information</h3>
-                                {driver ? (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-16 h-16 rounded-full bg-tertiary/10 flex items-center justify-center">
-                                                <span className="material-symbols-outlined text-tertiary text-3xl">directions_car</span>
-                                            </div>
-                                            <div>
-                                                <p className="text-xs font-bold text-on-surface-variant uppercase">Driver Name</p>
-                                                <p className="text-lg font-bold text-on-surface">{driver.prenom} {driver.nom}</p>
-                                                <p className="text-xs text-on-surface-variant">ID: {driver.id}</p>
-                                            </div>
-                                        </div>
-                                        <div className="space-y-4">
-                                            <div>
-                                                <p className="text-xs font-bold text-on-surface-variant uppercase">Vehicle</p>
-                                                <p className="text-on-surface font-semibold">
-                                                    {driver.vehicules?.[0]?.modele || 'N/A'} ({driver.vehicules?.[0]?.matricule || 'N/A'})
-                                                </p>
-                                            </div>
-                                            <div>
-                                                <p className="text-xs font-bold text-on-surface-variant uppercase">Contact</p>
-                                                <p className="text-on-surface font-semibold">{driver.telephone}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <p className="text-on-surface-variant">No driver assigned yet</p>
-                                )}
-                            </div>
-                        )}
-
-                        {activeTab === 'review' && (
-                            <div className="bg-surface-container-lowest rounded-xl p-16 shadow-sm ring-1 ring-outline-variant/10 flex flex-col items-center justify-center">
-                                <span className="material-symbols-outlined text-slate-300 text-6xl mb-4">rate_review</span>
-                                <p className="text-on-surface-variant font-medium text-lg">Aucune note pour cette course</p>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Sidebar Stats */}
-                    <div className="space-y-6">
-                        <div className="bg-primary text-on-primary p-6 rounded-xl shadow-lg relative overflow-hidden">
-                            <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
-                            <h3 className="font-headline font-bold text-lg mb-4">Trip Summary</h3>
-                            <div className="space-y-4">
-                                <div className="flex justify-between items-center border-b border-white/10 pb-2">
-                                    <span className="text-on-primary/70 text-sm">Distance</span>
-                                    <span className="font-bold">{course.distance || '--'} km</span>
-                                </div>
-                                <div className="flex justify-between items-center border-b border-white/10 pb-2">
-                                    <span className="text-on-primary/70 text-sm">Duration</span>
-                                    <span className="font-bold">{course.duree || '--'} min</span>
-                                </div>
-                                <div className="flex justify-between items-center mb-2">
-                                    <span className="text-on-primary/70 text-sm capitalize">Fare</span>
-                                    <span className="font-bold">{course.montant} FCFA</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="bg-surface-container-low p-6 rounded-xl ring-1 ring-outline-variant/10">
-                            <h4 className="text-xs font-black text-on-surface-variant uppercase tracking-widest mb-4">Payment Method</h4>
+                            
                             <div className="flex items-center gap-4">
-                                <div className="w-12 h-8 bg-surface-container-highest rounded flex items-center justify-center">
-                                    <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>account_balance_wallet</span>
+                                <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center text-white border border-white/20">
+                                    <span className="material-symbols-outlined text-3xl">route</span>
                                 </div>
                                 <div>
-                                    <p className="text-sm font-bold text-on-surface">Payment</p>
-                                    <p className="text-xs text-on-surface-variant">Confirmed</p>
+                                    <h1 className="text-4xl md:text-5xl font-headline font-black text-white tracking-tight leading-tight">
+                                        #{course.code || course.id}
+                                    </h1>
+                                    <div className="flex items-center gap-3 mt-2">
+                                        <span className={`px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase ${getStatusStyle(course.statut)} bg-white/20 text-white border-white/20`}>
+                                            {course.statut}
+                                        </span>
+                                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/10 text-white/90 text-xs font-bold border border-white/10">
+                                            <span className="material-symbols-outlined text-[16px]">event</span>
+                                            {course.date_depart}
+                                            <span className="w-1 h-1 rounded-full bg-white/30"></span>
+                                            {course.heure_depart}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="bg-white p-2 rounded-xl border border-surface-container space-y-1">
-                            <button className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-surface-container-low transition-colors group">
-                                <div className="flex items-center gap-3">
-                                    <span className="material-symbols-outlined text-slate-400 group-hover:text-primary">receipt_long</span>
-                                    <span className="text-sm font-semibold text-on-surface">Download Invoice</span>
-                                </div>
-                                <span className="material-symbols-outlined text-sm text-slate-300">chevron_right</span>
+                        <div className="flex flex-wrap gap-3">
+                            <button 
+                                onClick={handlePrint}
+                                className="px-8 py-3.5 bg-white text-primary rounded-2xl font-black text-sm shadow-xl hover:bg-surface-container-highest transition-all flex items-center gap-3 group"
+                            >
+                                <span className="material-symbols-outlined text-xl group-hover:rotate-12 transition-transform">print</span>
+                                Imprimer la Fiche
                             </button>
-                            <button className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-surface-container-low transition-colors group">
-                                <div className="flex items-center gap-3">
-                                    <span className="material-symbols-outlined text-slate-400 group-hover:text-primary">support_agent</span>
-                                    <span className="text-sm font-semibold text-on-surface">Report an Issue</span>
-                                </div>
-                                <span className="material-symbols-outlined text-sm text-slate-300">chevron_right</span>
+                            <button className="px-8 py-3.5 bg-white/10 text-white backdrop-blur-md rounded-2xl font-black text-sm border border-white/20 hover:bg-white/20 transition-all flex items-center gap-3">
+                                <span className="material-symbols-outlined text-xl">share</span>
+                                Partager
                             </button>
                         </div>
+                    </div>
+                </div>
+
+                {/* --- MAIN CONTENT BENTO --- */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                    
+                    {/* Left Column: Trip Process & Details */}
+                    <div className="lg:col-span-8 space-y-8">
+                        
+                        {/* Tab Switcher */}
+                        <div className="p-1.5 bg-surface-container-low rounded-2xl flex gap-1 w-fit border border-outline-variant/10 shadow-inner">
+                            {[
+                                { id: 'details', label: 'Trajet', icon: 'route' },
+                                { id: 'client', label: 'Client', icon: 'person' },
+                                { id: 'driver', label: 'Chauffeur', icon: 'local_taxi' },
+                                { id: 'review', label: 'Avis', icon: 'star' }
+                            ].map((tab) => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id as any)}
+                                    className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
+                                        activeTab === tab.id 
+                                        ? 'bg-white shadow-lg text-primary border border-outline-variant/5' 
+                                        : 'text-outline hover:bg-surface-container-high'
+                                    }`}
+                                >
+                                    <span className="material-symbols-outlined text-[18px]">{tab.icon}</span>
+                                    {tab.label}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Content Area */}
+                        <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                            {activeTab === 'details' && (
+                                <div className="space-y-8">
+                                    <div className="bg-white rounded-[2rem] p-10 shadow-sm border border-outline-variant/5 relative overflow-hidden group">
+                                        <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+                                            <span className="material-symbols-outlined text-8xl text-primary">directions_car</span>
+                                        </div>
+                                        
+                                        <div className="flex flex-col md:flex-row justify-between gap-12 mb-16 relative">
+                                            <div className="flex-1 space-y-12">
+                                                {/* Departure */}
+                                                <div className="relative pl-10">
+                                                    <div className="absolute left-0 top-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center ring-8 ring-primary/5">
+                                                        <div className="w-3 h-3 rounded-full bg-primary"></div>
+                                                    </div>
+                                                    <p className="text-[10px] font-black text-outline uppercase tracking-[0.2em] mb-2 leading-none">Départ</p>
+                                                    <h3 className="text-xl font-bold text-on-surface line-clamp-2">{course.lieu_depart}</h3>
+                                                </div>
+
+                                                {/* Vertical Connector */}
+                                                <div className="absolute left-4 top-10 bottom-10 w-0.5 bg-gradient-to-b from-primary via-primary/50 to-error rounded-full"></div>
+
+                                                {/* Arrival */}
+                                                <div className="relative pl-10">
+                                                    <div className="absolute left-0 top-0 w-8 h-8 rounded-full bg-error/10 flex items-center justify-center ring-8 ring-error/5">
+                                                        <span className="material-symbols-outlined text-error text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>location_on</span>
+                                                    </div>
+                                                    <p className="text-[10px] font-black text-outline uppercase tracking-[0.2em] mb-2 leading-none">Destination</p>
+                                                    <h3 className="text-xl font-bold text-on-surface line-clamp-2">{course.lieu_arrive}</h3>
+                                                </div>
+                                            </div>
+
+                                            <div className="md:w-64 space-y-1 relative">
+                                                <div className="p-6 bg-surface-container-low rounded-3xl border border-outline-variant/10 text-center flex flex-col items-center">
+                                                    <span className="text-[10px] font-black text-outline uppercase tracking-[0.2em] mb-4">Montant Total</span>
+                                                    <div className="text-4xl font-black text-primary font-headline">
+                                                        {course.montant.toLocaleString()}
+                                                    </div>
+                                                    <span className="text-xs font-bold text-outline uppercase tracking-widest mt-1">FCFA</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-10 border-t border-outline-variant/10">
+                                            <div className="space-y-1">
+                                                <p className="text-[10px] font-black text-outline uppercase tracking-widest">Type</p>
+                                                <p className="font-bold text-on-surface flex items-center gap-2">
+                                                    <span className="material-symbols-outlined text-sm text-secondary">category</span>
+                                                    {course.categorie_vehicule?.libelle || "COURSE"}
+                                                </p>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <p className="text-[10px] font-black text-outline uppercase tracking-widest">Distance</p>
+                                                <p className="font-bold text-on-surface flex items-center gap-2">
+                                                    <span className="material-symbols-outlined text-sm text-secondary">analytics</span>
+                                                    {course.distance || '—'} KM
+                                                </p>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <p className="text-[10px] font-black text-outline uppercase tracking-widest">Durée</p>
+                                                <p className="font-bold text-on-surface flex items-center gap-2">
+                                                    <span className="material-symbols-outlined text-sm text-secondary">timer</span>
+                                                    {course.duree || '—'} MIN
+                                                </p>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <p className="text-[10px] font-black text-outline uppercase tracking-widest">Paiement</p>
+                                                <p className="font-bold text-on-surface flex items-center gap-2">
+                                                    <span className={`material-symbols-outlined text-sm ${course.statut === 'TERMINEE' ? 'text-green-500' : 'text-error'}`}>check_circle</span>
+                                                    {course.statut === 'TERMINEE' ? 'Vérifié' : 'En attente'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Map Component */}
+                                    <div className="bg-white rounded-[2rem] h-[450px] overflow-hidden shadow-sm border border-outline-variant/5 relative group">
+                                         <CourseMap course={course} />
+                                         <div className="absolute top-6 left-6 p-4 bg-white/80 backdrop-blur-md rounded-2xl shadow-xl border border-outline-variant/10 flex items-center gap-3">
+                                             <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                                                 <span className="material-symbols-outlined text-xl animate-pulse">radar</span>
+                                             </div>
+                                             <div>
+                                                 <p className="text-[10px] font-black text-outline uppercase tracking-widest">Suivi Carte</p>
+                                                 <p className="text-xs font-bold text-on-surface">Course active</p>
+                                             </div>
+                                         </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'client' && (
+                                <div className="bg-white rounded-[2rem] p-12 shadow-sm border border-outline-variant/5 text-center flex flex-col items-center">
+                                    <div className="w-32 h-32 rounded-[2.5rem] bg-surface-container-high flex items-center justify-center text-4xl font-headline font-black text-primary shadow-xl border-4 border-white mb-8">
+                                        {course.client ? `${course.client.prenom[0]}${course.client.nom[0]}` : "?"}
+                                    </div>
+                                    <h3 className="text-3xl font-black text-on-surface mb-2">{course.client?.prenom} {course.client?.nom}</h3>
+                                    <p className="text-outline font-bold tracking-widest uppercase text-xs mb-10">Identifiant Client: #{course.client?.id}</p>
+                                    
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl">
+                                        <div className="p-6 bg-surface-container-low rounded-3xl border border-outline-variant/10 text-left group hover:bg-primary/5 transition-all">
+                                            <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-primary shadow-sm mb-4">
+                                                <span className="material-symbols-outlined text-xl">alternate_email</span>
+                                            </div>
+                                            <p className="text-[10px] font-black text-outline uppercase tracking-widest mb-1">Email</p>
+                                            <p className="font-bold text-on-surface text-lg break-all">{course.client?.email || 'Non renseigné'}</p>
+                                        </div>
+                                        <div className="p-6 bg-surface-container-low rounded-3xl border border-outline-variant/10 text-left group hover:bg-primary/5 transition-all">
+                                            <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-primary shadow-sm mb-4">
+                                                <span className="material-symbols-outlined text-xl">call</span>
+                                            </div>
+                                            <p className="text-[10px] font-black text-outline uppercase tracking-widest mb-1">Téléphone</p>
+                                            <p className="font-bold text-on-surface text-lg break-all">{course.client?.telephone || 'Non renseigné'}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {activeTab === 'driver' && (
+                                <div className="bg-white rounded-[2rem] p-12 shadow-sm border border-outline-variant/5">
+                                    {driver ? (
+                                        <div className="flex flex-col md:flex-row gap-12 items-center md:items-start text-center md:text-left">
+                                            <div className="w-40 h-40 rounded-[3rem] bg-secondary-container flex items-center justify-center text-5xl font-headline font-black text-primary shadow-2xl border-8 border-white ring-8 ring-primary/5">
+                                                {driver.prenom[0]}{driver.nom[0]}
+                                            </div>
+                                            <div className="flex-1 space-y-8 mt-4">
+                                                <div>
+                                                    <h3 className="text-4xl font-headline font-black text-on-surface">{driver.prenom} {driver.nom}</h3>
+                                                    <p className="text-outline font-bold tracking-[0.2em] uppercase text-xs">Identifiant Chauffeur: #{driver.id}</p>
+                                                </div>
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                    <div className="p-5 bg-surface-container-low rounded-3xl border border-outline-variant/10">
+                                                        <p className="text-[10px] font-black text-outline uppercase tracking-widest mb-1">Véhicule</p>
+                                                        <p className="font-bold text-on-surface flex items-center gap-2">
+                                                            <span className="material-symbols-outlined text-sm">directions_car</span>
+                                                            {driver.vehicules?.[0]?.modele || 'N/A'}
+                                                        </p>
+                                                    </div>
+                                                    <div className="p-5 bg-surface-container-low rounded-3xl border border-outline-variant/10">
+                                                        <p className="text-[10px] font-black text-outline uppercase tracking-widest mb-1">Immatriculation</p>
+                                                        <p className="font-black text-primary font-mono text-lg flex items-center gap-2">
+                                                            <span className="material-symbols-outlined text-sm">badge</span>
+                                                            {driver.vehicules?.[0]?.matricule || 'N/A'}
+                                                        </p>
+                                                    </div>
+                                                    <div className="p-5 bg-surface-container-low rounded-3xl border border-outline-variant/10 col-span-1 sm:col-span-2">
+                                                        <p className="text-[10px] font-black text-outline uppercase tracking-widest mb-1">Téléphone</p>
+                                                        <p className="font-bold text-on-surface flex items-center gap-2">
+                                                            <span className="material-symbols-outlined text-sm text-primary">call</span>
+                                                            {driver.telephone}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="py-20 text-center flex flex-col items-center">
+                                            <div className="w-16 h-16 rounded-2xl bg-surface-container-high flex items-center justify-center text-outline mb-4">
+                                                <span className="material-symbols-outlined text-4xl">person_off</span>
+                                            </div>
+                                            <p className="text-outline font-bold italic tracking-wide uppercase text-xs">Aucun chauffeur n'est encore attribué à cette course</p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {activeTab === 'review' && (
+                                <div className="bg-white rounded-[2rem] py-32 shadow-sm border border-outline-variant/5 text-center flex flex-col items-center">
+                                    <div className="w-20 h-20 rounded-3xl bg-surface-container-high flex items-center justify-center text-surface-dim mb-8">
+                                        <span className="material-symbols-outlined text-4xl">rate_review</span>
+                                    </div>
+                                    <p className="text-2xl font-bold text-outline/40 italic">Aucune note laissée pour cette course</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Right Column: Actions & Context */}
+                    <div className="lg:col-span-4 space-y-8">
+                        
+                        {/* Transaction Card */}
+                        <div className="bg-on-surface rounded-[2rem] p-8 text-surface shadow-2xl relative overflow-hidden group">
+                           <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-[60px] group-hover:bg-primary/40 transition-all duration-700"></div>
+                           <h4 className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] mb-8 flex items-center gap-2">
+                               <span className="material-symbols-outlined text-primary text-[16px]">receipt_long</span>
+                               Résumé Financier
+                           </h4>
+                           
+                           <div className="space-y-6">
+                               <div className="flex justify-between items-center py-2 border-b border-white/5">
+                                   <span className="text-xs text-white/50 font-bold">Frais de service</span>
+                                   <span className="text-sm font-black text-white">0 FCFA</span>
+                               </div>
+                               <div className="flex justify-between items-center py-2">
+                                   <span className="text-xs text-white/50 font-bold">Base tarifaire</span>
+                                   <span className="text-sm font-black text-white">{course.montant.toLocaleString()} FCFA</span>
+                               </div>
+                               
+                               <div className="mt-8 p-6 bg-white/5 rounded-3xl border border-white/10 backdrop-blur-md">
+                                   <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-2">Montant à encaisser</p>
+                                   <div className="flex items-baseline gap-2">
+                                       <span className="text-4xl font-headline font-black text-white">{course.montant.toLocaleString()}</span>
+                                       <span className="text-xs font-black text-white/40">F.CFA</span>
+                                   </div>
+                               </div>
+                           </div>
+                        </div>
+
+                        {/* Fast Actions */}
+                        <div className="bg-white rounded-[2rem] p-8 border border-outline-variant/10 shadow-sm space-y-6">
+                            <h4 className="text-[10px] font-black text-outline uppercase tracking-[0.3em] flex items-center gap-2 mb-2">
+                                <span className="material-symbols-outlined text-primary text-[14px]">bolt</span>
+                                Actions Centrales
+                            </h4>
+                            
+                            <div className="space-y-3">
+                                <button 
+                                    onClick={handlePrint}
+                                    className="w-full flex items-center gap-4 p-4 rounded-2xl bg-surface-container-low hover:bg-primary/5 border border-outline-variant/5 transition-all group"
+                                >
+                                    <div className="w-12 h-12 rounded-xl bg-white shadow-sm flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all transform group-hover:scale-110">
+                                        <span className="material-symbols-outlined text-xl">print</span>
+                                    </div>
+                                    <div className="text-left">
+                                        <p className="text-sm font-black text-on-surface">Générer la Fiche</p>
+                                        <p className="text-[10px] text-outline font-bold">Export PDF / Impression</p>
+                                    </div>
+                                </button>
+
+                                <button className="w-full flex items-center gap-4 p-4 rounded-2xl bg-surface-container-low hover:bg-error/5 border border-outline-variant/5 transition-all group">
+                                    <div className="w-12 h-12 rounded-xl bg-white shadow-sm flex items-center justify-center text-error group-hover:bg-error group-hover:text-white transition-all transform group-hover:scale-110 font-bold">
+                                         <span className="material-symbols-outlined text-xl">report</span>
+                                    </div>
+                                    <div className="text-left">
+                                        <p className="text-sm font-black text-on-surface">Signaler Litige</p>
+                                        <p className="text-[10px] text-outline font-bold">Contester cette course</p>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
             </div>

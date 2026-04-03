@@ -29,14 +29,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, user, onLogout }) 
                 { icon: 'business_center', label: 'Commerciaux', path: '/sales' },
                 { icon: 'handshake', label: 'Partenaires', path: '/partners' }, */
                  { icon: 'handshake', label: 'Partenaires', path: '/partners' },
+                 { icon: 'volunteer_activism', label: 'Contributeurs', path: '/contributors' },
             ]
         },
         {
             title: 'Exploitation',
             items: [
                 { icon: 'directions_car', label: 'Courses', path: '/courses' },
-              /*   { icon: 'event_available', label: 'Réservation', path: '/reservations' },
-                { icon: 'location_on', label: 'Location', path: '/rentals' }, */
+              /*   { icon: 'event_available', label: 'Réservation', path: '/reservations' },*/
+                { icon: 'location_on', label: 'Location', path: '/rentals' }, 
             ]
         },
         {

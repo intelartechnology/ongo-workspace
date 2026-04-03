@@ -26,12 +26,26 @@ import PartnerDashboard from './pages/partner/Dashboard'
 import PartnerCourses from './pages/partner/Courses'
 import CourseDetail from './pages/partner/CourseDetail'
 import PartnerVehicles from './pages/partner/Vehicles'
+import PartnerVehicleDetail from './pages/partner/VehicleDetail'
+import VehicleReportPrintPage from './pages/partner/VehicleReportPrintPage'
+import PartnerCoursesPrintPage from './pages/partner/PartnerCoursesPrintPage'
 import Rentals from './pages/rentals/Rentals'
 import RentalDetail from './pages/rentals/RentalDetail'
 import RentalVehicles from './pages/rentals/RentalVehicles'
 import AddRentalVehicle from './pages/rentals/AddRentalVehicle'
 import RentalCategories from './pages/rentals/RentalCategories'
 import AddRentalCategory from './pages/rentals/AddRentalCategory'
+import ContributorLogin from './pages/contributor/Login'
+import ContributorDashboard from './pages/contributor/Dashboard'
+import ContributorRides from './pages/contributor/Rides'
+import ContributorRideDetail from './pages/contributor/RideDetail'
+import ContributorVehicles from './pages/contributor/Vehicles'
+import ContributorVehicleDetail from './pages/contributor/VehicleDetail'
+import ContributorVehicleReportPrintPage from './pages/contributor/VehicleReportPrintPage'
+import ContributorPayments from './pages/contributor/Payments'
+import ContributorCoursesPrintPage from './pages/contributor/ContributorCoursesPrintPage'
+import Contributors from './pages/Contributors'
+import ContributorAdd from './pages/ContributorAdd'
 // Protected Route Component
 const ProtectedRoute = ({ children, isAuthenticated }: { children: React.ReactNode, isAuthenticated: boolean }) => {
   if (!isAuthenticated) {
@@ -47,6 +61,17 @@ const PartnerProtectedRoute = ({ children, isAuthenticated, user }: { children: 
   }
   if (!user?.is_partner) {
     return <Navigate to="/partner/login" replace />
+  }
+  return <>{children}</>
+}
+
+// Contributor Protected Route Component
+const ContributorProtectedRoute = ({ children, isAuthenticated, user }: { children: React.ReactNode, isAuthenticated: boolean, user: any }) => {
+  if (!isAuthenticated) {
+    return <Navigate to="/contributor/login" replace />
+  }
+  if (!user?.contributor) {
+    return <Navigate to="/contributor/login" replace />
   }
   return <>{children}</>
 }
@@ -193,6 +218,22 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/contributors"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <Contributors onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/contributors/add"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <ContributorAdd onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Admin Rental Management Routes */}
         <Route
@@ -292,6 +333,97 @@ function App() {
             <PartnerProtectedRoute isAuthenticated={isAuthenticated} user={useSelector((state: RootState) => state.auth.user)}>
               <PartnerVehicles onLogout={handleLogout} user={useSelector((state: RootState) => state.auth.user)} />
             </PartnerProtectedRoute>
+          }
+        />
+        <Route
+          path="/partner/vehicles/:id"
+          element={
+            <PartnerProtectedRoute isAuthenticated={isAuthenticated} user={useSelector((state: RootState) => state.auth.user)}>
+              <PartnerVehicleDetail onLogout={handleLogout} user={useSelector((state: RootState) => state.auth.user)} />
+            </PartnerProtectedRoute>
+          }
+        />
+        <Route
+          path="/partner/vehicle-report/:id"
+          element={
+            <PartnerProtectedRoute isAuthenticated={isAuthenticated} user={useSelector((state: RootState) => state.auth.user)}>
+              <VehicleReportPrintPage />
+            </PartnerProtectedRoute>
+          }
+        />
+        <Route
+          path="/partner/courses-report"
+          element={
+            <PartnerProtectedRoute isAuthenticated={isAuthenticated} user={useSelector((state: RootState) => state.auth.user)}>
+              <PartnerCoursesPrintPage user={useSelector((state: RootState) => state.auth.user)} />
+            </PartnerProtectedRoute>
+          }
+        />
+
+        {/* Contributor Flow Routes */}
+        <Route path="/contributor/login" element={isAuthenticated ? <Navigate to="/contributor/dashboard" replace /> : <ContributorLogin />} />
+        <Route
+          path="/contributor/dashboard"
+          element={
+            <ContributorProtectedRoute isAuthenticated={isAuthenticated} user={useSelector((state: RootState) => state.auth.user)}>
+              <ContributorDashboard onLogout={handleLogout} user={useSelector((state: RootState) => state.auth.user)} />
+            </ContributorProtectedRoute>
+          }
+        />
+        <Route
+          path="/contributor/vehicles"
+          element={
+            <ContributorProtectedRoute isAuthenticated={isAuthenticated} user={useSelector((state: RootState) => state.auth.user)}>
+              <ContributorVehicles onLogout={handleLogout} user={useSelector((state: RootState) => state.auth.user)} />
+            </ContributorProtectedRoute>
+          }
+        />
+        <Route
+          path="/contributor/vehicles/:id"
+          element={
+            <ContributorProtectedRoute isAuthenticated={isAuthenticated} user={useSelector((state: RootState) => state.auth.user)}>
+              <ContributorVehicleDetail onLogout={handleLogout} user={useSelector((state: RootState) => state.auth.user)} />
+            </ContributorProtectedRoute>
+          }
+        />
+        <Route
+          path="/contributor/vehicle-report/:id"
+          element={
+            <ContributorProtectedRoute isAuthenticated={isAuthenticated} user={useSelector((state: RootState) => state.auth.user)}>
+              <ContributorVehicleReportPrintPage />
+            </ContributorProtectedRoute>
+          }
+        />
+        <Route
+          path="/contributor/rides"
+          element={
+            <ContributorProtectedRoute isAuthenticated={isAuthenticated} user={useSelector((state: RootState) => state.auth.user)}>
+              <ContributorRides onLogout={handleLogout} user={useSelector((state: RootState) => state.auth.user)} />
+            </ContributorProtectedRoute>
+          }
+        />
+        <Route
+          path="/contributor/rides/:id"
+          element={
+            <ContributorProtectedRoute isAuthenticated={isAuthenticated} user={useSelector((state: RootState) => state.auth.user)}>
+              <ContributorRideDetail onLogout={handleLogout} user={useSelector((state: RootState) => state.auth.user)} />
+            </ContributorProtectedRoute>
+          }
+        />
+        <Route
+          path="/contributor/rides-report"
+          element={
+            <ContributorProtectedRoute isAuthenticated={isAuthenticated} user={useSelector((state: RootState) => state.auth.user)}>
+              <ContributorCoursesPrintPage user={useSelector((state: RootState) => state.auth.user)} />
+            </ContributorProtectedRoute>
+          }
+        />
+        <Route
+          path="/contributor/payments"
+          element={
+            <ContributorProtectedRoute isAuthenticated={isAuthenticated} user={useSelector((state: RootState) => state.auth.user)}>
+              <ContributorPayments onLogout={handleLogout} user={useSelector((state: RootState) => state.auth.user)} />
+            </ContributorProtectedRoute>
           }
         />
       </Routes>

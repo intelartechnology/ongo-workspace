@@ -118,19 +118,13 @@ const PartnerLogin: React.FC = () => {
                         <span className="h-px bg-[#c3c6d5] opacity-20 flex-grow"></span>
                     </div>
 
-                    <div className="mt-6 text-center">
-                        <p className="text-sm text-[#434653]">
-                            Besoin d'un compte ? <a className="text-[#00327d] font-bold hover:underline" href="#">Rejoignez le réseau</a>
-                        </p>
-                    </div>
+                  
                 </div>
 
                 {/* Footer micro-copy */}
                 <footer className="flex justify-between items-center text-[10px] text-[#737784] font-semibold tracking-wider uppercase">
                     <span>© 2024 ONGO 237</span>
                     <div className="flex space-x-4">
-                        <a className="hover:text-[#191b22] transition-colors" href="#">Confidentialité</a>
-                        <a className="hover:text-[#191b22] transition-colors" href="#">Conditions</a>
                     </div>
                 </footer>
             </section>

@@ -12,13 +12,33 @@ const PartnerCourses: React.FC<PartnerCoursesProps> = ({ onLogout, user }) => {
     const [courses, setCourses] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [pagination, setPagination] = useState<any>(null);
+    
+    // Filter State
+    const [isFilterVisible, setIsFilterVisible] = useState(false);
+    const [filters, setFilters] = useState({
+        statut: 'ALL',
+        startDate: '',
+        endDate: ''
+    });
     const api = new ApiService();
     const navigate = useNavigate();
 
-    const fetchCourses = async (url = `utilisateur/get-partner-courses?user_id=${user.id}`) => {
+    const fetchCourses = async (url?: string) => {
         setLoading(true);
         try {
-            const response = await api.getData(url);
+            let targetUrl = url;
+            
+            if (!targetUrl) {
+                const params = new URLSearchParams();
+                params.append('user_id', user.id);
+                if (filters.statut !== 'ALL') params.append('statut', filters.statut);
+                if (filters.startDate) params.append('start_date', filters.startDate);
+                if (filters.endDate) params.append('end_date', filters.endDate);
+                
+                targetUrl = `utilisateur/get-partner-courses?${params.toString()}`;
+            }
+
+            const response = await api.getData(targetUrl);
             if (response.data.success) {
                 setCourses(response.data.data.data);
                 setPagination(response.data.data);
@@ -38,9 +58,37 @@ const PartnerCourses: React.FC<PartnerCoursesProps> = ({ onLogout, user }) => {
 
     const handlePageChange = (url: string) => {
         if (url) {
-            const pageParam = url.split('?')[1];
-            fetchCourses(`utilisateur/get-partner-courses?user_id=${user.id}&${pageParam}`);
+            // Preservation of filters during pagination
+            const urlObj = new URL(url, window.location.origin);
+            const page = urlObj.searchParams.get('page');
+            
+            const params = new URLSearchParams();
+            params.append('user_id', user.id);
+            if (page) params.append('page', page);
+            if (filters.statut !== 'ALL') params.append('statut', filters.statut);
+            if (filters.startDate) params.append('start_date', filters.startDate);
+            if (filters.endDate) params.append('end_date', filters.endDate);
+            
+            fetchCourses(`utilisateur/get-partner-courses?${params.toString()}`);
         }
+    };
+
+    const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setFilters(prev => ({ ...prev, [name]: value }));
+    };
+
+    const resetFilters = () => {
+        const reseted = { statut: 'ALL', startDate: '', endDate: '' };
+        setFilters(reseted);
+        // We need to fetch with reseted values immediately
+        const params = new URLSearchParams();
+        params.append('user_id', user.id);
+        fetchCourses(`utilisateur/get-partner-courses?${params.toString()}`);
+    };
+
+    const applyFilters = () => {
+        fetchCourses();
     };
 
     return (
@@ -52,16 +100,85 @@ const PartnerCourses: React.FC<PartnerCoursesProps> = ({ onLogout, user }) => {
                     <p className="text-[#434653] font-medium">History of all trips made by your fleet.</p>
                 </div>
                 <div className="flex gap-3">
-                    <button className="bg-white text-[#00327d] border border-[#00327d]/20 px-6 py-3 rounded-full flex items-center gap-2 font-semibold text-sm shadow-sm hover:bg-slate-50 transition-colors">
-                        <span className="material-symbols-outlined text-lg">filter_list</span>
-                        Filter
+                    <button 
+                        onClick={() => setIsFilterVisible(!isFilterVisible)}
+                        className={`px-6 py-3 rounded-full flex items-center gap-2 font-semibold text-sm shadow-sm transition-all ${
+                            isFilterVisible 
+                            ? 'bg-[#00327d] text-white' 
+                            : 'bg-white text-[#00327d] border border-[#00327d]/20 hover:bg-slate-50'
+                        }`}
+                    >
+                        <span className="material-symbols-outlined text-lg">
+                            {isFilterVisible ? 'close' : 'filter_list'}
+                        </span>
+                        {isFilterVisible ? 'Close Filters' : 'Filter'}
                     </button>
-                    <button className="bg-gradient-to-br from-[#00327d] to-[#0047ab] text-white px-6 py-3 rounded-full flex items-center gap-2 font-semibold text-sm shadow-lg hover:opacity-90 transition-opacity active:scale-95">
-                        <span className="material-symbols-outlined text-lg">download</span>
-                        Export
+                    <button 
+                        onClick={() => navigate('/partner/courses-report')}
+                        className="bg-gradient-to-br from-[#00327d] to-[#0047ab] text-white px-6 py-3 rounded-full flex items-center gap-2 font-semibold text-sm shadow-lg hover:opacity-90 transition-opacity active:scale-95"
+                    >
+                        <span className="material-symbols-outlined text-lg">print</span>
+                        Print History
                     </button>
                 </div>
             </div>
+
+            {/* Filter Panel */}
+            {isFilterVisible && (
+                <div className="mb-6 bg-white p-6 rounded-xl shadow-sm border border-[#00327d]/10 animate-in fade-in slide-in-from-top-4 duration-300">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
+                        <div>
+                            <label className="block text-xs font-bold text-[#434653] uppercase mb-2 ml-1">Course Status</label>
+                            <select 
+                                name="statut"
+                                value={filters.statut}
+                                onChange={handleFilterChange}
+                                className="w-full bg-slate-50 border-none rounded-lg px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-[#00327d]/20 transition-shadow"
+                            >
+                                <option value="ALL">All Statuses</option>
+                                <option value="TERMINEE">Completed</option>
+                                <option value="ANNULEE">Canceled</option>
+                                <option value="EN COURS">In Progress</option>
+                                <option value="CONFIRMEE">Confirmed</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-[#434653] uppercase mb-2 ml-1">Start Date</label>
+                            <input 
+                                type="date" 
+                                name="startDate"
+                                value={filters.startDate}
+                                onChange={handleFilterChange}
+                                className="w-full bg-slate-50 border-none rounded-lg px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-[#00327d]/20 transition-shadow"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-[#434653] uppercase mb-2 ml-1">End Date</label>
+                            <input 
+                                type="date" 
+                                name="endDate"
+                                value={filters.endDate}
+                                onChange={handleFilterChange}
+                                className="w-full bg-slate-50 border-none rounded-lg px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-[#00327d]/20 transition-shadow"
+                            />
+                        </div>
+                        <div className="flex gap-2">
+                            <button 
+                                onClick={applyFilters}
+                                className="flex-1 bg-[#00327d] text-white py-2.5 rounded-lg font-bold text-sm hover:bg-[#0047ab] transition-colors shadow-md shadow-blue-900/10"
+                            >
+                                Apply
+                            </button>
+                            <button 
+                                onClick={resetFilters}
+                                className="px-4 bg-slate-100 text-[#434653] py-2.5 rounded-lg font-bold text-sm hover:bg-slate-200 transition-colors"
+                            >
+                                <span className="material-symbols-outlined text-lg">restart_alt</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Courses Table/List */}
             <div className="bg-white rounded-xl shadow-sm border border-[#c3c6d5]/15 overflow-hidden">

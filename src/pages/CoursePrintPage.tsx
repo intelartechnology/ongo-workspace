@@ -20,218 +20,159 @@ export default function CoursePrintPage() {
     // Auto-print once course data is loaded
     useEffect(() => {
         if (course) {
-            const timeout = setTimeout(() => window.print(), 400);
+            const timeout = setTimeout(() => {
+                window.print();
+            }, 800);
             return () => clearTimeout(timeout);
         }
     }, [course]);
 
     if (!course) {
         return (
-            <div style={{ padding: 40, fontFamily: "Inter, sans-serif", color: "#333" }}>
-                <p>Données introuvables pour la course #{id}.</p>
+            <div className="p-20 font-sans text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p className="text-gray-500 font-bold">Préparation de la fiche de course #{id}...</p>
             </div>
         );
     }
 
-    const paidLabel = course.is_paid
-        ? course.transaction_type === "CASH"
-            ? "CASH"
-            : "PAYÉ"
-        : "NON PAYÉ";
+    const driver = course.attributions?.[0]?.chauffeurs;
+    const vehicle = driver?.vehicules?.[0];
 
     return (
         <>
-            {/* Print-only global styles */}
             <style>{`
-                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
                 * { box-sizing: border-box; margin: 0; padding: 0; }
-                body { font-family: 'Inter', sans-serif; background: #fff; color: #111; }
+                body { font-family: 'Inter', sans-serif; background: #fff; color: #000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
                 @media print {
-                    @page { size: A4; margin: 18mm; }
+                    @page { size: A4; margin: 15mm; }
                     .no-print { display: none !important; }
-                    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                    body { font-size: 11pt; }
                 }
-                table { border-collapse: collapse; width: 100%; }
-                th, td { border: 1px solid #e5e7eb; padding: 8px 12px; font-size: 13px; text-align: left; }
-                th { background: #f8fafc; font-weight: 700; color: #64748b; text-transform: uppercase; font-size: 11px; letter-spacing: .04em; }
+                .sheet-container { max-width: 800px; margin: 0 auto; padding: 20px; border: 1px solid #eee; position: relative; }
+                .header { border-bottom: 3px solid #000; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
+                .logo-box { display: flex; align-items: center; gap: 15px; }
+                .logo-text { font-weight: 900; fontSize: 24px; text-transform: uppercase; letter-spacing: -1px; }
+                .stamp { position: absolute; top: 150px; right: 50px; transform: rotate(-15deg); border: 4px solid #1a56db; color: #1a56db; padding: 10px 20px; font-weight: 900; border-radius: 10px; opacity: 0.2; text-transform: uppercase; pointer-events: none; }
+                
+                .section-title { font-weight: 900; font-size: 14px; text-transform: uppercase; color: #333; margin-bottom: 15px; display: flex; items: center; gap: 8px; border-left: 4px solid #000; padding-left: 10px; }
+                .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+                .data-item { padding: 8px 0; border-bottom: 1px dashed #ddd; }
+                .label { font-size: 10px; font-weight: 700; color: #888; text-transform: uppercase; margin-bottom: 3px; }
+                .value { font-size: 14px; font-weight: 700; color: #111; }
+                
+                .amount-box { background: #f8fafc; padding: 25px; border: 2px solid #000; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
+                .amount-label { font-weight: 900; font-size: 16px; }
+                .amount-value { font-weight: 900; font-size: 32px; color: #1a56db; }
+                
+                .footer { margin-top: 50px; padding-top: 20px; border-top: 1px solid #eee; display: flex; justify-content: space-between; font-size: 10px; color: #999; }
+                .sig-box { margin-top: 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 100px; text-align: center; }
+                .sig-line { border-top: 1px solid #000; margin-top: 50px; padding-top: 10px; font-size: 11px; font-weight: 700; }
             `}</style>
 
-            <div style={{ maxWidth: 820, margin: "0 auto", padding: "32px 24px" }}>
-
-                {/* Print button — hidden during actual print */}
-                <div className="no-print" style={{ marginBottom: 20, display: "flex", gap: 10 }}>
-                    <button
-                        onClick={() => window.print()}
-                        style={{
-                            padding: "8px 18px", background: "#137fec", color: "#fff",
-                            border: "none", borderRadius: 8, fontWeight: 700, fontSize: 14, cursor: "pointer",
-                            display: "flex", alignItems: "center", gap: 6
-                        }}
-                    >
-                        🖨️ Imprimer / Exporter PDF
-                    </button>
-                    <button
-                        onClick={() => window.close()}
-                        style={{
-                            padding: "8px 18px", background: "#f1f5f9", color: "#475569",
-                            border: "1px solid #e2e8f0", borderRadius: 8, fontWeight: 600, fontSize: 14, cursor: "pointer"
-                        }}
-                    >
-                        Fermer
-                    </button>
+            <div className="sheet-container">
+                <div className="no-print" style={{ position: "fixed", bottom: 20, right: 20, zIndex: 100, display: "flex", gap: 10 }}>
+                    <button onClick={() => window.print()} style={{ padding: "12px 24px", background: "#000", color: "#fff", border: "none", borderRadius: 12, fontWeight: 900, cursor: "pointer", boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)" }}>IMPRIMER</button>
+                    <button onClick={() => window.close()} style={{ padding: "12px 24px", background: "#fff", color: "#000", border: "2px solid #000", borderRadius: 12, fontWeight: 900, cursor: "pointer" }}>FERMER</button>
                 </div>
 
-                {/* Header */}
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 28, paddingBottom: 20, borderBottom: "2px solid #137fec" }}>
-                    <div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-                            <img src="/logo.png" alt="Ongo 237" style={{ height: 40, width: "auto", objectFit: "contain" }} />
-                            <div>
-                                <div style={{ fontWeight: 900, fontSize: 18, color: "#137fec" }}>Ongo 237</div>
-                                <div style={{ fontSize: 11, color: "#94a3b8" }}>Super Admin Dashboard</div>
-                            </div>
+                <div className="stamp">{course.statut === 'TERMINEE' ? 'VERIFIÉ' : 'EN COURS'}</div>
+
+                <div className="header">
+                    <div className="logo-box">
+                        <div style={{ padding: 10, background: "#000", borderRadius: 12 }}>
+                            <span style={{ color: "#fff", fontWeight: 900, fontSize: 20 }}>O</span>
+                        </div>
+                        <div>
+                            <div className="logo-text">ONGO <span style={{ color: "#1a56db" }}>237</span></div>
+                            <div style={{ fontSize: 10, fontWeight: 700, color: "#666", letterSpacing: 2 }}>FICHE DE COURSE OFFICIELLE</div>
                         </div>
                     </div>
                     <div style={{ textAlign: "right" }}>
-                        <div style={{ fontWeight: 900, fontSize: 22 }}>Course #{course.id}</div>
-                        <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>
-                            {course.date_depart} — {course.heure_depart}
-                        </div>
-                        <div style={{
-                            display: "inline-block", marginTop: 6, padding: "2px 12px", borderRadius: 999, fontSize: 11, fontWeight: 700,
-                            background: course.statut === "ANNULEE" ? "#fee2e2" : course.statut === "TERMINEE" ? "#dcfce7" : "#dbeafe",
-                            color: course.statut === "ANNULEE" ? "#dc2626" : course.statut === "TERMINEE" ? "#16a34a" : "#2563eb",
-                        }}>
-                            {course.statut}
-                        </div>
+                        <div style={{ fontSize: 11, fontWeight: 800, color: "#888" }}>DOCUMENT REF:</div>
+                        <div style={{ fontSize: 20, fontStyle: "italic", fontWeight: 900 }}>#{course.code || course.id}</div>
+                        <div style={{ fontSize: 11, fontWeight: 700, marginTop: 4 }}>Généré le {new Date().toLocaleDateString('fr-FR')}</div>
                     </div>
                 </div>
 
-                {/* ── Section 1: Course Info ── */}
-                <Section title="Informations sur la Course">
-                    <TwoCol>
-                        <Field label="Code" value={course.code} />
-                        <Field label="Type" value={course.type || "COURSE"} />
-                        <Field label="Catégorie" value={course.categorie_vehicule?.libelle || "N/A"} />
-                        <Field label="Statut" value={course.statut} />
-                        <Field label="Date départ" value={course.date_depart} />
-                        <Field label="Heure départ" value={course.heure_depart} />
-                    </TwoCol>
-                </Section>
+                {/* --- COURSE INFO --- */}
+                <div className="section-title">Détails du Trajet</div>
+                <div className="data-grid">
+                    <div className="data-item">
+                        <div className="label">Lieu de Départ</div>
+                        <div className="value">{course.lieu_depart}</div>
+                    </div>
+                    <div className="data-item">
+                        <div className="label">Destination</div>
+                        <div className="value">{course.lieu_arrive}</div>
+                    </div>
+                    <div className="data-item">
+                        <div className="label">Date & Heure</div>
+                        <div className="value">{course.date_depart} à {course.heure_depart}</div>
+                    </div>
+                    <div className="data-item">
+                        <div className="label">Type de Service</div>
+                        <div className="value">{course.categorie_vehicule?.libelle || "COURSE STANDARD"}</div>
+                    </div>
+                </div>
 
-                {/* ── Section 2: Itinerary ── */}
-                <Section title="Itinéraire">
-                    <TwoCol>
-                        <Field label="🟢 Lieu de départ" value={course.lieu_depart} />
-                        <Field label="🔴 Lieu d'arrivée" value={course.lieu_arrive} />
-                    </TwoCol>
-                </Section>
+                {/* --- CHAUFFEUR & VEHICULE --- */}
+                <div className="section-title">Attribution Chauffeur</div>
+                <div className="data-grid">
+                    <div className="data-item">
+                        <div className="label">Nom du Chauffeur</div>
+                        <div className="value">{driver ? `${driver.prenom} ${driver.nom}` : "NON ATTRIBUÉ"}</div>
+                    </div>
+                    <div className="data-item">
+                        <div className="label">Téléphone Chauffeur</div>
+                        <div className="value">{driver?.telephone || "—"}</div>
+                    </div>
+                    <div className="data-item">
+                        <div className="label">Véhicule / Modèle</div>
+                        <div className="value">{vehicle?.modele || "—"}</div>
+                    </div>
+                    <div className="data-item">
+                        <div className="label">Immatriculation / Plaque</div>
+                        <div className="value" style={{ fontFamily: "monospace", fontSize: 16 }}>{vehicle?.matricule || "—"}</div>
+                    </div>
+                </div>
 
-                {/* ── Section 3: Payment ── */}
-                <Section title="Paiement">
-                    <TwoCol>
-                        <Field label="Montant" value={`${course.montant} Fcfa`} highlight />
-                        <Field label="Statut paiement" value={paidLabel} />
-                        <Field label="Mode de paiement" value={course.transaction_type || "N/A"} />
-                    </TwoCol>
-                </Section>
+                {/* --- CLIENT INFO --- */}
+                <div className="section-title">Informations Client</div>
+                <div className="data-grid">
+                    <div className="data-item">
+                        <div className="label">Nom du Client</div>
+                        <div className="value">{course.client ? `${course.client.prenom} ${course.client.nom}` : "ANONYME"}</div>
+                    </div>
+                    <div className="data-item">
+                        <div className="label">Contact Client</div>
+                        <div className="value">{course.client?.telephone || "—"}</div>
+                    </div>
+                </div>
 
-                {/* ── Section 4: Client ── */}
-                <Section title="Client">
-                    <TwoCol>
-                        <Field label="ID" value={course.client?.id || "—"} />
-                        <Field
-                            label="Nom complet"
-                            value={course.client ? `${course.client.prenom} ${course.client.nom}` : "Inconnu"}
-                        />
-                        <Field label="Téléphone" value={course.client?.telephone || "—"} />
-                        <Field label="Email" value={course.client?.email || "—"} />
-                    </TwoCol>
-                </Section>
+                {/* --- FINANCIALS --- */}
+                <div className="amount-box">
+                    <div>
+                        <div className="amount-label text-gray-500 uppercase tracking-widest text-[10px]">TOTAL À PERCEVOIR</div>
+                        <div style={{ fontWeight: 800 }}>Règlement par {course.transaction_type || "ESPESES"}</div>
+                    </div>
+                    <div className="amount-value">
+                        {course.montant.toLocaleString()} <span style={{ fontSize: 16 }}>FCFA</span>
+                    </div>
+                </div>
 
-                {/* ── Section 5: Attributions / Chauffeurs ── */}
-                <Section title={`Attributions / Chauffeurs (${course.attributions?.length || 0})`}>
-                    {course.attributions?.length > 0 ? (
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Chauffeur</th>
-                                    <th>Téléphone</th>
-                                    <th>Véhicule</th>
-                                    <th>Matricule</th>
-                                    <th>Solde</th>
-                                    <th>Statut</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {course.attributions.map((attr: any) => {
-                                    const balance = attr.chauffeurs?.balance ?? 0;
-                                    return (
-                                        <tr key={attr.id}>
-                                            <td>{attr.chauffeurs?.id}</td>
-                                            <td>{attr.chauffeurs?.prenom} {attr.chauffeurs?.nom}</td>
-                                            <td>{attr.chauffeurs?.telephone || "—"}</td>
-                                            <td>{attr.chauffeurs?.vehicules?.[0]?.modele || "—"}</td>
-                                            <td>{attr.chauffeurs?.vehicules?.[0]?.matricule || "—"}</td>
-                                            <td style={{ color: balance < 0 ? "#dc2626" : "#16a34a", fontWeight: 700 }}>
-                                                {balance} Fcfa
-                                            </td>
-                                            <td>
-                                                <span style={{
-                                                    padding: "2px 8px", borderRadius: 4, fontSize: 11, fontWeight: 700,
-                                                    background: attr.statut === "CONFIRMEE" ? "#dcfce7" : "#fee2e2",
-                                                    color: attr.statut === "CONFIRMEE" ? "#16a34a" : "#dc2626",
-                                                }}>
-                                                    {attr.statut}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                    ) : (
-                        <p style={{ color: "#94a3b8", fontSize: 13 }}>Aucune attribution pour cette course.</p>
-                    )}
-                </Section>
+                <div className="sig-box">
+                    <div className="sig-line">VISA PARTENAIRE / AGENCE</div>
+                    <div className="sig-line">SIGNATURE CHAUFFEUR</div>
+                </div>
 
-                {/* Footer */}
-                <div style={{ marginTop: 40, paddingTop: 16, borderTop: "1px solid #e2e8f0", fontSize: 11, color: "#94a3b8", display: "flex", justifyContent: "space-between" }}>
-                    <span>Ongo 237 — Document généré automatiquement</span>
-                    <span>Course #{course.id} — {new Date().toLocaleDateString("fr-FR", { year: "numeric", month: "long", day: "numeric" })}</span>
+                <div className="footer">
+                    <div>Ongo 237 S.A.R.L - Yaoundé, Cameroun</div>
+                    <div>Page 1 sur 1 - ID: {id}</div>
+                    <div style={{ fontWeight: 900 }}>DOCUMENT AUTHENTIQUE</div>
                 </div>
             </div>
         </>
-    );
-}
-
-// ── Helper components ──────────────────────────────────────────────────────────
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-    return (
-        <div style={{ marginBottom: 24 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 10 }}>
-                {title}
-            </div>
-            {children}
-        </div>
-    );
-}
-
-function TwoCol({ children }: { children: React.ReactNode }) {
-    return (
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px 24px" }}>
-            {children}
-        </div>
-    );
-}
-
-function Field({ label, value, highlight }: { label: string; value: any; highlight?: boolean }) {
-    return (
-        <div style={{ padding: "6px 0", borderBottom: "1px solid #f1f5f9" }}>
-            <div style={{ fontSize: 11, color: "#94a3b8", marginBottom: 2 }}>{label}</div>
-            <div style={{ fontWeight: 700, fontSize: 13, color: highlight ? "#137fec" : "#111" }}>{value}</div>
-        </div>
     );
 }

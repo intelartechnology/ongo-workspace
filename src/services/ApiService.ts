@@ -6,7 +6,7 @@ class ApiService {
     constructor() {
         // Base URL should ideally be an environment variable http://localhost:8000/
         this.api = axios.create({
-            baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api/',
+            baseURL: import.meta.env.VITE_API_URL || 'http://ongo-api-v2.test/api/',
            // baseURL: import.meta.env.VITE_API_URL || 'https://api.ongo237.com/api/',
             headers: {
                 'Content-Type': 'application/json',
@@ -60,6 +60,12 @@ class ApiService {
         // Based on source: const url = isPag ? route : baseShort + route;
         // In ondo-dashboard, we use baseURL, so we just need to append if not isPag
         return this.api.get(fullUrl);
+    }
+        public async postDatawithPagination(url: string, isPag: boolean): Promise<AxiosResponse> {
+        const fullUrl = isPag ? url : url; // If isPag is true, url is already absolute or includes query params
+        // Based on source: const url = isPag ? route : baseShort + route;
+        // In ondo-dashboard, we use baseURL, so we just need to append if not isPag
+        return this.api.post(fullUrl);
     }
 
     public async updateData(url: string, data: any): Promise<AxiosResponse> {

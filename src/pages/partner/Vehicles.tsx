@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import PartnerLayout from '../../components/partner/PartnerLayout';
 import ApiService from '../../services/ApiService';
 
@@ -8,10 +9,13 @@ interface PartnerVehiclesProps {
 }
 
 const PartnerVehicles: React.FC<PartnerVehiclesProps> = ({ onLogout, user }) => {
+    const navigate = useNavigate();
     const [vehicles, setVehicles] = useState<any[]>([]);
     const [stats, setStats] = useState<any>({ total: 0, inService: 0, free: 0, balance: 0 });
     const [loading, setLoading] = useState(true);
     const [pagination, setPagination] = useState<any>(null);
+    const [openDropdownId, setOpenDropdownId] = useState<number | null>(null);
+
     const api = new ApiService();
 
     const fetchVehicles = async (url = `utilisateur/get-partner-vehicles?user_id=${user.id}`) => {
@@ -43,6 +47,10 @@ const PartnerVehicles: React.FC<PartnerVehiclesProps> = ({ onLogout, user }) => 
             const pageParam = url.split('?')[1];
             fetchVehicles(`utilisateur/get-partner-vehicles?user_id=${user.id}&${pageParam}`);
         }
+    };
+
+    const openDetails = (fleet: any) => {
+        navigate(`/partner/vehicles/${fleet.id}`);
     };
 
     return (
@@ -99,6 +107,7 @@ const PartnerVehicles: React.FC<PartnerVehiclesProps> = ({ onLogout, user }) => 
                                 <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">License Plate</th>
                                 <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Driver</th>
                                 <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Category</th>
+                                <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Balance</th>
                                 <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Status</th>
                                 <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">Actions</th>
                             </tr>
@@ -150,6 +159,11 @@ const PartnerVehicles: React.FC<PartnerVehiclesProps> = ({ onLogout, user }) => 
                                                 </span>
                                             </td>
                                             <td className="px-6 py-5">
+                                                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider`}>
+                                                    {d?.balance || '0 FCFA'}
+                                                </span>
+                                            </td>
+                                               <td className="px-6 py-5">
                                                 <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
                                                     v?.statut === 'OCCUPE' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
                                                 }`}>
@@ -157,10 +171,41 @@ const PartnerVehicles: React.FC<PartnerVehiclesProps> = ({ onLogout, user }) => 
                                                     {v?.statut || 'N/A'}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-5 text-right">
-                                                <button className="p-2 text-slate-400 hover:text-primary transition-colors">
+                                            <td className="px-6 py-5 text-right relative">
+                                                <button 
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setOpenDropdownId(openDropdownId === fleet.id ? null : fleet.id);
+                                                    }}
+                                                    className="p-2 text-slate-400 hover:text-primary transition-colors"
+                                                >
                                                     <span className="material-symbols-outlined">more_vert</span>
                                                 </button>
+
+                                                {openDropdownId === fleet.id && (
+                                                    <div className="absolute right-6 top-14 w-48 bg-white rounded-xl shadow-xl ring-1 ring-black/5 z-50 py-1 origin-top-right transition-all">
+                                                        <button 
+                                                            onClick={() => openDetails(fleet)}
+                                                            className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 font-bold"
+                                                        >
+                                                            <span className="material-symbols-outlined text-lg">visibility</span>
+                                                            View Details
+                                                        </button>
+                                                        <button 
+                                                            className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 font-bold"
+                                                        >
+                                                            <span className="material-symbols-outlined text-lg">edit</span>
+                                                            Edit Vehicle
+                                                        </button>
+                                                        <div className="h-px bg-slate-100 my-1"></div>
+                                                        <button 
+                                                            className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 font-bold"
+                                                        >
+                                                            <span className="material-symbols-outlined text-lg">no_accounts</span>
+                                                            Unassign Driver
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </td>
                                         </tr>
                                     );
@@ -201,11 +246,8 @@ const PartnerVehicles: React.FC<PartnerVehiclesProps> = ({ onLogout, user }) => 
                     </div>
                 )}
             </div>
-
-          
         </PartnerLayout>
     );
 };
-
 
 export default PartnerVehicles;
