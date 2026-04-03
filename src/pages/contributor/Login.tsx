@@ -125,11 +125,8 @@ const ContributorLogin: React.FC = () => {
                 </div>
 
                 <footer className="flex justify-between items-center text-[10px] text-[#737784] font-semibold tracking-wider uppercase">
-                    <span>© 2024 ONGO 237</span>
-                    <div className="flex space-x-4">
-                        <a className="hover:text-[#191b22] transition-colors" href="#">Confidentialité</a>
-                        <a className="hover:text-[#191b22] transition-colors" href="#">Conditions</a>
-                    </div>
+                    <span>© 2026 ONGO 237</span>
+                    
                 </footer>
             </section>
 

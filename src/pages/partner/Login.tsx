@@ -123,9 +123,8 @@ const PartnerLogin: React.FC = () => {
 
                 {/* Footer micro-copy */}
                 <footer className="flex justify-between items-center text-[10px] text-[#737784] font-semibold tracking-wider uppercase">
-                    <span>© 2024 ONGO 237</span>
-                    <div className="flex space-x-4">
-                    </div>
+                    <span>© 2026 ONGO 237</span>
+                    
                 </footer>
             </section>
 
