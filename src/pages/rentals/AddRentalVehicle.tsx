@@ -17,7 +17,7 @@ const AddRentalVehicle: React.FC<AddRentalVehicleProps> = ({ onLogout, theme, to
     const navigate = useNavigate();
     const { id } = useParams();
     const [loading, setLoading] = useState<boolean>(false);
-    const [uploading, setUploading] = useState<boolean>(false); // Removing this in next step or keeping for potential future use?
+    // const [uploading, setUploading] = useState<boolean>(false); // Removing this in next step or keeping for potential future use?
     // Actually the lint says setUploading is never read. But wait, I might use it for progress.
     // I'll just remove the unused setUploading or use it.
     const [categories, setCategories] = useState<any[]>([]);
@@ -185,11 +185,11 @@ const AddRentalVehicle: React.FC<AddRentalVehicleProps> = ({ onLogout, theme, to
                                         <p className="text-[10px] uppercase font-black tracking-widest">Cliquez pour ajouter une photo</p>
                                     </div>
                                 )}
-                                {uploading && (
+                                {/* {uploading && (
                                     <div className="absolute inset-0 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-10">
                                         <span className="material-symbols-outlined animate-spin text-primary text-4xl">sync</span>
                                     </div>
-                                )}
+                                )} */}
                                 <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="hidden" accept="image/*" />
                             </div>
                             <div className="p-4 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 text-center">
@@ -373,7 +373,7 @@ const AddRentalVehicle: React.FC<AddRentalVehicleProps> = ({ onLogout, theme, to
                                 </button>
                                 <button 
                                     type="submit"
-                                    disabled={loading || uploading}
+                                    disabled={loading}
                                     className="flex-1 px-8 py-4 rounded-2xl bg-[#00327d] hover:bg-[#00327d]/90 text-white font-black uppercase tracking-widest shadow-2xl shadow-indigo-900/20 disabled:opacity-50 transition-all text-xs flex items-center justify-center gap-3"
                                 >
                                     {loading && <span className="material-symbols-outlined animate-spin">sync</span>}
