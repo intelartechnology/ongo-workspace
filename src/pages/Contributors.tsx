@@ -113,6 +113,7 @@ export default function Contributors({ onLogout = () => {}, theme = "light", tog
                                             <th className="px-6 py-4 text-[11px] font-extrabold text-slate-400 uppercase tracking-widest">Véhicule</th>
                                             <th className="px-6 py-4 text-[11px] font-extrabold text-slate-400 uppercase tracking-widest">Chauffeur</th>
                                             <th className="px-6 py-4 text-[11px] font-extrabold text-slate-400 uppercase tracking-widest">Statut Véhicule</th>
+                                            <th className="px-6 py-4 text-[11px] font-extrabold text-slate-400 uppercase tracking-widest text-right">Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
@@ -161,6 +162,15 @@ export default function Contributors({ onLogout = () => {}, theme = "light", tog
                                                             }`}>
                                                                 {v?.statut || "INCONNU"}
                                                             </span>
+                                                        </td>
+                                                        <td className="px-6 py-5 text-right">
+                                                            <button 
+                                                                onClick={() => navigate(`/contributors/${u.id}`)}
+                                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-primary hover:border-primary/50 hover:bg-primary/5 transition-all text-xs font-bold"
+                                                            >
+                                                                <span className="material-symbols-outlined text-[16px]">visibility</span>
+                                                                Détails
+                                                            </button>
                                                         </td>
                                                     </tr>
                                                 );

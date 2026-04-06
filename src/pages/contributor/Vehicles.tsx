@@ -61,10 +61,10 @@ const ContributorVehicles: React.FC<ContributorVehiclesProps> = ({ onLogout, use
     return (
         <ContributorLayout user={user} onLogout={onLogout}>
             {/* Header */}
-            <div className="mb-8 flex justify-between items-end">
+            <div className="mb-6 md:mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-4 md:gap-0">
                 <div>
-                    <h2 className="text-3xl font-extrabold text-emerald-800 tracking-tight mb-1">Mes Véhicules</h2>
-                    <p className="text-slate-500 font-medium">
+                    <h2 className="text-2xl md:text-3xl font-extrabold text-emerald-800 tracking-tight mb-1">Mes Véhicules</h2>
+                    <p className="text-slate-500 font-medium text-sm md:text-base">
                         Détail et performance de chaque véhicule sous votre contribution.
                     </p>
                 </div>
@@ -83,7 +83,7 @@ const ContributorVehicles: React.FC<ContributorVehiclesProps> = ({ onLogout, use
 
             {/* Vehicle Table */}
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto no-scrollbar">
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-slate-50/50 border-b border-slate-100">
@@ -181,8 +181,8 @@ const ContributorVehicles: React.FC<ContributorVehiclesProps> = ({ onLogout, use
 
             {/* Pagination */}
             {pagination && pagination.last_page > 1 && (
-                <div className="mt-8 px-6 py-4 bg-white rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between">
-                    <span className="text-xs font-medium text-slate-400">
+                <div className="mt-6 md:mt-8 px-4 md:px-6 py-4 bg-white rounded-2xl shadow-sm border border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-0">
+                    <span className="text-[10px] md:text-xs font-medium text-slate-400">
                         Affichage {pagination.from}–{pagination.to} sur {pagination.total} véhicules
                     </span>
                     <div className="flex gap-2">

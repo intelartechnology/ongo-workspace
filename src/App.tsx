@@ -46,6 +46,7 @@ import ContributorPayments from './pages/contributor/Payments'
 import ContributorCoursesPrintPage from './pages/contributor/ContributorCoursesPrintPage'
 import Contributors from './pages/Contributors'
 import ContributorAdd from './pages/ContributorAdd'
+import ContributorDetails from './pages/ContributorDetails'
 // Protected Route Component
 const ProtectedRoute = ({ children, isAuthenticated }: { children: React.ReactNode, isAuthenticated: boolean }) => {
   if (!isAuthenticated) {
@@ -231,6 +232,14 @@ function App() {
           element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>
               <ContributorAdd onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/contributors/:id"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <ContributorDetails onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
             </ProtectedRoute>
           }
         />

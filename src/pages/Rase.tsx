@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import GoogleMapReact from "google-map-react";
 
 import ApiService from "../services/ApiService";
@@ -87,6 +87,73 @@ interface RaseProps {
     toggleTheme?: () => void;
 }
 
+const ActionDropdown = ({ course, openDetails, openMap, openReattributionModal }: any) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    return (
+        <div className="relative" ref={dropdownRef}>
+            <button 
+                onClick={() => setIsOpen(!isOpen)}
+                className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                title="Actions"
+            >
+                <span className="material-symbols-outlined text-[22px]">more_vert</span>
+            </button>
+
+            {isOpen && (
+                <div className="absolute right-0 mt-1 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 overflow-hidden z-[999]">
+                    <div className="py-1">
+                        <button
+                            className="w-full px-4 py-2.5 text-left text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-3 text-slate-700 dark:text-slate-200 transition-colors"
+                            onClick={() => { setIsOpen(false); openDetails(course); }}
+                        >
+                            <span className="material-symbols-outlined text-[18px] text-blue-500">info</span>
+                            Détails
+                        </button>
+                        <button
+                            className="w-full px-4 py-2.5 text-left text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-3 text-slate-700 dark:text-slate-200 transition-colors"
+                            onClick={() => { setIsOpen(false); openMap(course); }}
+                        >
+                            <span className="material-symbols-outlined text-[18px] text-green-500">map</span>
+                            Carte
+                        </button>
+                        <button
+                            className="w-full px-4 py-2.5 text-left text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-3 text-slate-700 dark:text-slate-200 transition-colors"
+                            onClick={() => { 
+                                setIsOpen(false); 
+                                sessionStorage.setItem(`course_detail_${course.id}`, JSON.stringify(course));
+                                window.open(`/courses/${course.id}`, "_blank");
+                            }}
+                        >
+                            <span className="material-symbols-outlined text-[18px] text-purple-500">open_in_new</span>
+                            Nouvel onglet
+                        </button>
+                        <div className="h-px bg-slate-200 dark:bg-slate-700 my-1"></div>
+                        <button
+                            className="w-full px-4 py-2.5 text-left text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-3 text-slate-700 dark:text-slate-200 transition-colors"
+                            onClick={() => { setIsOpen(false); openReattributionModal(course); }}
+                        >
+                            <span className="material-symbols-outlined text-[18px] text-yellow-500">swap_horiz</span>
+                            Réattribuer
+                        </button>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
 export default function Rase({ onLogout = () => { }, theme = 'light', toggleTheme = () => { } }: RaseProps) {
     const [courses, setCourses] = useState<Course[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
@@ -147,7 +214,7 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
         }
     }, [Api, notify]);
 
-    const handleFilter = useCallback(async () => {
+    const handleFilter = useCallback(async (pageUrl?: string | React.MouseEvent) => {
         setLoading(true);
         const postData: { debut?: string; fin?: string; statut?: string; search?: string } = {};
 
@@ -156,8 +223,16 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
         if (statut !== "Tous les statuts") postData.statut = statut;
         if (search) postData.search = search;
 
+        let endpoint = "filter-course";
+        if (typeof pageUrl === 'string') {
+            const pageMatch = pageUrl.match(/page=(\d+)/);
+            if (pageMatch) {
+                endpoint += `?page=${pageMatch[1]}`;
+            }
+        }
+
         try {
-            const { data } = await Api.postData("filter-course", postData);
+            const { data } = await Api.postData(endpoint, postData);
             if (data.success) {
                 const normalized = (data.data.data as any[]).map((c: any) => ({
                     ...c,
@@ -458,37 +533,14 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
                                                         <td className="px-4 py-4 whitespace-nowrap">
                                                             {getStatusBadge(course.statut)}
                                                         </td>
-                                                        <td className="px-4 py-4 text-sm text-slate-700 dark:text-slate-300 whitespace-nowrap sticky right-0 bg-white dark:bg-slate-900">
-                                                            <div className="flex items-center space-x-2">
-                                                                <button
-                                                                    className="flex items-center gap-1 px-3 py-1 rounded-md text-sm font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900"
-                                                                    onClick={() => openDetails(course)}
-                                                                >
-                                                                    <span className="material-symbols-outlined text-[18px]">info</span>
-                                                                    Détails
-                                                                </button>
-                                                                <button
-                                                                    className="flex items-center gap-1 px-3 py-1 rounded-md text-sm font-medium bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900"
-                                                                    onClick={() => openMap(course)}
-                                                                >
-                                                                    <span className="material-symbols-outlined text-[18px]">map</span>
-                                                                    Carte
-                                                                </button>
-                                                                  <button   className="p-1.5 rounded-lg text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
-                                                                    onClick={() => {
-                                                                        sessionStorage.setItem(`course_detail_${course.id}`, JSON.stringify(course));
-                                                                        window.open(`/courses/${course.id}`, "_blank");
-                                                                    }}
-                                                                    title="Voir les détails complets"
-                                                                >
-                                                                    <span className="material-symbols-outlined text-[20px]">open_in_new</span> </button>
-                                                                <button
-                                                                    className="flex items-center gap-1 px-3 py-1 rounded-md text-sm font-medium bg-yellow-100 text-yellow-700 hover:bg-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:hover:bg-yellow-900"
-                                                                    onClick={() => openReattributionModal(course)}
-                                                                >
-                                                                    <span className="material-symbols-outlined text-[18px]">swap_horiz</span>
-                                                                    Réattribuer
-                                                                </button>
+                                                        <td className="px-4 py-4 text-sm text-slate-700 dark:text-slate-300 whitespace-nowrap sticky right-0 bg-white dark:bg-slate-900 border-l border-slate-100 dark:border-slate-800">
+                                                            <div className="flex items-center justify-center">
+                                                                <ActionDropdown 
+                                                                    course={course} 
+                                                                    openDetails={openDetails} 
+                                                                    openMap={openMap} 
+                                                                    openReattributionModal={openReattributionModal} 
+                                                                />
                                                             </div>
                                                         </td>
                                                     </tr>
@@ -521,7 +573,15 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
                                             return (
                                                 <button
                                                     key={index}
-                                                    onClick={() => item.url && fetchCourses(item.url, true)}
+                                                    onClick={() => {
+                                                        if (item.url) {
+                                                            if (item.url.includes('filter-course')) {
+                                                                handleFilter(item.url);
+                                                            } else {
+                                                                fetchCourses(item.url, true);
+                                                            }
+                                                        }
+                                                    }}
                                                     disabled={!item.url}
                                                     className={`
                                                         ${isIcon ? 'p-2' : 'size-8'} 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import ContributorSidebar from './ContributorSidebar';
 
 interface ContributorLayoutProps {
@@ -8,14 +8,27 @@ interface ContributorLayoutProps {
 }
 
 const ContributorLayout: React.FC<ContributorLayoutProps> = ({ children, user, onLogout }) => {
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
     return (
         <div className="bg-background text-on-background antialiased flex min-h-screen">
-            <ContributorSidebar onLogout={onLogout} />
+            <ContributorSidebar 
+                isOpen={isSidebarOpen} 
+                onClose={() => setIsSidebarOpen(false)} 
+                onLogout={onLogout} 
+            />
 
-            <main className="flex-1 ml-64 min-h-screen relative">
+            <main className="flex-1 w-full lg:ml-64 min-h-screen relative flex flex-col max-w-[100vw] overflow-x-hidden">
                 {/* TopAppBar */}
-                <header className="fixed top-0 right-0 w-[calc(100%-16rem)] h-16 bg-white/80 backdrop-blur-md z-40 flex justify-between items-center px-8 shadow-sm">
-                    <div className="flex items-center gap-8"></div>
+                <header className="fixed top-0 left-0 lg:left-64 right-0 h-16 bg-white/80 backdrop-blur-md z-30 flex justify-between items-center px-4 md:px-8 shadow-sm">
+                    <div className="flex items-center gap-4">
+                        <button 
+                            onClick={() => setIsSidebarOpen(true)}
+                            className="lg:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-lg flex items-center justify-center transition-colors items-center"
+                        >
+                            <span className="material-symbols-outlined">menu</span>
+                        </button>
+                    </div>
                     <div className="flex items-center gap-4">
                         <div className="flex items-center gap-3 pl-4 border-l border-slate-200">
                             <div className="text-right">
@@ -31,7 +44,7 @@ const ContributorLayout: React.FC<ContributorLayoutProps> = ({ children, user, o
                     </div>
                 </header>
 
-                <div className="pt-24 px-8 pb-12">
+                <div className="pt-24 px-4 sm:px-8 pb-12 flex-1 w-full box-border">
                     {children}
                 </div>
             </main>

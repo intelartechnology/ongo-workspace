@@ -54,14 +54,14 @@ const ContributorLogin: React.FC = () => {
 
                 <div className="max-w-[400px] w-full mx-auto">
                     <header className="mb-10">
-                        <div className="inline-flex items-center gap-2 mb-4 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-full text-xs font-bold uppercase tracking-wider">
+                        <div className="inline-flex items-center gap-2 mb-4 px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-wider">
                             <span className="material-symbols-outlined text-sm">verified</span>
                             Contributor Access
                         </div>
-                        <h1 className="font-headline text-4xl font-extrabold text-[#191b22] tracking-tight mb-3">
+                        <h1 className="font-headline text-3xl md:text-4xl font-extrabold text-[#191b22] tracking-tight mb-3">
                             Espace Contributeur
                         </h1>
-                        <p className="text-[#434653] text-lg">
+                        <p className="text-[#434653] text-sm md:text-lg">
                             Suivez vos véhicules, vos chauffeurs et vos revenus en temps réel.
                         </p>
                     </header>

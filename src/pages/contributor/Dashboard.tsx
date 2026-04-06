@@ -63,18 +63,18 @@ const ContributorDashboard: React.FC<ContributorDashboardProps> = ({ onLogout, u
     return (
         <ContributorLayout user={user} onLogout={onLogout}>
             {/* Header */}
-            <div className="mb-8 flex justify-between items-end">
+            <div className="mb-6 md:mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-4 md:gap-0">
                 <div>
-                    <h2 className="text-3xl font-extrabold text-emerald-800 tracking-tight mb-1">
+                    <h2 className="text-2xl md:text-3xl font-extrabold text-emerald-800 tracking-tight mb-1">
                         Contributor Dashboard
                     </h2>
-                    <p className="text-slate-500 font-medium">
+                    <p className="text-slate-500 font-medium text-sm md:text-base">
                         Bienvenue, <span className="text-slate-700 font-semibold">{user?.nom}</span>. Voici l'état de votre flotte aujourd'hui.
                     </p>
                 </div>
                 <Link
                     to="/contributor/rides"
-                    className="bg-gradient-to-br from-emerald-700 to-emerald-500 text-white px-6 py-3 rounded-full flex items-center gap-2 font-semibold text-sm shadow-lg hover:opacity-90 transition-opacity active:scale-95"
+                    className="w-full md:w-auto justify-center bg-gradient-to-br from-emerald-700 to-emerald-500 text-white px-6 py-3 rounded-xl md:rounded-full flex items-center gap-2 font-semibold text-sm shadow-lg hover:opacity-90 transition-opacity active:scale-95"
                 >
                     <span className="material-symbols-outlined text-lg">receipt_long</span>
                     Voir les courses
@@ -82,22 +82,22 @@ const ContributorDashboard: React.FC<ContributorDashboardProps> = ({ onLogout, u
             </div>
 
             {/* KPI Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-8 md:mb-10">
                 {/* Balance */}
-                <div className="md:col-span-2 bg-gradient-to-br from-emerald-800 to-emerald-600 p-6 rounded-2xl shadow-lg text-white flex flex-col justify-between">
+                <div className="sm:col-span-2 bg-gradient-to-br from-emerald-800 to-emerald-600 p-5 md:p-6 rounded-2xl shadow-lg text-white flex flex-col justify-between">
                     <div className="flex justify-between items-start">
                         <div>
-                            <p className="text-emerald-200 font-semibold text-xs uppercase tracking-wider mb-1">Solde Actuel</p>
+                            <p className="text-emerald-200 font-semibold text-[10px] md:text-xs uppercase tracking-wider mb-1">Solde Actuel</p>
                             {loading ? (
-                                <div className="h-10 w-40 bg-white/20 rounded-lg animate-pulse mt-1"/>
+                                <div className="h-10 w-32 md:w-40 bg-white/20 rounded-lg animate-pulse mt-1"/>
                             ) : (
-                                <h3 className="text-4xl font-extrabold">
+                                <h3 className="text-3xl md:text-4xl font-extrabold flex items-baseline flex-wrap">
                                     {Number(stats?.balance || user?.balance || 0).toLocaleString('fr-FR')}
-                                    <span className="text-lg font-bold opacity-70 ml-1">FCFA</span>
+                                    <span className="text-sm md:text-lg font-bold opacity-70 ml-1">FCFA</span>
                                 </h3>
                             )}
                         </div>
-                        <div className="bg-white/15 p-3 rounded-xl">
+                        <div className="hidden sm:block bg-white/15 p-3 rounded-xl">
                             <span className="material-symbols-outlined text-white text-3xl">account_balance_wallet</span>
                         </div>
                     </div>
@@ -141,20 +141,20 @@ const ContributorDashboard: React.FC<ContributorDashboardProps> = ({ onLogout, u
             </div>
 
             {/* Main Content: Weekly chart + Latest ride */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 mb-8 md:mb-10">
                 {/* Weekly Earnings */}
-                <div className="lg:col-span-2 bg-white p-8 rounded-2xl shadow-sm border border-slate-100 min-h-[400px]">
-                    <div className="flex justify-between items-center mb-8">
+                <div className="lg:col-span-2 bg-white p-5 md:p-8 rounded-2xl shadow-sm border border-slate-100 min-h-[350px] md:min-h-[400px]">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
                         <div>
-                            <h4 className="text-xl font-bold text-slate-800 tracking-tight">Revenus Hebdomadaires</h4>
-                            <p className="text-sm text-slate-400">Aperçu des 7 derniers jours</p>
+                            <h4 className="text-lg md:text-xl font-bold text-slate-800 tracking-tight">Revenus Hebdomadaires</h4>
+                            <p className="text-[10px] md:text-sm text-slate-400">Aperçu des 7 derniers jours</p>
                         </div>
-                        <div className="text-right">
-                            <p className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Total Revenue</p>
+                        <div className="sm:text-right">
+                            <p className="text-[10px] md:text-xs text-slate-400 uppercase tracking-wider font-semibold">Total Revenue</p>
                             {loading ? (
-                                <div className="h-6 w-28 bg-slate-100 rounded animate-pulse mt-1"/>
+                                <div className="h-6 w-24 md:w-28 bg-slate-100 rounded animate-pulse mt-1"/>
                             ) : (
-                                <p className="text-lg font-extrabold text-emerald-700">
+                                <p className="text-base md:text-lg font-extrabold text-emerald-700">
                                     {Number(stats?.total_revenue || 0).toLocaleString('fr-FR')} FCFA
                                 </p>
                             )}
@@ -253,16 +253,16 @@ const ContributorDashboard: React.FC<ContributorDashboardProps> = ({ onLogout, u
                                 </div>
                             </div>
 
-                            <div className="pt-4 border-t border-slate-200 flex justify-between items-center">
+                            <div className="pt-4 border-t border-slate-200 flex flex-wrap justify-between items-center gap-2">
                                 <div>
                                     <p className="text-[10px] font-bold text-slate-400 uppercase">Montant</p>
-                                    <p className="text-lg font-extrabold text-emerald-700">
+                                    <p className="text-base md:text-lg font-extrabold text-emerald-700 break-words line-clamp-1">
                                         {latestCourse.courses?.montant || '—'} FCFA
                                     </p>
                                 </div>
                                 <div className="text-right">
                                     <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Statut</p>
-                                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${
+                                    <span className={`px-2 md:px-3 py-1 rounded-full text-[9px] md:text-[10px] font-bold uppercase whitespace-nowrap ${
                                         latestCourse.courses?.statut === 'TERMINEE'
                                             ? 'bg-emerald-100 text-emerald-700'
                                             : 'bg-blue-100 text-blue-700'
@@ -282,17 +282,17 @@ const ContributorDashboard: React.FC<ContributorDashboardProps> = ({ onLogout, u
             </div>
 
             {/* Vehicle Breakdown */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                <div className="px-8 py-5 border-b border-slate-100 flex justify-between items-center">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden relative">
+                <div className="px-5 md:px-8 py-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                     <div>
-                        <h4 className="text-lg font-bold text-slate-800">Performance par Véhicule</h4>
-                        <p className="text-xs text-slate-400 font-medium">Détail de chaque véhicule sous votre contribution</p>
+                        <h4 className="text-base md:text-lg font-bold text-slate-800">Performance par Véhicule</h4>
+                        <p className="text-[10px] md:text-xs text-slate-400 font-medium">Détail de chaque véhicule sous votre contribution</p>
                     </div>
-                    <Link to="/contributor/vehicles" className="text-emerald-600 text-xs font-bold hover:underline flex items-center gap-1">
-                        Gérer <span className="material-symbols-outlined text-xs">arrow_forward</span>
+                    <Link to="/contributor/vehicles" className="text-emerald-600 text-[10px] md:text-xs font-bold hover:underline flex items-center gap-1 bg-emerald-50 px-3 py-1.5 rounded-full shrink-0">
+                        Gérer <span className="material-symbols-outlined text-[10px] md:text-xs">arrow_forward</span>
                     </Link>
                 </div>
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto no-scrollbar">
                     <table className="w-full text-left">
                         <thead>
                             <tr className="bg-slate-50">

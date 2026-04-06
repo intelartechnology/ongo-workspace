@@ -79,7 +79,7 @@ const ContributorRideDetail: React.FC<ContributorRideDetailProps> = ({ onLogout,
     return (
         <ContributorLayout user={user} onLogout={onLogout}>
             {/* Back + Header */}
-            <div className="mb-8">
+            <div className="mb-6 md:mb-8">
                 <button
                     onClick={() => navigate('/contributor/rides')}
                     className="flex items-center gap-1 text-sm text-slate-400 hover:text-emerald-700 font-medium transition-colors mb-4"
@@ -87,12 +87,12 @@ const ContributorRideDetail: React.FC<ContributorRideDetailProps> = ({ onLogout,
                     <span className="material-symbols-outlined text-lg">arrow_back</span>
                     Retour aux courses
                 </button>
-                <div className="flex items-start justify-between">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div>
-                        <h2 className="text-3xl font-extrabold text-emerald-800 tracking-tight">
+                        <h2 className="text-2xl md:text-3xl font-extrabold text-emerald-800 tracking-tight">
                             Course #{ride.id}
                         </h2>
-                        <p className="text-slate-500 mt-1">
+                        <p className="text-slate-500 mt-1 text-sm md:text-base">
                             {ride.created_at
                                 ? new Date(ride.created_at).toLocaleDateString('fr-FR', {
                                     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
@@ -108,18 +108,18 @@ const ContributorRideDetail: React.FC<ContributorRideDetailProps> = ({ onLogout,
 
             <div className="max-w-5xl space-y-6">
                 {/* Financial Summary — Hero Card */}
-                <div className="bg-gradient-to-r from-emerald-800 to-emerald-600 rounded-2xl p-8 text-white shadow-xl">
-                    <div className="grid grid-cols-3 gap-8">
-                        <div>
+                <div className="bg-gradient-to-r from-emerald-800 to-emerald-600 rounded-2xl p-6 md:p-8 text-white shadow-xl">
+                    <div className="grid grid-cols-1 sm:grid-cols-5 gap-6 sm:gap-8">
+                        <div className="sm:col-span-3">
                             <p className="text-emerald-200 text-xs font-bold uppercase tracking-wider mb-2">Montant Total</p>
-                            <p className="text-4xl font-extrabold">
+                            <p className="text-3xl md:text-4xl font-extrabold flex items-baseline flex-wrap">
                                 {montant > 0 ? montant.toLocaleString('fr-FR') : '—'}
-                                {montant > 0 && <span className="text-xl font-bold opacity-70 ml-2">FCFA</span>}
+                                {montant > 0 && <span className="text-base md:text-xl font-bold opacity-70 ml-2">FCFA</span>}
                             </p>
                         </div>
                         
-                        <div className="border-l border-white/20 pl-8">
-                            <p className="text-emerald-200 text-xs font-bold uppercase tracking-wider mb-2">Type de Paiement</p>
+                        <div className="border-t sm:border-t-0 sm:border-l border-white/20 pt-4 sm:pt-0 sm:pl-8 sm:col-span-2">
+                            <p className="text-emerald-200 text-[10px] md:text-xs font-bold uppercase tracking-wider mb-2">Type de Paiement</p>
                             <div className="flex items-center gap-2 mt-2">
                                 <span className="material-symbols-outlined text-2xl">
                                     {ride.transaction_type === 'CASH' ? 'payments' : 'credit_card'}
@@ -233,20 +233,20 @@ const ContributorRideDetail: React.FC<ContributorRideDetailProps> = ({ onLogout,
                                     </div>
                                 </div>
                                 {vehicle && (
-                                    <div className="mt-4 pt-4 border-t border-slate-100 space-y-2">
+                                    <div className="mt-4 pt-4 border-t border-slate-100 flex flex-col gap-2">
                                         <div className="flex items-center justify-between">
-                                            <span className="text-xs text-slate-400 font-semibold uppercase">Matricule</span>
+                                            <span className="text-[10px] md:text-xs text-slate-400 font-semibold uppercase">Matricule</span>
                                             <span className="text-sm font-bold text-slate-800">{vehicle.matricule}</span>
                                         </div>
                                         {vehicle.modele && (
                                             <div className="flex items-center justify-between">
-                                                <span className="text-xs text-slate-400 font-semibold uppercase">Modèle</span>
-                                                <span className="text-sm font-medium text-slate-600">{vehicle.modele}</span>
+                                                <span className="text-[10px] md:text-xs text-slate-400 font-semibold uppercase">Modèle</span>
+                                                <span className="text-sm font-medium text-slate-600 line-clamp-1 truncate max-w-[120px] text-right">{vehicle.modele}</span>
                                             </div>
                                         )}
                                         {vehicle.color && (
                                             <div className="flex items-center justify-between">
-                                                <span className="text-xs text-slate-400 font-semibold uppercase">Couleur</span>
+                                                <span className="text-[10px] md:text-xs text-slate-400 font-semibold uppercase">Couleur</span>
                                                 <span className="text-sm font-medium text-slate-600 capitalize">{vehicle.color}</span>
                                             </div>
                                         )}

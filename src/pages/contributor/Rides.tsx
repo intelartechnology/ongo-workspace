@@ -53,7 +53,11 @@ const ContributorRides: React.FC<ContributorRidesProps> = ({ onLogout, user }) =
     const handlePageChange = (url: string) => {
         if (url) {
             const pageParam = url.split('?')[1];
-            fetchRides(`utilisateur/get-contributor-courses?user_id=${user.id}&${pageParam}`);
+            let fetchUrl = `utilisateur/get-contributor-courses?user_id=${user.id}&${pageParam}`;
+            if (statusFilter !== 'ALL') fetchUrl += `&statut=${statusFilter}`;
+            if (startDate) fetchUrl += `&start_date=${startDate}`;
+            if (endDate) fetchUrl += `&end_date=${endDate}`;
+            fetchRides(fetchUrl);
         }
     };
 
@@ -67,20 +71,20 @@ const ContributorRides: React.FC<ContributorRidesProps> = ({ onLogout, user }) =
     return (
         <ContributorLayout user={user} onLogout={onLogout}>
             {/* Header */}
-            <div className="mb-8 flex justify-between items-end">
+            <div className="mb-6 md:mb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-4 md:gap-0">
                 <div>
-                    <h2 className="text-3xl font-extrabold text-emerald-800 tracking-tight mb-1">Historique des Courses</h2>
-                    <p className="text-slate-500 font-medium">
+                    <h2 className="text-2xl md:text-3xl font-extrabold text-emerald-800 tracking-tight mb-1">Historique des Courses</h2>
+                    <p className="text-slate-500 font-medium text-sm md:text-base">
                         Toutes les courses effectuées par vos véhicules.
                         {pagination && !loading && (
-                            <span className="ml-2 text-emerald-600 font-bold">{pagination.total} courses au total</span>
+                            <span className="ml-2 text-emerald-600 font-bold block sm:inline">{pagination.total} courses au total</span>
                         )}
                     </p>
                 </div>
-                <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row w-full md:w-auto gap-3">
                     <button 
                         onClick={() => setIsFilterVisible(!isFilterVisible)}
-                        className={`px-6 py-3 rounded-full flex items-center gap-2 font-semibold text-sm transition-all shadow-md ${
+                        className={`w-full sm:w-auto justify-center px-6 py-3 rounded-xl sm:rounded-full flex items-center gap-2 font-semibold text-sm transition-all shadow-md ${
                             isFilterVisible 
                             ? 'bg-emerald-100 text-emerald-700 ring-2 ring-emerald-500/20' 
                             : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
@@ -93,18 +97,18 @@ const ContributorRides: React.FC<ContributorRidesProps> = ({ onLogout, user }) =
                     </button>
                     <Link 
                         to="/contributor/rides-report"
-                        className="px-6 py-3 bg-slate-800 text-white hover:bg-slate-900 rounded-full flex items-center gap-2 font-bold text-sm shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all"
+                        className="w-full sm:w-auto justify-center px-6 py-3 bg-slate-800 text-white hover:bg-slate-900 rounded-xl sm:rounded-full flex items-center gap-2 font-bold text-sm shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all"
                     >
                         <span className="material-symbols-outlined text-lg">print</span>
-                        Imprimer l'Historique
+                        Imprimer
                     </Link>
                 </div>
             </div>
 
             {/* Filters Bar */}
             {isFilterVisible && (
-                <div className="mb-6 bg-white p-6 rounded-2xl shadow-sm border border-emerald-100/50 animate-in fade-in slide-in-from-top-4 duration-300">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
+                <div className="mb-6 bg-white p-5 md:p-6 rounded-2xl shadow-sm border border-emerald-100/50 animate-in fade-in slide-in-from-top-4 duration-300">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 items-end">
                         <div>
                             <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">Statut de la course</label>
                             <select 
@@ -156,7 +160,7 @@ const ContributorRides: React.FC<ContributorRidesProps> = ({ onLogout, user }) =
 
             {/* Table */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto no-scrollbar">
                     <table className="w-full text-left">
                         <thead>
                             <tr className="bg-slate-50 border-b border-slate-100">

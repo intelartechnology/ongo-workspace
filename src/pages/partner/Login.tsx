@@ -47,27 +47,27 @@ const PartnerLogin: React.FC = () => {
     };
 
     return (
-        <main className="flex min-h-screen bg-surface font-body">
+        <main className="flex min-h-screen bg-surface font-body overflow-x-hidden">
             {/* Left Pane: The Action Area */}
-            <section className="w-full md:w-[60%] bg-white flex flex-col justify-between px-8 py-10 md:px-24 md:py-16">
+            <section className="w-full lg:w-[50%] bg-white flex flex-col justify-between px-6 py-8 sm:px-12 md:px-24 md:py-16">
                 {/* Brand Anchor */}
                 <div className="flex items-center">
                     <span className="font-headline text-2xl font-black text-[#00327d] tracking-tight">Ongo 237</span>
                 </div>
 
                 {/* Login Form Container */}
-                <div className="max-w-[400px] w-full mx-auto">
-                    <header className="mb-10">
-                        <h1 className="font-headline text-4xl font-extrabold text-[#191b22] tracking-tight mb-3">Accès Partenaire</h1>
-                        <p className="text-[#434653] text-lg">Gérez votre activité et vos performances en un seul endroit.</p>
+                <div className="w-full max-w-[400px] mx-auto mt-12 md:mt-0 flex-1 flex flex-col justify-center">
+                    <header className="mb-8 md:mb-10">
+                        <h1 className="font-headline text-3xl md:text-4xl font-extrabold text-[#191b22] tracking-tight mb-2 md:mb-3">Accès Partenaire</h1>
+                        <p className="text-[#434653] text-base md:text-lg">Gérez votre activité et vos performances en un seul endroit.</p>
                     </header>
 
-                    <form className="space-y-6" onSubmit={handleSubmit}>
+                    <form className="space-y-5 md:space-y-6" onSubmit={handleSubmit}>
                         <div className="space-y-2">
                             <label className="block font-medium text-sm text-[#434653]" htmlFor="email">Email professionnel ou Téléphone</label>
                             <div className="relative group">
                                 <input
-                                    className="w-full bg-[#f3f3fc] border-none rounded-md px-4 py-3.5 text-[#191b22] focus:ring-2 focus:ring-[#00327d] focus:bg-[#e2e2eb] transition-all duration-200 outline-none"
+                                    className="w-full bg-[#f3f3fc] border-none rounded-md px-4 py-3.5 text-[#191b22] focus:ring-2 focus:ring-[#00327d] focus:bg-[#e2e2eb] transition-all duration-200 outline-none placeholder:text-slate-400"
                                     id="email"
                                     name="email"
                                     placeholder="nom@entreprise.com"
@@ -86,7 +86,7 @@ const PartnerLogin: React.FC = () => {
                             </div>
                             <div className="relative group">
                                 <input
-                                    className="w-full bg-[#f3f3fc] border-none rounded-md px-4 py-3.5 text-[#191b22] focus:ring-2 focus:ring-[#00327d] focus:bg-[#e2e2eb] transition-all duration-200 outline-none"
+                                    className="w-full bg-[#f3f3fc] border-none rounded-md px-4 py-3.5 text-[#191b22] focus:ring-2 focus:ring-[#00327d] focus:bg-[#e2e2eb] transition-all duration-200 outline-none placeholder:text-slate-400"
                                     id="password"
                                     name="password"
                                     placeholder="••••••••"
@@ -99,12 +99,12 @@ const PartnerLogin: React.FC = () => {
                         </div>
 
                         <div className="flex items-center">
-                            <input className="w-4 h-4 text-[#00327d] bg-[#f3f3fc] border-none rounded focus:ring-[#00327d]" id="remember" type="checkbox" />
-                            <label className="ml-2 text-sm text-[#434653] font-medium" htmlFor="remember">Se souvenir de moi</label>
+                            <input className="w-4 h-4 text-[#00327d] bg-[#f3f3fc] border-slate-300 rounded focus:ring-[#00327d]" id="remember" type="checkbox" />
+                            <label className="ml-2 text-sm text-[#434653] font-medium cursor-pointer" htmlFor="remember">Se souvenir de moi</label>
                         </div>
 
                         <button
-                            className="w-full bg-gradient-to-r from-[#00327d] to-[#0047ab] text-white font-bold py-4 rounded-full shadow-lg hover:brightness-110 active:scale-[0.98] transition-all duration-200 disabled:opacity-50"
+                            className="w-full bg-gradient-to-r from-[#00327d] to-[#0047ab] text-white font-bold py-3.5 md:py-4 rounded-full shadow-lg hover:brightness-110 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 mt-2"
                             type="submit"
                             disabled={loading}
                         >
@@ -112,27 +112,25 @@ const PartnerLogin: React.FC = () => {
                         </button>
                     </form>
 
-                    <div className="mt-12 flex items-center justify-center space-x-4">
+                    <div className="mt-10 md:mt-12 flex items-center justify-center space-x-4">
                         <span className="h-px bg-[#c3c6d5] opacity-20 flex-grow"></span>
-                        <span className="text-xs font-bold text-[#737784] uppercase tracking-widest">Aide & Support</span>
+                        <span className="text-xs font-bold text-[#737784] uppercase tracking-widest whitespace-nowrap">Aide & Support</span>
                         <span className="h-px bg-[#c3c6d5] opacity-20 flex-grow"></span>
                     </div>
-
-                  
                 </div>
 
                 {/* Footer micro-copy */}
-                <footer className="flex justify-between items-center text-[10px] text-[#737784] font-semibold tracking-wider uppercase">
+                <footer className="mt-8 flex justify-center text-[10px] text-[#737784] font-semibold tracking-wider uppercase">
                     <span>© 2026 ONGO 237</span>
-                    
                 </footer>
             </section>
 
             {/* Right Pane: The Brand Anchor (Signature Blue Area) */}
-            <section className="hidden md:flex md:w-[40%] bg-[#00327d] relative overflow-hidden flex-col justify-center items-center p-12 text-center">
+            <section className="hidden lg:flex lg:w-[50%] bg-[#00327d] relative overflow-hidden flex-col justify-center items-center p-12 text-center">
                 {/* Abstract Background Element */}
                 <div className="absolute inset-0 z-0 opacity-40">
                     <img
+                        alt="abstract background"
                         className="w-full h-full object-cover mix-blend-overlay"
                         src="https://lh3.googleusercontent.com/aida-public/AB6AXuAQ1V8pKNpZo9LafUS6wFhA3s2bYCTdehWewv6EmTAisupAACpA9YBDBCtkZdjIohMiBDRU45pETQcrGwu1XQjOgYnWeIZmr1hLUNKCrtKXESNiK_FemXXqvjRPqHJWgFGbaO0_Iq-xRpUa7DS24kGB6eFli4K1jn6xt0qZjmRQ5w31cBkpto6ZiHB8H3i3cQodcJBkYqzY__owpIL9JybUO1d7ptao-1Tcku8BbtTPoKlLYJ7JpRhD3TFMWAVccMMOEo_77No9ZjE"
                     />
@@ -141,34 +139,34 @@ const PartnerLogin: React.FC = () => {
                 <div className="absolute inset-0 z-10 bg-gradient-to-br from-[#00327d] via-[#00327d]/80 to-[#0047ab]/90"></div>
                 
                 {/* Content Anchor */}
-                <div className="relative z-20 max-w-sm space-y-8">
+                <div className="relative z-20 max-w-md space-y-8">
                     <div className="inline-flex items-center justify-center w-20 h-20 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/10 mx-auto shadow-2xl">
                         <span className="material-symbols-outlined text-white text-4xl">handshake</span>
                     </div>
                     <div className="space-y-4">
-                        <h2 className="font-headline text-4xl font-extrabold text-white leading-tight tracking-tight">
+                        <h2 className="font-headline text-4xl lg:text-5xl font-extrabold text-white leading-tight tracking-tight">
                             Propulsez votre activité avec Ongo 237
                         </h2>
-                        <p className="text-blue-100 font-medium text-lg opacity-90 leading-relaxed">
+                        <p className="text-blue-100 font-medium text-lg lg:text-xl opacity-90 leading-relaxed">
                             Accédez à des outils analytiques de pointe et connectez-vous avec un écosystème de croissance exponentielle.
                         </p>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4 pt-8">
-                        <div className="bg-white/5 backdrop-blur-md p-4 rounded-xl border border-white/5 text-left">
+                        <div className="bg-white/5 backdrop-blur-md p-5 rounded-xl border border-white/5 text-left transition-transform hover:-translate-y-1">
                             <span className="material-symbols-outlined text-white mb-2 block">insights</span>
                             <span className="text-white text-xs font-bold uppercase tracking-wider">Analyses</span>
-                            <p className="text-white/60 text-[10px] leading-tight mt-1">Données en temps réel sur vos ventes.</p>
+                            <p className="text-white/60 text-xs leading-tight mt-1">Données en temps réel sur vos ventes.</p>
                         </div>
-                        <div className="bg-white/5 backdrop-blur-md p-4 rounded-xl border border-white/5 text-left">
+                        <div className="bg-white/5 backdrop-blur-md p-5 rounded-xl border border-white/5 text-left transition-transform hover:-translate-y-1">
                             <span className="material-symbols-outlined text-white mb-2 block">rocket_launch</span>
                             <span className="text-white text-xs font-bold uppercase tracking-wider">Croissance</span>
-                            <p className="text-white/60 text-[10px] leading-tight mt-1">Outils d'optimisation de visibilité.</p>
+                            <p className="text-white/60 text-xs leading-tight mt-1">Outils d'optimisation de visibilité.</p>
                         </div>
                     </div>
                 </div>
 
-                <div className="absolute bottom-10 left-10 opacity-20">
+                <div className="absolute bottom-10 left-10 opacity-20 hidden xl:block">
                     <span className="font-headline text-8xl font-black text-white/10 select-none">ONGO</span>
                 </div>
             </section>

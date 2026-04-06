@@ -205,28 +205,32 @@ const CourseDetail: React.FC<PartnerCourseDetailProps> = ({ onLogout, user }) =>
                     
                     <div className="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-end gap-8">
                         <div className="space-y-4">
-                            <div className="flex items-center gap-2 text-white/70 text-xs font-black uppercase tracking-[0.2em]">
-                                <button onClick={() => navigate('/partner/courses')} className="hover:text-white transition-colors">Courses</button>
-                                <span className="material-symbols-outlined text-[12px]">chevron_right</span>
-                                <span className="text-white">Détails de la course</span>
+                            <div className="flex flex-wrap items-center gap-2 text-white/70 text-xs font-black uppercase tracking-[0.2em]">
+                                <button onClick={() => navigate('/partner/courses')} className="hover:text-white transition-colors py-1">Courses</button>
+                                <span className="material-symbols-outlined text-[10px] md:text-[12px]">chevron_right</span>
+                                <span className="text-white py-1">Détails de la course</span>
                             </div>
                             
-                            <div className="flex items-center gap-4">
-                                <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center text-white border border-white/20">
-                                    <span className="material-symbols-outlined text-3xl">route</span>
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                                <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center text-white border border-white/20 shrink-0">
+                                    <span className="material-symbols-outlined text-2xl md:text-3xl">route</span>
                                 </div>
                                 <div>
-                                    <h1 className="text-4xl md:text-5xl font-headline font-black text-white tracking-tight leading-tight">
+                                    <h1 className="text-3xl sm:text-4xl md:text-5xl font-headline font-black text-white tracking-tight leading-tight break-all">
                                         #{course.code || course.id}
                                     </h1>
-                                    <div className="flex items-center gap-3 mt-2">
-                                        <span className={`px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase ${getStatusStyle(course.statut)} bg-white/20 text-white border-white/20`}>
+                                    <div className="flex flex-wrap items-center gap-2 md:gap-3 mt-2 md:mt-3">
+                                        <span className={`px-3 md:px-4 py-1.5 rounded-full text-[9px] md:text-[10px] font-black tracking-widest uppercase ${getStatusStyle(course.statut)} bg-white/20 text-white border-white/20`}>
                                             {course.statut}
                                         </span>
-                                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/10 text-white/90 text-xs font-bold border border-white/10">
-                                            <span className="material-symbols-outlined text-[16px]">event</span>
+                                        <div className="flex items-center gap-1.5 md:gap-2 px-3 py-1.5 rounded-full bg-black/10 text-white/90 text-[10px] md:text-xs font-bold border border-white/10">
+                                            <span className="material-symbols-outlined text-[14px] md:text-[16px]">event</span>
                                             {course.date_depart}
-                                            <span className="w-1 h-1 rounded-full bg-white/30"></span>
+                                            <span className="w-1 h-1 rounded-full bg-white/30 hidden sm:block"></span>
+                                            <span className="hidden sm:inline">{course.heure_depart}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1.5 md:gap-2 px-3 py-1.5 rounded-full bg-black/10 text-white/90 text-[10px] md:text-xs font-bold border border-white/10 sm:hidden">
+                                            <span className="material-symbols-outlined text-[14px] md:text-[16px]">schedule</span>
                                             {course.heure_depart}
                                         </div>
                                     </div>
@@ -234,15 +238,15 @@ const CourseDetail: React.FC<PartnerCourseDetailProps> = ({ onLogout, user }) =>
                             </div>
                         </div>
 
-                        <div className="flex flex-wrap gap-3">
+                        <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto mt-6 lg:mt-0">
                             <button 
                                 onClick={handlePrint}
-                                className="px-8 py-3.5 bg-white text-primary rounded-2xl font-black text-sm shadow-xl hover:bg-surface-container-highest transition-all flex items-center gap-3 group"
+                                className="flex-1 sm:flex-none justify-center px-8 py-3.5 bg-white text-primary rounded-2xl font-black text-sm shadow-xl hover:bg-surface-container-highest transition-all flex items-center gap-3 group"
                             >
                                 <span className="material-symbols-outlined text-xl group-hover:rotate-12 transition-transform">print</span>
                                 Imprimer la Fiche
                             </button>
-                            <button className="px-8 py-3.5 bg-white/10 text-white backdrop-blur-md rounded-2xl font-black text-sm border border-white/20 hover:bg-white/20 transition-all flex items-center gap-3">
+                            <button className="flex-1 sm:flex-none justify-center px-8 py-3.5 bg-white/10 text-white backdrop-blur-md rounded-2xl font-black text-sm border border-white/20 hover:bg-white/20 transition-all flex items-center gap-3">
                                 <span className="material-symbols-outlined text-xl">share</span>
                                 Partager
                             </button>
@@ -257,7 +261,7 @@ const CourseDetail: React.FC<PartnerCourseDetailProps> = ({ onLogout, user }) =>
                     <div className="lg:col-span-8 space-y-8">
                         
                         {/* Tab Switcher */}
-                        <div className="p-1.5 bg-surface-container-low rounded-2xl flex gap-1 w-fit border border-outline-variant/10 shadow-inner">
+                        <div className="p-1.5 bg-surface-container-low rounded-2xl flex gap-1 w-full overflow-x-auto no-scrollbar border border-outline-variant/10 shadow-inner">
                             {[
                                 { id: 'details', label: 'Trajet', icon: 'route' },
                                 { id: 'client', label: 'Client', icon: 'person' },
@@ -267,7 +271,7 @@ const CourseDetail: React.FC<PartnerCourseDetailProps> = ({ onLogout, user }) =>
                                 <button
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id as any)}
-                                    className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2 ${
+                                    className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 whitespace-nowrap flex-shrink-0 ${
                                         activeTab === tab.id 
                                         ? 'bg-white shadow-lg text-primary border border-outline-variant/5' 
                                         : 'text-outline hover:bg-surface-container-high'
@@ -283,20 +287,20 @@ const CourseDetail: React.FC<PartnerCourseDetailProps> = ({ onLogout, user }) =>
                         <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
                             {activeTab === 'details' && (
                                 <div className="space-y-8">
-                                    <div className="bg-white rounded-[2rem] p-10 shadow-sm border border-outline-variant/5 relative overflow-hidden group">
-                                        <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-                                            <span className="material-symbols-outlined text-8xl text-primary">directions_car</span>
+                                    <div className="bg-white rounded-[2rem] p-6 md:p-10 shadow-sm border border-outline-variant/5 relative overflow-hidden group">
+                                        <div className="absolute top-0 right-0 p-6 md:p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+                                            <span className="material-symbols-outlined text-6xl md:text-8xl text-primary">directions_car</span>
                                         </div>
                                         
-                                        <div className="flex flex-col md:flex-row justify-between gap-12 mb-16 relative">
-                                            <div className="flex-1 space-y-12">
+                                        <div className="flex flex-col md:flex-row justify-between gap-8 md:gap-12 mb-12 md:mb-16 relative">
+                                            <div className="flex-1 space-y-10 md:space-y-12">
                                                 {/* Departure */}
                                                 <div className="relative pl-10">
                                                     <div className="absolute left-0 top-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center ring-8 ring-primary/5">
                                                         <div className="w-3 h-3 rounded-full bg-primary"></div>
                                                     </div>
                                                     <p className="text-[10px] font-black text-outline uppercase tracking-[0.2em] mb-2 leading-none">Départ</p>
-                                                    <h3 className="text-xl font-bold text-on-surface line-clamp-2">{course.lieu_depart}</h3>
+                                                    <h3 className="text-lg md:text-xl font-bold text-on-surface line-clamp-2">{course.lieu_depart}</h3>
                                                 </div>
 
                                                 {/* Vertical Connector */}
@@ -308,11 +312,11 @@ const CourseDetail: React.FC<PartnerCourseDetailProps> = ({ onLogout, user }) =>
                                                         <span className="material-symbols-outlined text-error text-[20px]" style={{ fontVariationSettings: "'FILL' 1" }}>location_on</span>
                                                     </div>
                                                     <p className="text-[10px] font-black text-outline uppercase tracking-[0.2em] mb-2 leading-none">Destination</p>
-                                                    <h3 className="text-xl font-bold text-on-surface line-clamp-2">{course.lieu_arrive}</h3>
+                                                    <h3 className="text-lg md:text-xl font-bold text-on-surface line-clamp-2">{course.lieu_arrive}</h3>
                                                 </div>
                                             </div>
 
-                                            <div className="md:w-64 space-y-1 relative">
+                                            <div className="w-full md:w-64 space-y-1 relative mt-6 md:mt-0">
                                                 <div className="p-6 bg-surface-container-low rounded-3xl border border-outline-variant/10 text-center flex flex-col items-center">
                                                     <span className="text-[10px] font-black text-outline uppercase tracking-[0.2em] mb-4">Montant Total</span>
                                                     <div className="text-4xl font-black text-primary font-headline">
@@ -323,31 +327,31 @@ const CourseDetail: React.FC<PartnerCourseDetailProps> = ({ onLogout, user }) =>
                                             </div>
                                         </div>
 
-                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-10 border-t border-outline-variant/10">
+                                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 pt-10 border-t border-outline-variant/10">
                                             <div className="space-y-1">
-                                                <p className="text-[10px] font-black text-outline uppercase tracking-widest">Type</p>
-                                                <p className="font-bold text-on-surface flex items-center gap-2">
+                                                <p className="text-[9px] md:text-[10px] font-black text-outline uppercase tracking-widest break-words">Type</p>
+                                                <p className="text-sm md:text-base font-bold text-on-surface flex flex-wrap items-center gap-1.5">
                                                     <span className="material-symbols-outlined text-sm text-secondary">category</span>
                                                     {course.categorie_vehicule?.libelle || "COURSE"}
                                                 </p>
                                             </div>
                                             <div className="space-y-1">
-                                                <p className="text-[10px] font-black text-outline uppercase tracking-widest">Distance</p>
-                                                <p className="font-bold text-on-surface flex items-center gap-2">
+                                                <p className="text-[9px] md:text-[10px] font-black text-outline uppercase tracking-widest break-words">Distance</p>
+                                                <p className="text-sm md:text-base font-bold text-on-surface flex items-center gap-1.5">
                                                     <span className="material-symbols-outlined text-sm text-secondary">analytics</span>
                                                     {course.distance || '—'} KM
                                                 </p>
                                             </div>
                                             <div className="space-y-1">
-                                                <p className="text-[10px] font-black text-outline uppercase tracking-widest">Durée</p>
-                                                <p className="font-bold text-on-surface flex items-center gap-2">
+                                                <p className="text-[9px] md:text-[10px] font-black text-outline uppercase tracking-widest break-words">Durée</p>
+                                                <p className="text-sm md:text-base font-bold text-on-surface flex items-center gap-1.5">
                                                     <span className="material-symbols-outlined text-sm text-secondary">timer</span>
                                                     {course.duree || '—'} MIN
                                                 </p>
                                             </div>
                                             <div className="space-y-1">
-                                                <p className="text-[10px] font-black text-outline uppercase tracking-widest">Paiement</p>
-                                                <p className="font-bold text-on-surface flex items-center gap-2">
+                                                <p className="text-[9px] md:text-[10px] font-black text-outline uppercase tracking-widest break-words">Paiement</p>
+                                                <p className="text-sm md:text-base font-bold text-on-surface flex flex-wrap items-center gap-1.5">
                                                     <span className={`material-symbols-outlined text-sm ${course.statut === 'TERMINEE' ? 'text-green-500' : 'text-error'}`}>check_circle</span>
                                                     {course.statut === 'TERMINEE' ? 'Vérifié' : 'En attente'}
                                                 </p>
@@ -356,7 +360,7 @@ const CourseDetail: React.FC<PartnerCourseDetailProps> = ({ onLogout, user }) =>
                                     </div>
 
                                     {/* Map Component */}
-                                    <div className="bg-white rounded-[2rem] h-[450px] overflow-hidden shadow-sm border border-outline-variant/5 relative group">
+                                    <div className="bg-white rounded-[2rem] h-[300px] md:h-[450px] overflow-hidden shadow-sm border border-outline-variant/5 relative group">
                                          <CourseMap course={course} />
                                          <div className="absolute top-6 left-6 p-4 bg-white/80 backdrop-blur-md rounded-2xl shadow-xl border border-outline-variant/10 flex items-center gap-3">
                                              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
@@ -372,42 +376,42 @@ const CourseDetail: React.FC<PartnerCourseDetailProps> = ({ onLogout, user }) =>
                             )}
 
                             {activeTab === 'client' && (
-                                <div className="bg-white rounded-[2rem] p-12 shadow-sm border border-outline-variant/5 text-center flex flex-col items-center">
-                                    <div className="w-32 h-32 rounded-[2.5rem] bg-surface-container-high flex items-center justify-center text-4xl font-headline font-black text-primary shadow-xl border-4 border-white mb-8">
+                                <div className="bg-white rounded-[2rem] p-6 md:p-12 shadow-sm border border-outline-variant/5 text-center flex flex-col items-center">
+                                    <div className="w-24 h-24 md:w-32 md:h-32 rounded-[2rem] md:rounded-[2.5rem] bg-surface-container-high flex items-center justify-center text-3xl md:text-4xl font-headline font-black text-primary shadow-xl border-4 border-white mb-6 md:mb-8">
                                         {course.client ? `${course.client.prenom[0]}${course.client.nom[0]}` : "?"}
                                     </div>
-                                    <h3 className="text-3xl font-black text-on-surface mb-2">{course.client?.prenom} {course.client?.nom}</h3>
-                                    <p className="text-outline font-bold tracking-widest uppercase text-xs mb-10">Identifiant Client: #{course.client?.id}</p>
+                                    <h3 className="text-2xl md:text-3xl font-black text-on-surface mb-2">{course.client?.prenom} {course.client?.nom}</h3>
+                                    <p className="text-outline font-bold tracking-widest uppercase text-xs mb-8 md:mb-10">Identifiant Client: #{course.client?.id}</p>
                                     
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl">
-                                        <div className="p-6 bg-surface-container-low rounded-3xl border border-outline-variant/10 text-left group hover:bg-primary/5 transition-all">
+                                        <div className="p-5 md:p-6 bg-surface-container-low rounded-3xl border border-outline-variant/10 text-left group hover:bg-primary/5 transition-all">
                                             <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-primary shadow-sm mb-4">
                                                 <span className="material-symbols-outlined text-xl">alternate_email</span>
                                             </div>
                                             <p className="text-[10px] font-black text-outline uppercase tracking-widest mb-1">Email</p>
-                                            <p className="font-bold text-on-surface text-lg break-all">{course.client?.email || 'Non renseigné'}</p>
+                                            <p className="font-bold text-on-surface text-base md:text-lg break-all">{course.client?.email || 'Non renseigné'}</p>
                                         </div>
-                                        <div className="p-6 bg-surface-container-low rounded-3xl border border-outline-variant/10 text-left group hover:bg-primary/5 transition-all">
+                                        <div className="p-5 md:p-6 bg-surface-container-low rounded-3xl border border-outline-variant/10 text-left group hover:bg-primary/5 transition-all">
                                             <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-primary shadow-sm mb-4">
                                                 <span className="material-symbols-outlined text-xl">call</span>
                                             </div>
                                             <p className="text-[10px] font-black text-outline uppercase tracking-widest mb-1">Téléphone</p>
-                                            <p className="font-bold text-on-surface text-lg break-all">{course.client?.telephone || 'Non renseigné'}</p>
+                                            <p className="font-bold text-on-surface text-base md:text-lg break-all">{course.client?.telephone || 'Non renseigné'}</p>
                                         </div>
                                     </div>
                                 </div>
                             )}
 
                             {activeTab === 'driver' && (
-                                <div className="bg-white rounded-[2rem] p-12 shadow-sm border border-outline-variant/5">
+                                <div className="bg-white rounded-[2rem] p-6 md:p-12 shadow-sm border border-outline-variant/5">
                                     {driver ? (
-                                        <div className="flex flex-col md:flex-row gap-12 items-center md:items-start text-center md:text-left">
-                                            <div className="w-40 h-40 rounded-[3rem] bg-secondary-container flex items-center justify-center text-5xl font-headline font-black text-primary shadow-2xl border-8 border-white ring-8 ring-primary/5">
+                                        <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-center md:items-start text-center md:text-left">
+                                            <div className="w-32 h-32 md:w-40 md:h-40 rounded-[2.5rem] md:rounded-[3rem] bg-secondary-container flex items-center justify-center text-4xl md:text-5xl font-headline font-black text-primary shadow-2xl border-8 border-white ring-8 ring-primary/5 flex-shrink-0">
                                                 {driver.prenom[0]}{driver.nom[0]}
                                             </div>
-                                            <div className="flex-1 space-y-8 mt-4">
+                                            <div className="flex-1 space-y-6 md:space-y-8 mt-2 md:mt-4">
                                                 <div>
-                                                    <h3 className="text-4xl font-headline font-black text-on-surface">{driver.prenom} {driver.nom}</h3>
+                                                    <h3 className="text-3xl md:text-4xl font-headline font-black text-on-surface">{driver.prenom} {driver.nom}</h3>
                                                     <p className="text-outline font-bold tracking-[0.2em] uppercase text-xs">Identifiant Chauffeur: #{driver.id}</p>
                                                 </div>
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -447,11 +451,11 @@ const CourseDetail: React.FC<PartnerCourseDetailProps> = ({ onLogout, user }) =>
                             )}
 
                             {activeTab === 'review' && (
-                                <div className="bg-white rounded-[2rem] py-32 shadow-sm border border-outline-variant/5 text-center flex flex-col items-center">
+                                <div className="bg-white rounded-[2rem] py-20 md:py-32 shadow-sm border border-outline-variant/5 text-center flex flex-col items-center px-4">
                                     <div className="w-20 h-20 rounded-3xl bg-surface-container-high flex items-center justify-center text-surface-dim mb-8">
                                         <span className="material-symbols-outlined text-4xl">rate_review</span>
                                     </div>
-                                    <p className="text-2xl font-bold text-outline/40 italic">Aucune note laissée pour cette course</p>
+                                    <p className="text-xl md:text-2xl font-bold text-outline/40 italic">Aucune note laissée pour cette course</p>
                                 </div>
                             )}
                         </div>
@@ -469,20 +473,20 @@ const CourseDetail: React.FC<PartnerCourseDetailProps> = ({ onLogout, user }) =>
                            </h4>
                            
                            <div className="space-y-6">
-                               <div className="flex justify-between items-center py-2 border-b border-white/5">
+                               <div className="flex justify-between items-center py-3 border-b border-white/5">
                                    <span className="text-xs text-white/50 font-bold">Frais de service</span>
                                    <span className="text-sm font-black text-white">0 FCFA</span>
                                </div>
-                               <div className="flex justify-between items-center py-2">
+                               <div className="flex justify-between items-center py-3">
                                    <span className="text-xs text-white/50 font-bold">Base tarifaire</span>
                                    <span className="text-sm font-black text-white">{course.montant.toLocaleString()} FCFA</span>
                                </div>
                                
-                               <div className="mt-8 p-6 bg-white/5 rounded-3xl border border-white/10 backdrop-blur-md">
+                               <div className="mt-6 md:mt-8 p-5 md:p-6 bg-white/5 rounded-3xl border border-white/10 backdrop-blur-md">
                                    <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-2">Montant à encaisser</p>
-                                   <div className="flex items-baseline gap-2">
-                                       <span className="text-4xl font-headline font-black text-white">{course.montant.toLocaleString()}</span>
-                                       <span className="text-xs font-black text-white/40">F.CFA</span>
+                                   <div className="flex flex-wrap items-baseline gap-2">
+                                       <span className="text-3xl sm:text-4xl font-headline font-black text-white">{course.montant.toLocaleString()}</span>
+                                       <span className="text-[10px] md:text-xs font-black text-white/40">F.CFA</span>
                                    </div>
                                </div>
                            </div>

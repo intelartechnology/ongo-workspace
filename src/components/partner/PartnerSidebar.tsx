@@ -3,9 +3,11 @@ import { NavLink } from 'react-router-dom';
 
 interface PartnerSidebarProps {
     onLogout: () => void;
+    isOpen?: boolean;
+    onClose?: () => void;
 }
 
-const PartnerSidebar: React.FC<PartnerSidebarProps> = ({ onLogout }) => {
+const PartnerSidebar: React.FC<PartnerSidebarProps> = ({ onLogout, isOpen = false, onClose }) => {
     const menuItems = [
         { icon: 'dashboard', label: 'Dashboard', path: '/partner/dashboard' },
         { icon: 'school', label: 'Courses', path: '/partner/courses' },
@@ -14,16 +16,29 @@ const PartnerSidebar: React.FC<PartnerSidebarProps> = ({ onLogout }) => {
     ];
 
     return (
-        <aside className="h-screen w-64 fixed left-0 top-0 border-r border-slate-200 bg-slate-50 flex flex-col py-8 px-4 z-50">
-            <div className="mb-10 px-2">
-                <h1 className="text-xl font-bold text-blue-900 tracking-tight">Ongo 237</h1>
-                <p className="text-xs font-manrope text-slate-500 font-medium lowercase">Partner Portal</p>
+        <aside 
+            className={`fixed inset-y-0 left-0 z-50 w-64 transform bg-slate-50 border-r border-slate-200 flex flex-col py-8 px-4 transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+                isOpen ? 'translate-x-0' : '-translate-x-full'
+            }`}
+        >
+            <div className="mb-10 px-2 flex justify-between items-center">
+                <div>
+                    <h1 className="text-xl font-bold text-blue-900 tracking-tight">Ongo 237</h1>
+                    <p className="text-xs font-manrope text-slate-500 font-medium lowercase">Partner Portal</p>
+                </div>
+                <button 
+                    onClick={onClose} 
+                    className="lg:hidden p-2 -mr-2 text-slate-500 hover:bg-slate-200 rounded-lg transition-colors"
+                >
+                    <span className="material-symbols-outlined">close</span>
+                </button>
             </div>
             <nav className="flex-1 space-y-1">
                 {menuItems.map((item) => (
                     <NavLink
                         key={item.label}
                         to={item.path}
+                        onClick={onClose}
                         className={({ isActive }) =>
                             `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${
                                 isActive
@@ -40,7 +55,10 @@ const PartnerSidebar: React.FC<PartnerSidebarProps> = ({ onLogout }) => {
             <div className="mt-auto space-y-1 pt-6 border-t border-slate-200/50">
              
                 <button
-                    onClick={onLogout}
+                    onClick={() => {
+                        if (onClose) onClose();
+                        onLogout();
+                    }}
                     className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-200/50 transition-colors"
                 >
                     <span className="material-symbols-outlined">logout</span>
