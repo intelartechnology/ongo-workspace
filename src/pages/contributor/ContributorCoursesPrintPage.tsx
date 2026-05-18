@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
 import ApiService from '../../services/ApiService';
 
 interface ContributorCoursesPrintPageProps {
@@ -7,7 +6,7 @@ interface ContributorCoursesPrintPageProps {
 }
 
 const ContributorCoursesPrintPage: React.FC<ContributorCoursesPrintPageProps> = ({ user }) => {
-    const [searchParams] = useSearchParams();
+    
     const [courses, setCourses] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const api = new ApiService();
@@ -33,7 +32,7 @@ const ContributorCoursesPrintPage: React.FC<ContributorCoursesPrintPageProps> = 
     }, [user?.id]);
 
     const totalAmount = courses.reduce((sum, c) => sum + (c.courses?.montant || 0), 0);
-    const myShare = totalAmount * 0.8;
+   
 
     if (loading) {
         return (
@@ -115,7 +114,7 @@ const ContributorCoursesPrintPage: React.FC<ContributorCoursesPrintPageProps> = 
                         <tbody className="divide-y divide-slate-50">
                             {courses.map((attr: any, i: number) => {
                                 const montant = Number(attr.courses?.montant || 0);
-                                const part = montant * 0.8;
+                            
                                 return (
                                     <tr key={i} className="hover:bg-slate-50/50 transition-colors">
                                         <td className="px-5 py-4">

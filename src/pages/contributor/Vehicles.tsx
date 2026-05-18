@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import ContributorLayout from '../../components/contributor/ContributorLayout';
 import ApiService from '../../services/ApiService';
 
@@ -40,15 +40,15 @@ const ContributorVehicles: React.FC<ContributorVehiclesProps> = ({ onLogout, use
         }
     };
 
-    const statusBadge = (statut: string) => {
+/*     const statusBadge = (statut: string) => {
         const map: Record<string, string> = {
             LIBRE: 'bg-emerald-100 text-emerald-700',
             OCCUPE: 'bg-blue-100 text-blue-700',
             INACTIF: 'bg-slate-100 text-slate-500',
         };
         return map[statut] || 'bg-amber-100 text-amber-700';
-    };
-
+    }; */
+/* 
     const statusDot = (statut: string) => {
         const map: Record<string, string> = {
             LIBRE: 'bg-emerald-500',
@@ -56,7 +56,7 @@ const ContributorVehicles: React.FC<ContributorVehiclesProps> = ({ onLogout, use
             INACTIF: 'bg-slate-400',
         };
         return map[statut] || 'bg-amber-400';
-    };
+    }; */
 
     return (
         <ContributorLayout user={user} onLogout={onLogout}>

@@ -11,7 +11,6 @@ import {
     Tooltip, 
     ResponsiveContainer
 } from 'recharts';
-import type { TooltipProps } from 'recharts';
 
 interface ContributorDashboardProps {
     onLogout: () => void;
@@ -48,7 +47,7 @@ const ContributorDashboard: React.FC<ContributorDashboardProps> = ({ onLogout, u
         return 'bg-amber-100 text-amber-700';
     };
 
-    const CustomTooltip = ({ active, payload, label }: TooltipProps<number, string>) => {
+    const CustomTooltip = ({ active, payload, label }: any) => {
         if (active && payload && payload.length) {
             return (
                 <div className="bg-slate-800 text-white text-xs font-bold px-3 py-2 rounded-lg shadow-xl border border-slate-700">

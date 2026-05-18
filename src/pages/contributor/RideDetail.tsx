@@ -41,7 +41,7 @@ const ContributorRideDetail: React.FC<ContributorRideDetailProps> = ({ onLogout,
     };
 
     const montant = Number(ride?.montant || ride?.paiement?.montant || 0);
-    const part = montant * 0.8;
+   
 
     const attribution = ride?.attributions?.[0];
     const driver = attribution?.chauffeurs;

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
 import ApiService from '../../services/ApiService';
 
 interface PartnerCoursesPrintPageProps {
@@ -7,7 +6,7 @@ interface PartnerCoursesPrintPageProps {
 }
 
 const PartnerCoursesPrintPage: React.FC<PartnerCoursesPrintPageProps> = ({ user }) => {
-    const [searchParams] = useSearchParams();
+    
     const [courses, setCourses] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const api = new ApiService();

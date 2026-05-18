@@ -107,6 +107,14 @@ function App() {
       <Routes>
         <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login onLogin={() => { }} />} />
         <Route
+          path="/"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <Dashboard onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+          <Route
           path="/dashboard"
           element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>

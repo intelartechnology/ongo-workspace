@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import ContributorLayout from '../../components/contributor/ContributorLayout';
 import ApiService from '../../services/ApiService';
 
@@ -10,7 +10,7 @@ interface VehicleDetailProps {
 
 const VehicleDetail: React.FC<VehicleDetailProps> = ({ onLogout, user }) => {
     const { id } = useParams<{ id: string }>();
-    const navigate = useNavigate();
+  
     const [loading, setLoading] = useState(true);
     const [fleet, setFleet] = useState<any>(null);
     const [courses, setCourses] = useState<any[]>([]);

@@ -12,7 +12,6 @@ import {
     ResponsiveContainer, 
     Cell
 } from 'recharts';
-import type { TooltipProps } from 'recharts';
 
 interface PartnerDashboardProps {
     onLogout: () => void;
@@ -80,7 +79,7 @@ const PartnerDashboard: React.FC<PartnerDashboardProps> = ({ onLogout, user }) =
         matricule: item.matricule
     }));
 
-    const CustomTooltip = ({ active, payload, label }: TooltipProps<number, string>) => {
+    const CustomTooltip = ({ active, payload, label }: any) => {
         if (active && payload && payload.length) {
             return (
                 <div className="bg-[#191b22] px-4 py-3 rounded-2xl shadow-2xl border border-white/10 backdrop-blur-md">
@@ -317,7 +316,7 @@ const PartnerDashboard: React.FC<PartnerDashboardProps> = ({ onLogout, user }) =
                                 radius={[0, 4, 4, 0]}
                                 barSize={20}
                             >
-                                {balanceData.map((entry, index) => (
+                                {balanceData.map((_: any, index: number) => (
                                     <Cell key={`cell-${index}`} fill={index % 2 === 0 ? '#00327d' : '#00a3ff'} />
                                 ))}
                             </Bar>
