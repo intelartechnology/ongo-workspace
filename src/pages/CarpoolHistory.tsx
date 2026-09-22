@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 import MainLayout from "./MainLayout";
 import ApiService from "../services/ApiService";
+import { notifier } from "../services/notifier";
 import Loading from "../components/Loading";
 
 /**
@@ -125,10 +126,29 @@ export default function CarpoolHistory({ onLogout, theme, toggleTheme }: Carpool
 
     /** Les colonnes, propres à chaque registre. */
     const entetes: Record<Onglet, string[]> = {
-        trips: ["ID", "Trajet", "Départ", "Conducteur", "Places", "Prix", "État"],
-        requests: ["ID", "Trajet", "Départ", "Passager", "Places", "Prix", "État"],
-        subscriptions: ["ID", "Trajet", "Départ", "Passager", "Places", "Montant", "État"],
+        trips: ["ID", "Trajet", "Départ", "Conducteur", "Places", "Prix", "État", ""],
+        requests: ["ID", "Trajet", "Départ", "Passager", "Places", "Prix", "État", ""],
+        subscriptions: ["ID", "Trajet", "Départ", "Passager", "Places", "Montant", "État", ""],
     };
+
+    const nom = (u: any) => (u ? `${u.prenom ?? ""} ${u.nom ?? ""}`.trim() : null);
+
+    /** Une cloche par personne à prévenir, avec son libellé. */
+    const cloches = (boutons: { libelle: string; action: () => void }[]) => (
+        <td className="px-6 py-4 text-right whitespace-nowrap">
+            {boutons.map(({ libelle, action }) => (
+                <button
+                    key={libelle}
+                    title={libelle}
+                    onClick={action}
+                    className="inline-flex items-center gap-1 ml-1 px-2 py-1.5 rounded-lg text-xs text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                >
+                    <span className="material-symbols-outlined text-[18px]">notifications</span>
+                    {libelle}
+                </button>
+            ))}
+        </td>
+    );
 
     const ligneTrajet = (t: any) => (
         <tr key={t.id} className="hover:bg-slate-50 dark:hover:bg-primary/5 transition-colors">
@@ -150,6 +170,17 @@ export default function CarpoolHistory({ onLogout, theme, toggleTheme }: Carpool
                     ? pastille("Suspendu", "ambre")
                     : pastille("En ligne", "vert")}
             </td>
+            {cloches([
+                {
+                    libelle: "Conducteur",
+                    action: () =>
+                        notifier({
+                            destinataires: [{ id: t.vehicule?.chauffeur?.id ?? t.vehicule?.chauffeur_id, nom: nom(t.vehicule?.chauffeur) }],
+                            titre: `Votre trajet ${t.lieu_depart} → ${t.lieu_arrive}`,
+                            sujet: { type: "CarSharing", id: t.id },
+                        }),
+                },
+            ])}
         </tr>
     );
 
@@ -175,6 +206,17 @@ export default function CarpoolHistory({ onLogout, theme, toggleTheme }: Carpool
                     ? pastille("Ouverte", "ambre")
                     : pastille(d.statut ?? "—", "gris")}
             </td>
+            {cloches([
+                {
+                    libelle: "Passager",
+                    action: () =>
+                        notifier({
+                            destinataires: [{ id: d.requester?.id ?? d.user_id, nom: nom(d.requester) }],
+                            titre: `Votre demande ${d.lieu_depart} → ${d.lieu_arrive}`,
+                            sujet: { type: "CarSharingRequest", id: d.id },
+                        }),
+                },
+            ])}
         </tr>
     );
 
@@ -200,6 +242,35 @@ export default function CarpoolHistory({ onLogout, theme, toggleTheme }: Carpool
                     {p.settle_at && pastille(p.settle_mode === "CASH" ? "Soldée espèces" : "Soldée", "gris")}
                 </div>
             </td>
+            {cloches([
+                {
+                    libelle: "Passager",
+                    action: () =>
+                        notifier({
+                            destinataires: [{ id: p.passagers?.[0]?.id ?? p.subscriber_id, nom: nom(p.passagers?.[0]) }],
+                            titre: p.carsharing ? `Votre place ${p.carsharing.lieu_depart} → ${p.carsharing.lieu_arrive}` : "Votre réservation",
+                            sujet: { type: "CarSharingSubscription", id: p.id },
+                        }),
+                },
+                ...(p.carsharing?.vehicule?.chauffeur?.id || p.carsharing?.vehicule?.chauffeur_id
+                    ? [
+                          {
+                              libelle: "Conducteur",
+                              action: () =>
+                                  notifier({
+                                      destinataires: [
+                                          {
+                                              id: p.carsharing.vehicule.chauffeur?.id ?? p.carsharing.vehicule.chauffeur_id,
+                                              nom: nom(p.carsharing.vehicule.chauffeur),
+                                          },
+                                      ],
+                                      titre: `Réservation sur votre trajet ${p.carsharing.lieu_depart} → ${p.carsharing.lieu_arrive}`,
+                                      sujet: { type: "CarSharing", id: p.carsharing.id },
+                                  }),
+                          },
+                      ]
+                    : []),
+            ])}
         </tr>
     );
 

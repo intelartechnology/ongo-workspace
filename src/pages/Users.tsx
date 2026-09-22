@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import MainLayout from './MainLayout';
 import ApiService from '../services/ApiService';
 import { toast } from 'react-toastify';
+import { notifier } from '../services/notifier';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import jsPDF from 'jspdf';
@@ -266,6 +267,13 @@ const Users: React.FC<UsersProps> = ({ onLogout, theme, toggleTheme }) => {
 
                                             <td className="px-6 py-4 text-right">
                                                 <div className="flex justify-end gap-2">
+                                                    <button
+                                                        title="Envoyer une notification"
+                                                        className="px-2 py-1.5 text-slate-600 border border-slate-300 rounded hover:bg-slate-50 transition-colors dark:text-slate-300 dark:border-slate-700 dark:hover:bg-slate-800"
+                                                        onClick={() => notifier({ destinataires: [{ id: user.id, nom: `${user.prenom ?? ''} ${user.nom ?? ''}` }] })}
+                                                    >
+                                                        <span className="material-symbols-outlined text-[16px] align-middle">notifications</span>
+                                                    </button>
                                                     {user.is_agence == 0 && (
                                                         <button
                                                             className="px-3 py-1.5 text-[11px] font-bold text-emerald-600 border border-emerald-600 rounded hover:bg-emerald-50 transition-colors"

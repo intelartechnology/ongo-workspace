@@ -49,7 +49,14 @@ interface Ligne {
     refund: number;
     net: number;
     settled_at: string | null;
-    order: { code: string; delivered_at: string | null; dining_mode: string } | null;
+    order: {
+        code: string;
+        delivered_at: string | null;
+        dining_mode: string;
+        promo_code: string | null;
+        discount_total: number;
+        discount_paid_by: "merchant" | "platform" | null;
+    } | null;
 }
 
 interface RevenueProps {
@@ -221,6 +228,12 @@ export default function Revenue({ merchantId }: RevenueProps) {
                                                         <tr key={ligne.id}>
                                                             <td className="px-5 py-2 font-mono text-slate-900 dark:text-white">
                                                                 {ligne.order?.code ?? "—"}
+                                                                {ligne.order?.promo_code && (
+                                                                    <span className="block text-xs font-sans text-slate-500">
+                                                                        code {ligne.order.promo_code} · −{francs(ligne.order.discount_total)} ·{" "}
+                                                                        {ligne.order.discount_paid_by === "platform" ? "payé par Ongo" : "à votre charge"}
+                                                                    </span>
+                                                                )}
                                                             </td>
                                                             <td className="px-5 py-2 text-right text-slate-600 dark:text-slate-300">{francs(ligne.basket)}</td>
                                                             <td className="px-5 py-2 text-right text-slate-600 dark:text-slate-300">− {francs(ligne.commission)}</td>

@@ -6,6 +6,12 @@ import Loading from "../../components/Loading";
 import OrderDesk from "./OrderDesk";
 import Catalog from "./Catalog";
 import Revenue from "./Revenue";
+import Delivery from "./Delivery";
+import Promotions from "./Promotions";
+import Hours from "./Hours";
+import StoreProfile from "./StoreProfile";
+import Reviews from "./Reviews";
+import Team from "./Team";
 
 /**
  * L'espace d'un marchand.
@@ -50,7 +56,7 @@ interface Livreur {
     matricule: string | null;
 }
 
-type Onglet = "commandes" | "catalogue" | "livreurs" | "revenus";
+type Onglet = "commandes" | "horaires" | "boutique" | "catalogue" | "avis" | "promotions" | "livraison" | "livreurs" | "equipe" | "revenus";
 
 export default function MerchantSpace() {
     const { merchantId } = useParams<{ merchantId: string }>();
@@ -193,13 +199,21 @@ export default function MerchantSpace() {
 
     const onglets: { cle: Onglet; libelle: string }[] = [
         { cle: "commandes", libelle: "Commandes" },
+        { cle: "horaires", libelle: "Horaires" },
+        { cle: "boutique", libelle: "Boutique" },
         { cle: "catalogue", libelle: "Catalogue" },
+        { cle: "avis", libelle: "Avis" },
+        { cle: "promotions", libelle: "Promotions" },
+        { cle: "livraison", libelle: "Livraison" },
         { cle: "livreurs", libelle: "Livreurs" },
+        { cle: "equipe", libelle: "Équipe" },
         { cle: "revenus", libelle: "Revenus" },
     ];
 
     // La cuisine ne touche ni au catalogue ni aux livreurs.
-    const visibles = marchand.role === "staff" ? onglets.slice(0, 1) : onglets;
+    // La cuisine voit ses commandes, et les horaires pour fermer ou ouvrir
+    // dans la journée ; ni le catalogue, ni les livreurs, ni l'argent.
+    const visibles = marchand.role === "staff" ? onglets.slice(0, 2) : onglets;
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
@@ -227,7 +241,7 @@ export default function MerchantSpace() {
                         )}
                     </div>
 
-                    <nav className="flex gap-6 mt-5">
+                    <nav className="flex gap-6 mt-5 overflow-x-auto whitespace-nowrap">
                         {visibles.map(({ cle, libelle }) => (
                             <button
                                 key={cle}
@@ -250,8 +264,20 @@ export default function MerchantSpace() {
                     <p className="text-slate-500">Aucune boutique n'est rattachée à ce compte.</p>
                 ) : onglet === "commandes" ? (
                     <OrderDesk merchantId={merchantId!} storeId={boutique.id} />
+                ) : onglet === "boutique" ? (
+                    <StoreProfile merchantId={merchantId!} storeId={boutique.id} canEdit={marchand.role !== "staff"} />
+                ) : onglet === "avis" ? (
+                    <Reviews merchantId={merchantId!} storeId={boutique.id} />
+                ) : onglet === "equipe" ? (
+                    <Team merchantId={merchantId!} />
                 ) : onglet === "catalogue" ? (
                     <Catalog merchantId={merchantId!} storeId={boutique.id} storeType={boutique.type} />
+                ) : onglet === "horaires" ? (
+                    <Hours merchantId={merchantId!} storeId={boutique.id} storeName={boutique.name} canEditWeek={marchand.role !== "staff"} />
+                ) : onglet === "promotions" ? (
+                    <Promotions merchantId={merchantId!} storeId={boutique.id} storeName={boutique.name} />
+                ) : onglet === "livraison" ? (
+                    <Delivery merchantId={merchantId!} storeId={boutique.id} />
                 ) : onglet === "revenus" ? (
                     <Revenue merchantId={merchantId!} />
                 ) : (

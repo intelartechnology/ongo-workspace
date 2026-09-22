@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import MainLayout from '../MainLayout';
 import ApiService from '../../services/ApiService';
 import { toast } from 'react-toastify';
+import { notifier } from '../../services/notifier';
 import { Link, useNavigate } from 'react-router-dom';
 
 interface RentalsProps {
@@ -83,6 +84,7 @@ const Rentals: React.FC<RentalsProps> = ({ onLogout, theme, toggleTheme }) => {
                                     <th className="px-6 py-4 text-[11px] font-black uppercase tracking-widest text-slate-500">Période</th>
                                     <th className="px-6 py-4 text-[11px] font-black uppercase tracking-widest text-slate-500">Montant</th>
                                     <th className="px-6 py-4 text-[11px] font-black uppercase tracking-widest text-slate-500">Statut</th>
+                                    <th className="px-6 py-4" />
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-manrope">
@@ -155,7 +157,23 @@ const Rentals: React.FC<RentalsProps> = ({ onLogout, theme, toggleTheme }) => {
                                                     {loc.status}
                                                 </span>
                                             </td>
-                                      
+                                            <td className="px-6 py-4 text-right">
+                                                <button
+                                                    title="Notifier le client"
+                                                    onClick={(e) => {
+                                                        // La ligne ouvre la location : le bouton ne doit pas la suivre.
+                                                        e.stopPropagation();
+                                                        notifier({
+                                                            destinataires: [{ id: loc.client?.id ?? loc.id_utilisateur ?? loc.user_id, nom: `${loc.client?.prenom ?? ''} ${loc.client?.nom ?? ''}` }],
+                                                            titre: `Votre location${loc.vehicule?.modele ? ` — ${loc.vehicule.modele}` : ''}`,
+                                                            sujet: { type: 'Location', id: loc.id },
+                                                        });
+                                                    }}
+                                                    className="p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800"
+                                                >
+                                                    <span className="material-symbols-outlined text-[20px]">notifications</span>
+                                                </button>
+                                            </td>
                                         </tr>
                                     ))
                                 )}

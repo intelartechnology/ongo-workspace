@@ -18,6 +18,8 @@ interface Ligne {
     name: string;
     quantity: number;
     line_total: number;
+    unit_price: number;
+    compare_at_price: number | null;
     note: string | null;
     status: string;
     replaced_by_name: string | null;
@@ -32,6 +34,9 @@ interface Commande {
     dining_mode: string;
     total: number;
     subtotal: number;
+    discount_total: number;
+    promo_code: string | null;
+    discount_paid_by: "merchant" | "platform" | null;
     created_at: string;
     promised_at: string | null;
     prep_minutes: number | null;
@@ -258,6 +263,46 @@ export default function OrderDesk({ merchantId, storeId }: OrderDeskProps) {
         return minutes < 1 ? "à l'instant" : `${minutes} min`;
     };
 
+    /**
+     * Les réductions dont le client a profité, toujours visibles.
+     *
+     * Le code promo, avec son montant et qui le paie ; les articles achetés en
+     * promotion, avec l'économie. Le marchand ne doit jamais découvrir une
+     * remise dans son relevé sans l'avoir vue passer sur la commande.
+     */
+    const reductions = (commande: Commande) => {
+        const economie = commande.items.reduce(
+            (somme, l) =>
+                somme + (l.compare_at_price !== null && l.compare_at_price > l.unit_price ? (l.compare_at_price - l.unit_price) * l.quantity : 0),
+            0
+        );
+        const remisees = commande.items.filter((l) => l.compare_at_price !== null && l.compare_at_price > l.unit_price).length;
+
+        if (!commande.promo_code && economie === 0) return null;
+
+        return (
+            <div className="mt-3 flex flex-wrap gap-2">
+                {commande.promo_code && commande.discount_total > 0 && (
+                    <span
+                        className={`px-2 py-1 rounded-md text-xs font-medium ${
+                            commande.discount_paid_by === "platform"
+                                ? "bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300"
+                                : "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+                        }`}
+                    >
+                        Code {commande.promo_code} · −{francs(commande.discount_total)} ·{" "}
+                        {commande.discount_paid_by === "platform" ? "payé par Ongo" : "à votre charge"}
+                    </span>
+                )}
+                {economie > 0 && (
+                    <span className="px-2 py-1 rounded-md text-xs font-medium bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300">
+                        Promo · {remisees} article{remisees > 1 ? "s" : ""} remisé{remisees > 1 ? "s" : ""} · −{francs(economie)}
+                    </span>
+                )}
+            </div>
+        );
+    };
+
     const carte = (commande: Commande, actions: React.ReactNode) => {
         const deployee = ouverte === commande.public_id;
         const urgente = commande.status === "pending"
@@ -285,6 +330,8 @@ export default function OrderDesk({ merchantId, storeId }: OrderDeskProps) {
                     <p className="font-semibold text-slate-900 dark:text-white">{francs(commande.total)}</p>
                 </div>
 
+                {reductions(commande)}
+
                 <button
                     onClick={() => setOuverte(deployee ? null : commande.public_id)}
                     className="mt-3 text-sm text-slate-600 dark:text-slate-300 underline"
@@ -301,6 +348,13 @@ export default function OrderDesk({ merchantId, storeId }: OrderDeskProps) {
                                     <p className={`text-slate-900 dark:text-white ${ligne.status !== "ok" ? "line-through opacity-60" : ""}`}>
                                         {ligne.quantity} × {ligne.name}
                                     </p>
+
+                                    {ligne.compare_at_price !== null && ligne.compare_at_price > ligne.unit_price && (
+                                        <p className="text-xs text-red-600 dark:text-red-400 ml-4">
+                                            promo : {francs(ligne.unit_price)} au lieu de{" "}
+                                            <span className="line-through">{francs(ligne.compare_at_price)}</span>
+                                        </p>
+                                    )}
 
                                     {(ligne.options ?? []).map((option, rang) => (
                                         <p key={rang} className="text-xs text-slate-500 ml-4">+ {option.name}</p>

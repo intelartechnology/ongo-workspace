@@ -25,6 +25,13 @@ import Settings from './pages/Settings';
 import Merchants from './pages/Merchants';
 import EatDashboard from './pages/EatDashboard';
 import EatPayouts from './pages/EatPayouts';
+import EatPromoCodes from './pages/EatPromoCodes';
+import EatFilters from './pages/EatFilters';
+import EatBanners from './pages/EatBanners';
+import EatCampaigns from './pages/EatCampaigns';
+import EatStores from './pages/EatStores';
+import EatTags from './pages/EatTags';
+import EatSections from './pages/EatSections';
 import MerchantSpace from './pages/merchant/MerchantSpace';
 import AddDriver from './pages/AddDriver'
 import DriverDetail from './pages/DriverDetail'
@@ -238,6 +245,62 @@ function App() {
           element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>
               <EatPayouts onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/eat-promo-codes"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <EatPromoCodes onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/eat-filters"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <EatFilters onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/eat-banners"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <EatBanners onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/eat-campaigns"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <EatCampaigns onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/eat-stores"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <EatStores onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/eat-tags"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <EatTags onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/eat-sections"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <EatSections onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
             </ProtectedRoute>
           }
         />

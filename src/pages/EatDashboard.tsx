@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 import MainLayout from "./MainLayout";
 import ApiService from "../services/ApiService";
+import { notifier } from "../services/notifier";
 import Loading from "../components/Loading";
 
 /**
@@ -24,11 +25,13 @@ interface Stats {
     money: {
         revenue: number; items: number; delivery_fees: number;
         service_fees: number; tips: number; refunded: number; commission: number;
+        discounts?: { merchant: number; platform: number };
     };
     delays: { acceptance_minutes: number | null; total_minutes: number | null };
 }
 
 interface Commande {
+    id: number;
     public_id: string;
     code: string;
     status: string;
@@ -36,6 +39,8 @@ interface Commande {
     total: number;
     created_at: string;
     store: { name: string; type: string } | null;
+    user_id: number | null;
+    courier_id: number | null;
     customer: { nom: string | null; telephone: string | null } | null;
     courier: { nom: string | null; telephone: string | null } | null;
 }
@@ -209,6 +214,8 @@ export default function EatDashboard({ onLogout, theme, toggleTheme }: EatDashbo
                             {carte("Articles", francs(stats.money.items))}
                             {carte("Frais de livraison", francs(stats.money.delivery_fees), "reviennent au livreur")}
                             {carte("Remboursé", francs(stats.money.refunded), undefined, stats.money.refunded > 0)}
+                            {carte("Codes promo Ongo", francs(stats.money.discounts?.platform ?? 0), "payés par Ongo")}
+                            {carte("Codes promo marchands", francs(stats.money.discounts?.merchant ?? 0), "payés par les marchands")}
                         </section>
 
                         <section className="grid grid-cols-2 gap-4 mb-10">
@@ -291,6 +298,38 @@ export default function EatDashboard({ onLogout, theme, toggleTheme }: EatDashbo
                                             <span className="text-sm font-semibold text-slate-900 dark:text-white shrink-0">
                                                 {francs(commande.total)}
                                             </span>
+
+                                            <div className="flex gap-1 shrink-0">
+                                                <button
+                                                    title="Notifier le client"
+                                                    onClick={() =>
+                                                        notifier({
+                                                            destinataires: [{ id: commande.user_id, nom: commande.customer?.nom }],
+                                                            titre: `Votre commande ${commande.code}`,
+                                                            sujet: { type: "Order", id: commande.id },
+                                                        })
+                                                    }
+                                                    className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                                                >
+                                                    <span className="material-symbols-outlined text-[18px]">notifications</span>
+                                                    Client
+                                                </button>
+                                                {commande.courier_id && (
+                                                    <button
+                                                        title="Notifier le livreur"
+                                                        onClick={() =>
+                                                            notifier({
+                                                                destinataires: [{ id: commande.courier_id, nom: commande.courier?.nom }],
+                                                                titre: `Livraison ${commande.code}`,
+                                                            })
+                                                        }
+                                                        className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                                                    >
+                                                        <span className="material-symbols-outlined text-[18px]">notifications</span>
+                                                        Livreur
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
                                     ))}
                                 </div>

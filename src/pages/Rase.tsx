@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import GoogleMapReact from "google-map-react";
 
 import ApiService from "../services/ApiService";
+import { notifier } from "../services/notifier";
 
 import { ToastContainer, toast } from "react-toastify";
 
@@ -139,6 +140,42 @@ const ActionDropdown = ({ course, openDetails, openMap, openReattributionModal }
                             <span className="material-symbols-outlined text-[18px] text-purple-500">open_in_new</span>
                             Nouvel onglet
                         </button>
+                        <div className="h-px bg-slate-200 dark:bg-slate-700 my-1"></div>
+                        <button
+                            className="w-full px-4 py-2.5 text-left text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-3 text-slate-700 dark:text-slate-200 transition-colors"
+                            onClick={() => {
+                                setIsOpen(false);
+                                notifier({
+                                    destinataires: [{ id: course.client?.id, nom: course.client ? `${course.client.prenom ?? ""} ${course.client.nom ?? ""}` : null }],
+                                    titre: `Votre course ${course.code ?? `#${course.id}`}`,
+                                    sujet: { type: "Course", id: course.id },
+                                });
+                            }}
+                        >
+                            <span className="material-symbols-outlined text-[18px] text-sky-500">notifications</span>
+                            Notifier le client
+                        </button>
+                        {(() => {
+                            // Le chauffeur retenu : l'attribution confirmée, sinon la dernière.
+                            const attribution = (course.attributions ?? []).find((a: any) => a.statut === "CONFIRMEE") ?? (course.attributions ?? []).slice(-1)[0];
+
+                            return attribution?.chauffeur_id ? (
+                                <button
+                                    className="w-full px-4 py-2.5 text-left text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-3 text-slate-700 dark:text-slate-200 transition-colors"
+                                    onClick={() => {
+                                        setIsOpen(false);
+                                        notifier({
+                                            destinataires: [{ id: attribution.chauffeur_id, nom: attribution.chauffeurs ? `${attribution.chauffeurs.prenom ?? ""} ${attribution.chauffeurs.nom ?? ""}` : "le chauffeur" }],
+                                            titre: `Course ${course.code ?? `#${course.id}`}`,
+                                            sujet: { type: "Course", id: course.id },
+                                        });
+                                    }}
+                                >
+                                    <span className="material-symbols-outlined text-[18px] text-sky-500">notifications</span>
+                                    Notifier le chauffeur
+                                </button>
+                            ) : null;
+                        })()}
                         <div className="h-px bg-slate-200 dark:bg-slate-700 my-1"></div>
                         <button
                             className="w-full px-4 py-2.5 text-left text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-3 text-slate-700 dark:text-slate-200 transition-colors"

@@ -73,7 +73,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, user, onLogout }) 
                 { icon: 'person_search', label: 'Demandes', path: '/requests' },
              /*    { icon: 'category', label: 'Modèles', path: '/models' }, */
             ]
-        }/* ,
+        },
         {
             title: 'Plateforme',
             items: [
@@ -81,10 +81,17 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, user, onLogout }) 
                 // deploiement se change ici.
                 { icon: 'restaurant', label: 'Ongo Eat', path: '/eat' },
                 { icon: 'payments', label: 'Reversements', path: '/eat-payouts' },
+                { icon: 'local_mall', label: 'Boutiques', path: '/eat-stores' },
+                { icon: 'ramen_dining', label: 'Cuisines', path: '/eat-tags' },
+                { icon: 'view_agenda', label: 'Rubriques', path: '/eat-sections' },
+                { icon: 'sell', label: 'Codes promo', path: '/eat-promo-codes' },
+                { icon: 'filter_list', label: 'Filtres', path: '/eat-filters' },
+                { icon: 'view_carousel', label: 'Bannières', path: '/eat-banners' },
+                { icon: 'campaign', label: 'Campagnes', path: '/eat-campaigns' },
                 { icon: 'storefront', label: 'Marchands', path: '/merchants' },
                 { icon: 'tune', label: 'Réglages', path: '/settings' },
             ],
-        },
+        }/* ,
         {
             title: 'Support & Litiges',
             items: [

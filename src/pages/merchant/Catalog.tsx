@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 import ApiService from "../../services/ApiService";
+import OptionGroupsEditor, { type GroupeEdite, problemeDuGroupe, versApi } from "./OptionGroupsEditor";
+import IngredientsInput from "./IngredientsInput";
+import ProductPreview from "./ProductPreview";
 
 /**
  * Le catalogue, côté marchand.
@@ -33,6 +36,7 @@ interface Produit {
     public_id: string;
     name: string;
     description: string | null;
+    ingredients: string[] | null;
     image: string | null;
     price: number;
     compare_at_price: number | null;
@@ -118,7 +122,10 @@ export default function Catalog({ merchantId, storeId, storeType }: CatalogProps
                 return true;
             }
 
-            Swal.fire({ icon: "error", title: "Refusé", text: data.message });
+            // La raison exacte, champ par champ : « Suppléments : 3 choix pour
+            // 1 option » apprend au marchand quoi corriger.
+            const details = data.data && typeof data.data === "object" ? Object.values(data.data).flat().join("\n") : "";
+            Swal.fire({ icon: "error", title: data.message || "Refusé", text: details });
         } catch (erreur) {
             Swal.fire({ icon: "error", title: "Enregistrement impossible", text: String(erreur) });
         }
@@ -205,17 +212,32 @@ export default function Catalog({ merchantId, storeId, storeType }: CatalogProps
             return;
         }
 
+        // Un groupe incomplet est dit ici, avant l'envoi : le serveur le
+        // refuserait de toute façon, avec moins de contexte.
+        const groupes = (edition.option_groups ?? []) as unknown as GroupeEdite[];
+        const probleme = groupes.map((g) => ({ g, p: problemeDuGroupe(g) })).find((x) => x.p !== null);
+
+        if (probleme) {
+            Swal.fire({ icon: "info", title: "Options incomplètes", text: `${probleme.g.name || "Un groupe"} : ${probleme.p}` });
+
+            return;
+        }
+
         const ok = await envoyer("products", {
             product_id: edition.id,
             section_id: edition.section_id,
             name: edition.name,
             description: edition.description,
+            ingredients: edition.ingredients ?? [],
             image: edition.image ?? null,
             price: Number(edition.price),
             compare_at_price: edition.compare_at_price ? Number(edition.compare_at_price) : null,
             size_value: edition.size_value ? Number(edition.size_value) : null,
             size_unit: edition.size_unit || null,
             is_popular: edition.is_popular ?? false,
+            // L'état voulu des options, identifiants compris : le serveur met à
+            // jour ce qui existe au lieu de le recréer.
+            option_groups: versApi(groupes),
         }, edition.id ? "Produit modifié" : "Produit créé");
 
         if (ok) setEdition(null);
@@ -294,6 +316,9 @@ export default function Catalog({ merchantId, storeId, storeType }: CatalogProps
                         {edition.id ? "Modifier le produit" : "Nouveau produit"}
                     </h3>
 
+                    <div className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-8">
+                    <div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {[
                             { cle: "name", libelle: "Nom", exemple: "Poulet DG" },
@@ -348,6 +373,34 @@ export default function Catalog({ merchantId, storeId, storeType }: CatalogProps
                     <p className="text-xs text-slate-500 mt-3">
                         La contenance sert au prix au kilo affiché aux clients. Elle ne concerne que les commerces.
                     </p>
+
+                    <div className="mt-5">
+                        <span className="text-xs font-semibold uppercase text-slate-500">Ingrédients</span>
+                        <IngredientsInput
+                            merchantId={merchantId}
+                            valeur={edition.ingredients ?? []}
+                            onChange={(ingredients) => setEdition({ ...edition, ingredients })}
+                        />
+                    </div>
+
+                    <OptionGroupsEditor
+                        groupes={(edition.option_groups ?? []) as unknown as GroupeEdite[]}
+                        onChange={(groupes) => setEdition({ ...edition, option_groups: groupes as unknown as Produit["option_groups"] })}
+                    />
+                    </div>
+
+                    <ProductPreview
+                        name={edition.name ?? ""}
+                        description={edition.description ?? null}
+                        ingredients={edition.ingredients ?? []}
+                        image={edition.image ?? null}
+                        price={Number(edition.price) || 0}
+                        compareAtPrice={edition.compare_at_price ? Number(edition.compare_at_price) : null}
+                        sizeValue={edition.size_value ? Number(edition.size_value) : null}
+                        sizeUnit={edition.size_unit ?? null}
+                        groupes={(edition.option_groups ?? []) as unknown as GroupeEdite[]}
+                    />
+                    </div>
 
                     <div className="mt-5 flex gap-3">
                         <button
