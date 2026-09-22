@@ -16,6 +16,16 @@ import CourseDetailPage from './pages/CourseDetailPage'
 import CoursePrintPage from './pages/CoursePrintPage'
 import VehicleEditPage from './pages/VehicleEditPage'
 import DriversRequest from './pages/DriversRequest'
+import Carpoolers from './pages/Carpoolers';
+import CarpoolHistory from './pages/CarpoolHistory';
+import CarpoolRefunds from './pages/CarpoolRefunds';
+import Transactions from './pages/Transactions';
+import Moderation from './pages/Moderation';
+import Settings from './pages/Settings';
+import Merchants from './pages/Merchants';
+import EatDashboard from './pages/EatDashboard';
+import EatPayouts from './pages/EatPayouts';
+import MerchantSpace from './pages/merchant/MerchantSpace';
 import AddDriver from './pages/AddDriver'
 import DriverDetail from './pages/DriverDetail'
 import Partners from './pages/Partners'
@@ -184,6 +194,90 @@ function App() {
           element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>
               <DriversRequest onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/carpoolers"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <Carpoolers onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/carpool"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <CarpoolHistory onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/transactions"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <Transactions onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        {/*
+          * L'espace marchand. Sans la barre latérale d'administration : un
+          * restaurateur n'a rien à faire dans les écrans de flotte.
+          */}
+        <Route
+          path="/merchant/:merchantId"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <MerchantSpace />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/eat-payouts"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <EatPayouts onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/eat"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <EatDashboard onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/merchants"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <Merchants onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <Settings onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/moderation"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <Moderation onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/carpool-refunds"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <CarpoolRefunds onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
             </ProtectedRoute>
           }
         />

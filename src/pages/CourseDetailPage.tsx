@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import MainLayout from "./MainLayout";
+import ApiService from "../services/ApiService";
 
 interface CourseDetailPageProps {
     onLogout?: () => void;
@@ -8,7 +9,30 @@ interface CourseDetailPageProps {
     toggleTheme?: () => void;
 }
 
-type Tab = "course" | "client" | "chauffeur" | "avis";
+type Tab = "course" | "client" | "chauffeur" | "avis" | "ressources";
+
+/**
+ * Ce qu'une course a consommé chez Google et dans Firestore.
+ *
+ * Les deux fournisseurs ne facturent qu'un total mensuel : ces compteurs sont
+ * la seule façon de rapporter la dépense à une course précise.
+ */
+interface RessourcesTotal {
+    google_directions: number;
+    google_place_autocomplete: number;
+    google_place_details: number;
+    google_geocoding: number;
+    google_total: number;
+    firestore_reads: number;
+    firestore_writes: number;
+    reroutes_needed: number;
+    off_route_max_meters: number;
+}
+
+interface RessourcesPhase extends RessourcesTotal {
+    id: number;
+    phase: string;
+}
 
 export default function CourseDetailPage({
     onLogout = () => { },
@@ -20,6 +44,10 @@ export default function CourseDetailPage({
     const [course, setCourse] = useState<any>(null);
     const [activeTab, setActiveTab] = useState<Tab>("course");
 
+    const [ressources, setRessources] = useState<RessourcesTotal | null>(null);
+    const [phases, setPhases] = useState<RessourcesPhase[]>([]);
+    const [ressourcesLoading, setRessourcesLoading] = useState(true);
+
     useEffect(() => {
         const stored = sessionStorage.getItem(`course_detail_${id}`);
         if (stored) {
@@ -29,6 +57,28 @@ export default function CourseDetailPage({
                 console.error("Failed to parse course data");
             }
         }
+    }, [id]);
+
+    useEffect(() => {
+        const api = new ApiService();
+
+        const fetchRessources = async () => {
+            try {
+                const res = await api.getData(`v3/race/course-log/${id}`);
+                if (res.data.success) {
+                    setRessources(res.data.data.total);
+                    setPhases(res.data.data.phases ?? []);
+                }
+            } catch (error) {
+                // L'absence de relevé n'est pas une anomalie : les courses
+                // antérieures à cette mesure n'en ont pas. L'onglet le dira.
+                console.error("Error fetching course resources:", error);
+            } finally {
+                setRessourcesLoading(false);
+            }
+        };
+
+        if (id) fetchRessources();
     }, [id]);
 
     const getStatusBadge = (status: string) => {
@@ -66,7 +116,16 @@ export default function CourseDetailPage({
         { key: "client", label: "Client", icon: "person" },
         { key: "chauffeur", label: "Chauffeur", icon: "assignment_ind" },
         { key: "avis", label: "Avis", icon: "reviews" },
+        { key: "ressources", label: "Ressources", icon: "data_usage" },
     ];
+
+    /** Libellés des phases, tels que les applications les déposent. */
+    const phaseLabels: Record<string, string> = {
+        "approche": "Approche du chauffeur",
+        "approche-immobile": "Chauffeur immobile",
+        "trajet": "Trajet",
+        "chauffeur": "Application chauffeur",
+    };
 
     if (!course) {
         return (
@@ -400,6 +459,135 @@ export default function CourseDetailPage({
                                         <p className="text-slate-500 font-medium">
                                             Aucune note pour cette course
                                         </p>
+                                    </div>
+                                )}
+
+                                {/* ── Ressources Tab ── */}
+                                {activeTab === "ressources" && (
+                                    <div>
+                                        {ressourcesLoading ? (
+                                            <div className="space-y-4 animate-pulse">
+                                                <div className="h-24 bg-slate-100 dark:bg-slate-800 rounded-xl" />
+                                                <div className="h-24 bg-slate-100 dark:bg-slate-800 rounded-xl" />
+                                            </div>
+                                        ) : !ressources || phases.length === 0 ? (
+                                            <div className="flex flex-col items-center justify-center py-16 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-xl">
+                                                <span className="material-symbols-outlined text-slate-300 text-5xl mb-4">
+                                                    data_usage
+                                                </span>
+                                                <p className="text-slate-500 font-medium">Non mesuré</p>
+                                                <p className="text-xs text-slate-400 mt-1 text-center max-w-sm">
+                                                    Cette course est antérieure à la mesure des ressources, ou
+                                                    l'application n'a pas pu déposer son relevé.
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">
+                                                    Appels Google
+                                                </h3>
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
+                                                    {[
+                                                        { label: "Total Google", value: ressources.google_total, icon: "cloud", accent: true },
+                                                        { label: "Itinéraires", value: ressources.google_directions, icon: "route" },
+                                                        { label: "Autocomplétion", value: ressources.google_place_autocomplete, icon: "search" },
+                                                        { label: "Détails de lieu", value: ressources.google_place_details, icon: "place" },
+                                                        { label: "Géocodage", value: ressources.google_geocoding, icon: "my_location" },
+                                                    ].map((card) => (
+                                                        <div
+                                                            key={card.label}
+                                                            className={`p-4 rounded-xl border shadow-sm ${card.accent
+                                                                ? "bg-primary/5 dark:bg-primary/10 border-primary/10"
+                                                                : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
+                                                                }`}
+                                                        >
+                                                            <span className={`material-symbols-outlined text-xl ${card.accent ? "text-primary" : "text-slate-400"}`}>
+                                                                {card.icon}
+                                                            </span>
+                                                            <p className={`text-xs font-medium mt-1 truncate ${card.accent ? "text-primary" : "text-slate-500 dark:text-slate-400"}`}>
+                                                                {card.label}
+                                                            </p>
+                                                            <h3 className={`text-2xl font-bold mt-1 ${card.accent ? "text-primary" : "text-slate-900 dark:text-white"}`}>
+                                                                {card.value}
+                                                            </h3>
+                                                        </div>
+                                                    ))}
+                                                </div>
+
+                                                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">
+                                                    Firestore
+                                                </h3>
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                                                    {[
+                                                        { label: "Documents lus", value: ressources.firestore_reads, icon: "download" },
+                                                        { label: "Documents écrits", value: ressources.firestore_writes, icon: "upload" },
+                                                    ].map((card) => (
+                                                        <div
+                                                            key={card.label}
+                                                            className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm"
+                                                        >
+                                                            <span className="material-symbols-outlined text-xl text-slate-400">{card.icon}</span>
+                                                            <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">{card.label}</p>
+                                                            <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{card.value}</h3>
+                                                        </div>
+                                                    ))}
+                                                </div>
+
+                                                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">
+                                                    Détours
+                                                </h3>
+                                                <div className="p-4 rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-900/10 dark:border-amber-900/30 mb-8">
+                                                    <div className="flex justify-between py-1">
+                                                        <span className="text-slate-500">Retraçages qui auraient été faits</span>
+                                                        <span className="font-bold">{ressources.reroutes_needed}</span>
+                                                    </div>
+                                                    <div className="flex justify-between py-1">
+                                                        <span className="text-slate-500">Écart maximal au tracé</span>
+                                                        <span className="font-bold">{ressources.off_route_max_meters} m</span>
+                                                    </div>
+                                                    <p className="text-xs text-slate-500 mt-2">
+                                                        Dépense <span className="font-bold">évitée</span> : l'application ne
+                                                        recalcule pas l'itinéraire en cas de détour, elle compte seulement
+                                                        combien de fois elle l'aurait fait.
+                                                    </p>
+                                                </div>
+
+                                                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">
+                                                    Détail par phase
+                                                </h3>
+                                                <div className="overflow-x-auto rounded-xl border border-slate-100 dark:border-slate-800">
+                                                    <table className="w-full text-left">
+                                                        <thead className="bg-slate-50 dark:bg-slate-800/50">
+                                                            <tr className="text-slate-500 text-xs font-bold uppercase">
+                                                                <th className="py-3 px-6">Phase</th>
+                                                                <th className="py-3 px-6">Google</th>
+                                                                <th className="py-3 px-6">Lectures</th>
+                                                                <th className="py-3 px-6">Écritures</th>
+                                                                <th className="py-3 px-6">Détours</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
+                                                            {phases.map((p) => (
+                                                                <tr key={p.id}>
+                                                                    <td className="py-3 px-6 font-bold">
+                                                                        {phaseLabels[p.phase] ?? p.phase}
+                                                                    </td>
+                                                                    <td className="py-3 px-6">
+                                                                        {p.google_directions +
+                                                                            p.google_place_autocomplete +
+                                                                            p.google_place_details +
+                                                                            p.google_geocoding}
+                                                                    </td>
+                                                                    <td className="py-3 px-6">{p.firestore_reads}</td>
+                                                                    <td className="py-3 px-6">{p.firestore_writes}</td>
+                                                                    <td className="py-3 px-6">{p.reroutes_needed}</td>
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
                                 )}
                             </div>

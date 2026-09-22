@@ -117,8 +117,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout, theme, toggleTheme }) =
                                                         <span className="material-symbols-outlined">person</span>
                                                     </div>
                                                     <div>
-                                                        <p className="text-sm font-bold text-slate-900 dark:text-white">{item.chauffeurs.nom} {item.chauffeurs.prenom}</p>
-                                                        <p className="text-[11px] text-slate-500 font-mono">{item.chauffeurs.telephone}</p>
+                                                        <p className="text-sm font-bold text-slate-900 dark:text-white">{item.chauffeurs?.nom} {item.chauffeurs?.prenom}</p>
+                                                        <p className="text-[11px] text-slate-500 font-mono">{item.chauffeurs?.telephone}</p>
                                                     </div>
                                                 </div>
                                                 <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${item.courses.statut === 'Annulée' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
@@ -130,7 +130,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout, theme, toggleTheme }) =
                                             <div className="flex items-center justify-between text-xs py-2 border-y border-slate-50 dark:border-slate-800/50">
                                                 <div className="flex flex-col">
                                                     <span className="text-slate-400 uppercase text-[9px] font-bold">Véhicule</span>
-                                                    <span className="font-semibold">{item.chauffeurs.vehicules[0]?.modele} <span className="text-[10px] text-primary">({item.courses.categorie_vehicule.libelle})</span></span>
+                                                    <span className="font-semibold">{item.chauffeurs?.vehicules?.[0]?.modele}{item.courses.categorie_vehicule?.libelle && <span className="text-[10px] text-primary"> ({item.courses.categorie_vehicule.libelle})</span>}</span>
                                                 </div>
                                                 <div className="flex flex-col text-right">
                                                     <span className="text-slate-400 uppercase text-[9px] font-bold">Montant</span>
@@ -198,8 +198,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout, theme, toggleTheme }) =
                                                                 <span className="material-symbols-outlined text-lg">person</span>
                                                             </div>
                                                             <div className="flex flex-col">
-                                                                <span className="text-sm font-semibold text-slate-900 dark:text-white">{item.chauffeurs.nom} {item.chauffeurs.prenom}</span>
-                                                                <span className="text-xs text-slate-500 font-mono">{item.chauffeurs.telephone}</span>
+                                                                <span className="text-sm font-semibold text-slate-900 dark:text-white">{item.chauffeurs?.nom} {item.chauffeurs?.prenom}</span>
+                                                                <span className="text-xs text-slate-500 font-mono">{item.chauffeurs?.telephone}</span>
                                                             </div>
                                                         </div>
                                                     </td>
@@ -216,8 +216,8 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout, theme, toggleTheme }) =
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap">
                                                         <div className="flex flex-col">
-                                                            <span className="text-sm font-medium text-slate-900 dark:text-white">{item.chauffeurs.vehicules[0]?.modele}</span>
-                                                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold uppercase w-fit mt-1">{item.courses.categorie_vehicule.libelle}</span>
+                                                            <span className="text-sm font-medium text-slate-900 dark:text-white">{item.chauffeurs?.vehicules?.[0]?.modele}</span>
+                                                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold uppercase w-fit mt-1">{item.courses.categorie_vehicule?.libelle}</span>
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-4">

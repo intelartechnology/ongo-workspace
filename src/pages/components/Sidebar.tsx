@@ -25,6 +25,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, user, onLogout }) 
             title: 'Utilisateurs',
             items: [
                 { icon: 'group', label: 'Utilisateurs', path: '/users' },
+                // Avertir, bloquer, rendre un compte : un seul endroit, a cote
+                // de la liste des utilisateurs, la ou on vient les chercher.
+                { icon: 'gavel', label: 'Modération', path: '/moderation' },
              /*    { icon: 'admin_panel_settings', label: 'Administrateurs', path: '/admins' },
                 { icon: 'business_center', label: 'Commerciaux', path: '/sales' },
                 { icon: 'handshake', label: 'Partenaires', path: '/partners' }, */
@@ -49,6 +52,20 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, user, onLogout }) 
             ]
         },
         {
+            title: 'Finance',
+            items: [
+                { icon: 'payments', label: 'Transactions', path: '/transactions' },
+            ]
+        },
+        {
+            title: 'Covoiturage',
+            items: [
+                { icon: 'groups', label: 'Activité', path: '/carpool' },
+                { icon: 'how_to_reg', label: 'Covoitureurs', path: '/carpoolers' },
+                { icon: 'currency_exchange', label: 'Remboursements', path: '/carpool-refunds' },
+            ]
+        },
+        {
             title: 'Flotte',
             items: [
                 { icon: 'car_rental', label: 'Véhicules', path: '/vehicles' },
@@ -57,6 +74,17 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, user, onLogout }) 
              /*    { icon: 'category', label: 'Modèles', path: '/models' }, */
             ]
         }/* ,
+        {
+            title: 'Plateforme',
+            items: [
+                // Commissions et delais : ce qui se changeait par un
+                // deploiement se change ici.
+                { icon: 'restaurant', label: 'Ongo Eat', path: '/eat' },
+                { icon: 'payments', label: 'Reversements', path: '/eat-payouts' },
+                { icon: 'storefront', label: 'Marchands', path: '/merchants' },
+                { icon: 'tune', label: 'Réglages', path: '/settings' },
+            ],
+        },
         {
             title: 'Support & Litiges',
             items: [

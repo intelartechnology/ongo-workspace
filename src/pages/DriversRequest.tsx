@@ -142,9 +142,14 @@ export default function DriversRequest({ onLogout, theme, toggleTheme }: Drivers
 
       const docRef = doc(db, "vehicules", String(data.id));
       try {
+        // `driver_id` et non `chauffeur_id` : c'est le nom retenu pour le
+        // document Firestore, celui que l'API écrit déjà de son côté. Les deux
+        // coexistaient selon l'origine de la création, ce qui rendait le champ
+        // inexploitable côté serveur. `chauffeur_id` reste la convention de
+        // l'API REST et de la base — seule la clé Firestore change.
         await setDoc(docRef, {
           categorie_id: data.categorie_id,
-          chauffeur_id: data.chauffeur_id,
+          driver_id: data.chauffeur_id,
           is_booked: false,
           is_online: false,
           lat: null,
@@ -152,6 +157,13 @@ export default function DriversRequest({ onLogout, theme, toggleTheme }: Drivers
           matricule: data.matricule,
           vehicule_id: data.id,
           location: myGeoPoint,
+          // Posés dès la création pour que la structure soit complète : sans
+          // eux, ces champs n'apparaissaient qu'au premier relevé de position.
+          heading: 0,
+          speed: null,
+          // `updated_at` est délibérément absent. Son absence signale un
+          // véhicule qui n'a jamais émis de position, ce qui l'écarte des
+          // chauffeurs joignables — l'y poser le ferait passer pour actif.
         });
         if (docRef.id === null) {
           notify("Une erreur c'est produite", "error");

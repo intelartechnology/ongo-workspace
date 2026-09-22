@@ -11,6 +11,32 @@ interface LoginProps {
     onLogin: () => void;
 }
 
+/**
+ * Où conduire celui qui vient de se connecter.
+ *
+ * Le même compte sert à commander une course et à tenir une boutique : rien
+ * ne distingue un marchand d'un client tant qu'on n'a pas regardé ses
+ * appartenances. C'est cette requête qui décide.
+ */
+async function conduireVersSonEspace(navigate: (chemin: string) => void): Promise<void> {
+    try {
+        const { data } = await new ApiService().getData("v3/merchant/me");
+
+        const espaces: { short_id: string }[] = data?.success ? (data.data ?? []) : [];
+
+        if (espaces.length === 1) {
+            navigate(`/merchant/${espaces[0].short_id}`);
+
+            return;
+        }
+    } catch {
+        // Une appartenance illisible ne doit pas empêcher d'entrer : on
+        // retombe sur le tableau de bord, qui refusera de lui-même si besoin.
+    }
+
+    navigate("/dashboard");
+}
+
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
@@ -58,7 +84,11 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
                     setLoading(false);
                     notify("Utilisateur connecté avec succès", "success");
-                    navigate('/dashboard');
+                    // Un marchand ne doit pas atterrir sur le tableau de bord
+                    // d'Ongo : il est conduit dans son espace. Un seul
+                    // marchand, on y va ; plusieurs, il choisira ; aucun, c'est
+                    // un administrateur.
+                    await conduireVersSonEspace(navigate);
                 } else {
                     setLoading(false);
                     notify(response.data.message || "Erreur lors de la connexion", "error");
