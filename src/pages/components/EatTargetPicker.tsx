@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import ApiService from "../../services/ApiService";
 
 /**
@@ -11,15 +12,21 @@ import ApiService from "../../services/ApiService";
  *   offers  → les restaurants qui font des offres
  *   page    → une page de campagne    (valeur : son id)
  *   promo   → le ticket d'un code     (valeur : le code)
+ *   aisle   → un même rayon partout   (valeur : son nom, « Boissons »)
+ *   category→ une catégorie d'Ongo    (valeur : son slug)
+ *   dishes  → les plats d'une cuisine  (valeur : le slug de la cuisine)
  */
 
-export type TargetType = "" | "store" | "section" | "tag" | "offers" | "page" | "promo";
+export type TargetType = "" | "store" | "section" | "tag" | "offers" | "page" | "promo" | "aisle" | "category" | "dishes";
 
 export interface TargetOptions {
     stores: { id: number; name: string }[];
     tags: { slug: string; name: string }[];
     campaigns: { id: number; title: string; is_active: boolean }[];
     promo_codes: { id: number; code: string; funded_by: string }[];
+    categories?: { slug: string; name: string }[];
+    /** Les noms de rayons déjà utilisés, et combien de rayons les portent. */
+    aisles?: { name: string; stores: number }[];
 }
 
 interface Props {
@@ -42,6 +49,9 @@ const LIBELLES: Record<TargetType, string> = {
     offers: "Les restaurants avec offres",
     page: "Une page de campagne",
     promo: "Le ticket d'un code promo",
+    aisle: "Un même rayon, toutes boutiques",
+    category: "Une catégorie Ongo, toutes boutiques",
+    dishes: "Les plats d'une cuisine, tous restaurants",
     "": "Nulle part",
 };
 
@@ -61,6 +71,12 @@ export const decrireCible = (type: string | null, value: string | null, options:
             return `Page : ${options.campaigns.find((c) => String(c.id) === value)?.title ?? "introuvable"}`;
         case "promo":
             return `Ticket du code ${value}`;
+        case "aisle":
+            return `Rayons « ${value} » de toutes les boutiques`;
+        case "category":
+            return `Catégorie « ${options.categories?.find((c) => c.slug === value)?.name ?? value} »`;
+        case "dishes":
+            return `Les plats « ${options.tags.find((t) => t.slug === value)?.name ?? value} » de tous les restaurants`;
     }
 
     return "Aucune destination";
@@ -125,7 +141,7 @@ export default function EatTargetPicker({ type, value, options, onChange, allowe
                 </label>
             )}
 
-            {type === "tag" && (
+            {(type === "tag" || type === "dishes") && (
                 <label>
                     <span className="text-xs font-semibold uppercase text-slate-500">Cuisine</span>
                     <select className={champ} value={value} onChange={(e) => onChange(type, e.target.value)}>
@@ -148,6 +164,42 @@ export default function EatTargetPicker({ type, value, options, onChange, allowe
                                 <option key={c.id} value={c.id}>{c.title}{c.is_active ? "" : " (retirée)"}</option>
                             ))}
                     </select>
+                    {options.campaigns.filter((c) => c.id !== excludeCampaignId).length === 0 && (
+                        <span className="text-xs text-amber-700">
+                            Aucune page de campagne pour l'instant.{" "}
+                            <Link to="/eat-campaigns" className="underline font-medium">Créer une page</Link>, puis revenez la choisir ici.
+                        </span>
+                    )}
+                </label>
+            )}
+
+            {type === "aisle" && (
+                <label>
+                    <span className="text-xs font-semibold uppercase text-slate-500">Nom du rayon</span>
+                    <input className={champ} list="eat-noms-rayons" value={value} placeholder="Boissons" onChange={(e) => onChange(type, e.target.value)} />
+                    <datalist id="eat-noms-rayons">
+                        {(options.aisles ?? []).map((a) => (
+                            <option key={a.name} value={a.name}>{`${a.stores} rayon(s)`}</option>
+                        ))}
+                    </datalist>
+                    <span className="text-xs text-slate-400">Sans accents ni majuscules : « boissons » retrouve aussi « BOISSONS ».</span>
+                </label>
+            )}
+
+            {type === "category" && (
+                <label>
+                    <span className="text-xs font-semibold uppercase text-slate-500">Catégorie</span>
+                    <select className={champ} value={value} onChange={(e) => onChange(type, e.target.value)}>
+                        <option value="">Choisir…</option>
+                        {(options.categories ?? []).map((c) => (
+                            <option key={c.slug} value={c.slug}>{c.name}</option>
+                        ))}
+                    </select>
+                    {(options.categories ?? []).length === 0 && (
+                        <span className="text-xs text-amber-700">
+                            Aucune catégorie. <Link to="/eat-categories" className="underline font-medium">Créer une catégorie</Link>, puis associez-y des rayons.
+                        </span>
+                    )}
                 </label>
             )}
 
@@ -160,6 +212,11 @@ export default function EatTargetPicker({ type, value, options, onChange, allowe
                             <option key={c.id} value={c.code}>{c.code}{c.funded_by === "merchant" ? " (marchand)" : ""}</option>
                         ))}
                     </select>
+                    {options.promo_codes.length === 0 && (
+                        <span className="text-xs text-amber-700">
+                            Aucun code promo actif. <Link to="/eat-promo-codes" className="underline font-medium">Créer un code</Link>.
+                        </span>
+                    )}
                 </label>
             )}
         </div>

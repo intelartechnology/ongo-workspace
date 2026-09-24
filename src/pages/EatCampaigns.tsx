@@ -2,6 +2,10 @@ import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 import MainLayout from "./MainLayout";
 import ApiService from "../services/ApiService";
+import { apercu, envoyerSiBesoin } from "../services/images";
+import ImageField from "./components/ImageField";
+import CampaignStoreRules, { reglesVides } from "./components/CampaignStoreRules";
+import type { Regles } from "./components/CampaignStoreRules";
 import EatTargetPicker, { cibleComplete, decrireCible } from "./components/EatTargetPicker";
 import type { TargetOptions, TargetType } from "./components/EatTargetPicker";
 
@@ -19,6 +23,8 @@ import type { TargetOptions, TargetType } from "./components/EatTargetPicker";
 
 interface Tuile {
     image: string;
+    // Le visuel choisi, envoyé seulement à l'enregistrement.
+    fichier?: File | null;
     format: "wide" | "square";
     target_type: TargetType;
     target_value: string;
@@ -34,6 +40,8 @@ interface Campagne {
     is_active: boolean;
     starts_at: string | null;
     ends_at: string | null;
+    store_ids: number[] | null;
+    store_rules: Regles | null;
     tiles: { image: string; format: "wide" | "square"; target_type: TargetType | null; target_value: string | null }[];
 }
 
@@ -50,10 +58,16 @@ const vide = {
     title: "",
     subtitle: "",
     hero_image: "",
+    hero_fichier: null as File | null,
     background_color: "#6B3A1E",
     starts_at: "",
     ends_at: "",
     tiles: [] as Tuile[],
+    // Les boutiques sous les tuiles ; vide : celles que les tuiles désignent.
+    store_ids: [] as number[],
+    // « Choisir » des boutiques, ou les retenir par critères.
+    stores_mode: "manual" as "manual" | "auto",
+    store_rules: reglesVides as Regles,
 };
 
 // Le même rangement que l'application : trois unités par rangée.
@@ -80,7 +94,7 @@ export default function EatCampaigns({ onLogout, theme, toggleTheme }: EatCampai
     const [campagnes, setCampagnes] = useState<Campagne[]>([]);
     const [options, setOptions] = useState<TargetOptions>({ stores: [], tags: [], campaigns: [], promo_codes: [] });
     const [form, setForm] = useState<typeof vide | null>(null);
-    const [envoi, setEnvoi] = useState<string | null>(null);
+    const [envoi, setEnvoi] = useState(false);
 
     const api = new ApiService();
 
@@ -91,7 +105,7 @@ export default function EatCampaigns({ onLogout, theme, toggleTheme }: EatCampai
             if (lesCampagnes.data.success) setCampagnes(lesCampagnes.data.data ?? []);
             if (lesOptions.data.success) {
                 const d = lesOptions.data.data;
-                setOptions({ stores: d.stores ?? [], tags: d.tags ?? [], campaigns: d.campaigns ?? [], promo_codes: d.promo_codes ?? [] });
+                setOptions({ stores: d.stores ?? [], tags: d.tags ?? [], campaigns: d.campaigns ?? [], promo_codes: d.promo_codes ?? [], categories: d.categories ?? [], aisles: d.aisles ?? [] });
             }
         } catch (erreur) {
             Swal.fire({ icon: "warning", title: "Campagnes illisibles", text: String(erreur) });
@@ -102,43 +116,48 @@ export default function EatCampaigns({ onLogout, theme, toggleTheme }: EatCampai
         charger();
     }, []);
 
-    /** Envoyer une image : `cle` dit où la ranger (« hero » ou le rang d'une tuile). */
-    const televerser = async (fichier: File, cle: string) => {
-        setEnvoi(cle);
+    const enregistrer = async () => {
+        if (!form) return;
+
+        setEnvoi(true);
+
+        // Les images choisies partent maintenant, l'une après l'autre ; une
+        // seule qui échoue arrête tout, rien n'est enregistré à moitié.
+        let heroImage: string | null;
+        let tuiles: { image: string; format: string; target_type: string | null; target_value: string | null }[];
 
         try {
-            const { data } = await api.uploadImage(fichier);
+            heroImage = await envoyerSiBesoin(form.hero_fichier, form.hero_image || null);
+            tuiles = [];
 
-            if (!data.success) {
-                Swal.fire({ icon: "error", title: "Image refusée", text: data.message });
-            } else {
-                setForm((f) => {
-                    if (f === null) return f;
-                    if (cle === "hero") return { ...f, hero_image: data.data };
-
-                    return { ...f, tiles: f.tiles.map((t, i) => (String(i) === cle ? { ...t, image: data.data } : t)) };
+            for (const t of form.tiles) {
+                tuiles.push({
+                    image: (await envoyerSiBesoin(t.fichier, t.image || null)) ?? "",
+                    format: t.format,
+                    target_type: t.target_type || null,
+                    target_value: t.target_value || null,
                 });
             }
         } catch (erreur) {
-            Swal.fire({ icon: "error", title: "Envoi impossible", text: String(erreur) });
+            setEnvoi(false);
+            Swal.fire({ icon: "error", title: "Image non envoyée", text: String((erreur as Error).message ?? erreur) });
+            return;
         }
-
-        setEnvoi(null);
-    };
-
-    const enregistrer = async () => {
-        if (!form) return;
 
         const { data } = await api.postData("v3/admin/eat/campaigns", {
             id: form.id,
             title: form.title,
             subtitle: form.subtitle || null,
-            hero_image: form.hero_image || null,
+            hero_image: heroImage,
             background_color: form.background_color || null,
             starts_at: form.starts_at || null,
             ends_at: form.ends_at || null,
-            tiles: form.tiles.map((t) => ({ ...t, target_type: t.target_type || null, target_value: t.target_value || null })),
+            tiles: tuiles,
+            store_ids: form.stores_mode === "manual" ? form.store_ids : [],
+            store_rules: form.stores_mode === "auto" && form.store_rules.criteria.length ? form.store_rules : null,
         });
+
+        setEnvoi(false);
 
         if (!data.success) {
             Swal.fire({ icon: "error", title: data.message });
@@ -180,10 +199,14 @@ export default function EatCampaigns({ onLogout, theme, toggleTheme }: EatCampai
             title: c.title,
             subtitle: c.subtitle ?? "",
             hero_image: c.hero_image ?? "",
+            hero_fichier: null,
             background_color: c.background_color ?? "#6B3A1E",
             starts_at: c.starts_at ? c.starts_at.slice(0, 16) : "",
             ends_at: c.ends_at ? c.ends_at.slice(0, 16) : "",
             tiles: c.tiles.map((t) => ({ image: t.image, format: t.format, target_type: (t.target_type ?? "") as TargetType, target_value: t.target_value ?? "" })),
+            store_ids: c.store_ids ?? [],
+            stores_mode: c.store_rules?.criteria?.length ? "auto" : "manual",
+            store_rules: c.store_rules?.criteria?.length ? c.store_rules : reglesVides,
         });
 
     const changerTuile = (rang: number, modif: Partial<Tuile>) =>
@@ -202,7 +225,7 @@ export default function EatCampaigns({ onLogout, theme, toggleTheme }: EatCampai
     const enLigne = (c: Campagne) =>
         c.is_active && (!c.starts_at || new Date(c.starts_at) <= new Date()) && (!c.ends_at || new Date(c.ends_at) > new Date());
 
-    const valide = !!form && form.title.trim() !== "" && form.tiles.every((t) => t.image !== "" && cibleComplete(t.target_type, t.target_value));
+    const valide = !!form && form.title.trim() !== "" && form.tiles.every((t) => (t.image !== "" || !!t.fichier) && cibleComplete(t.target_type, t.target_value));
 
     return (
         <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
@@ -241,11 +264,16 @@ export default function EatCampaigns({ onLogout, theme, toggleTheme }: EatCampai
                                             onChange={(e) => setForm({ ...form, subtitle: e.target.value })}
                                         />
                                     </label>
-                                    <label>
-                                        <span className="text-xs font-semibold uppercase text-slate-500">Visuel d'en-tête</span>
-                                        <input type="file" accept="image/*" className="block mt-1 text-sm" disabled={envoi !== null} onChange={(e) => e.target.files?.[0] && televerser(e.target.files[0], "hero")} />
-                                        <span className="text-xs text-slate-400">Portrait, environ 1284 × 1500 px ; le haut reste libre pour le titre.</span>
-                                    </label>
+                                    <ImageField
+                                        label="Visuel d'en-tête"
+                                        hint="Portrait, environ 1284 × 1500 px ; le haut reste libre pour le titre."
+                                        adresse={form.hero_image}
+                                        fichier={form.hero_fichier}
+                                        owner="ongo"
+                                        disabled={envoi}
+                                        forme="aspect-[4/5]"
+                                        onChange={(hero_image, hero_fichier) => setForm({ ...form, hero_image, hero_fichier })}
+                                    />
                                     <label>
                                         <span className="text-xs font-semibold uppercase text-slate-500">Couleur de fond</span>
                                         <input type="color" className="block mt-1 h-10 w-20 rounded" value={form.background_color} onChange={(e) => setForm({ ...form, background_color: e.target.value })} />
@@ -282,13 +310,17 @@ export default function EatCampaigns({ onLogout, theme, toggleTheme }: EatCampai
                                                         <span className="material-symbols-outlined text-[18px]">arrow_downward</span>
                                                     </button>
                                                 </div>
-                                                <div className="w-28 h-20 shrink-0 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800">
-                                                    {t.image && <img src={t.image} alt="" className="w-full h-full object-cover" />}
-                                                </div>
                                                 <div className="flex-1 space-y-3">
                                                     <div className="flex flex-wrap items-center gap-3">
-                                                        <input type="file" accept="image/*" className="text-sm" disabled={envoi !== null} onChange={(e) => e.target.files?.[0] && televerser(e.target.files[0], String(rang))} />
-                                                        {envoi === String(rang) && <span className="text-xs text-slate-400">Envoi…</span>}
+                                                        <ImageField
+                                                            label="Visuel"
+                                                            adresse={t.image}
+                                                            fichier={t.fichier ?? null}
+                                                            owner="ongo"
+                                                            disabled={envoi}
+                                                            forme={t.format === "square" ? "aspect-square" : "aspect-[2/1]"}
+                                                            onChange={(image, fichier) => changerTuile(rang, { image, fichier })}
+                                                        />
                                                         <select className="px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm" value={t.format} onChange={(e) => changerTuile(rang, { format: e.target.value as "wide" | "square" })}>
                                                             <option value="wide">Large (2/3)</option>
                                                             <option value="square">Carrée (1/3)</option>
@@ -314,6 +346,68 @@ export default function EatCampaigns({ onLogout, theme, toggleTheme }: EatCampai
                                         {form.tiles.length === 0 && <p className="text-sm text-slate-400">Aucune tuile : « Viande et volaille », « Boissons »…</p>}
                                     </div>
                                 </div>
+
+                                {/* Les boutiques sous les tuiles, comme chez Yango. */}
+                                <div>
+                                    <p className="text-xs font-semibold uppercase text-slate-500 mb-1">Boutiques sous les tuiles</p>
+                                    <p className="text-xs text-slate-400 mb-2">
+                                        Leurs cartes complètes : délai, note, livraison, favori. Sans choix ni critère : les boutiques visées par les tuiles.
+                                    </p>
+                                    <div className="flex gap-2 mb-3">
+                                        {([["manual", `Choisir (${form.store_ids.length})`], ["auto", `Automatique (${form.store_rules.criteria.length} critère(s))`]] as const).map(([cle, libelle]) => (
+                                            <button
+                                                key={cle}
+                                                type="button"
+                                                onClick={() => setForm({ ...form, stores_mode: cle })}
+                                                className={`px-3 py-1.5 rounded-full text-sm border ${
+                                                    form.stores_mode === cle ? "bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-slate-900" : "border-slate-300 text-slate-600 dark:border-slate-700 dark:text-slate-300"
+                                                }`}
+                                            >
+                                                {libelle}
+                                            </button>
+                                        ))}
+                                    </div>
+                                    {form.stores_mode === "auto" ? (
+                                        <CampaignStoreRules regles={form.store_rules} options={options} onChange={(store_rules) => setForm({ ...form, store_rules })} />
+                                    ) : (
+                                    <>
+                                    <select
+                                        className="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm"
+                                        value=""
+                                        onChange={(e) => e.target.value && setForm({ ...form, store_ids: [...form.store_ids, Number(e.target.value)] })}
+                                    >
+                                        <option value="">+ Ajouter une boutique</option>
+                                        {options.stores
+                                            .filter((b) => !form.store_ids.includes(b.id))
+                                            .map((b) => (
+                                                <option key={b.id} value={b.id}>{b.name}</option>
+                                            ))}
+                                    </select>
+                                    <div className="mt-2 space-y-1">
+                                        {form.store_ids.map((id, rang) => (
+                                            <div key={id} className="flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-sm">
+                                                <button
+                                                    type="button"
+                                                    disabled={rang === 0}
+                                                    className="disabled:opacity-20"
+                                                    onClick={() => {
+                                                        const ids = [...form.store_ids];
+                                                        [ids[rang - 1], ids[rang]] = [ids[rang], ids[rang - 1]];
+                                                        setForm({ ...form, store_ids: ids });
+                                                    }}
+                                                >
+                                                    <span className="material-symbols-outlined text-[16px]">arrow_upward</span>
+                                                </button>
+                                                <span className="flex-1 text-slate-800 dark:text-slate-100">{options.stores.find((b) => b.id === id)?.name ?? `Boutique #${id} (inactive)`}</span>
+                                                <button type="button" onClick={() => setForm({ ...form, store_ids: form.store_ids.filter((x) => x !== id) })} className="text-rose-600">
+                                                    Retirer
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    </>
+                                    )}
+                                </div>
                             </div>
 
                             {/* L'aperçu, dans un téléphone. */}
@@ -321,7 +415,7 @@ export default function EatCampaigns({ onLogout, theme, toggleTheme }: EatCampai
                                 <p className="text-xs font-semibold uppercase text-slate-500 mb-2">Aperçu</p>
                                 <div className="rounded-[36px] border-8 border-slate-900 overflow-hidden bg-white" style={{ width: 340 }}>
                                     <div className="relative" style={{ height: 380, background: form.background_color }}>
-                                        {form.hero_image && <img src={form.hero_image} alt="" className="absolute inset-0 w-full h-full object-cover" />}
+                                        {apercu(form.hero_fichier, form.hero_image) && <img src={apercu(form.hero_fichier, form.hero_image)} alt="" className="absolute inset-0 w-full h-full object-cover" />}
                                         <div className="relative px-6 pt-16 text-center text-white">
                                             <p className="text-3xl font-black uppercase leading-none tracking-tight">{form.title || "Titre"}</p>
                                             {form.subtitle && <p className="mt-3 text-sm leading-snug">{form.subtitle}</p>}
@@ -337,9 +431,18 @@ export default function EatCampaigns({ onLogout, theme, toggleTheme }: EatCampai
                                                         className="rounded-2xl overflow-hidden bg-slate-100"
                                                         style={{ width: t.format === "square" ? 96 : 200, height: 96 }}
                                                     >
-                                                        {t.image && <img src={t.image} alt="" className="w-full h-full object-cover" />}
+                                                        {apercu(t.fichier, t.image) && <img src={apercu(t.fichier, t.image)} alt="" className="w-full h-full object-cover" />}
                                                     </div>
                                                 ))}
+                                            </div>
+                                        ))}
+                                        {form.stores_mode === "auto" && form.store_rules.criteria.length > 0 && (
+                                            <p className="pt-2 text-xs text-slate-500 px-1">Boutiques selon les critères, recalculées à chaque ouverture.</p>
+                                        )}
+                                        {form.stores_mode === "manual" && form.store_ids.map((id) => (
+                                            <div key={id} className="pt-2">
+                                                <div className="h-24 rounded-2xl bg-slate-200" />
+                                                <p className="text-sm font-semibold mt-1 px-1">{options.stores.find((b) => b.id === id)?.name}</p>
                                             </div>
                                         ))}
                                     </div>
@@ -353,10 +456,10 @@ export default function EatCampaigns({ onLogout, theme, toggleTheme }: EatCampai
                             </button>
                             <button
                                 onClick={enregistrer}
-                                disabled={!valide || envoi !== null}
+                                disabled={!valide || envoi}
                                 className="px-5 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium disabled:opacity-40 dark:bg-white dark:text-slate-900"
                             >
-                                Enregistrer
+                                {envoi ? "Envoi…" : "Enregistrer"}
                             </button>
                         </div>
                     </div>

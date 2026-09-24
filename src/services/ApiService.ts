@@ -76,10 +76,26 @@ class ApiService {
     public async uploadImage(data: any, base: string | null = null): Promise<AxiosResponse> {
         const formData = new FormData();
         formData.append("file", data);
-        const baseShort = base == null ? "api/" : base + "/";
-        return this.api.post(baseShort + "v2/file-upload", formData, {
+
+        // `baseURL` se termine déjà par « /api » : l'ancien préfixe « api/ »
+        // visait « /api/api/v2/file-upload », qui n'existe pas (404).
+        const url = (base == null ? "" : base + "/") + "v2/file-upload";
+
+        const reponse = await this.api.post(url, formData, {
             headers: { "Content-Type": "multipart/form-data" },
         });
+
+        // Le serveur rend l'URL brute, pas { success, data } : on la présente
+        // comme les autres réponses, pour que les écrans la lisent pareil.
+        if (typeof reponse.data === "string" || reponse.data === "" || reponse.data == null) {
+            const lien = typeof reponse.data === "string" ? reponse.data.trim().replace(/^"|"$/g, "") : "";
+
+            reponse.data = lien.startsWith("http")
+                ? { success: true, message: "Image envoyée", data: lien }
+                : { success: false, message: "Le serveur n'a pas pu enregistrer l'image", data: null };
+        }
+
+        return reponse;
     }
 
     public async uploadPdf(data: any, base: string | null = null): Promise<AxiosResponse> {

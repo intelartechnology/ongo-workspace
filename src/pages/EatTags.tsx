@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 import MainLayout from "./MainLayout";
 import ApiService from "../services/ApiService";
+import { envoyerSiBesoin } from "../services/images";
+import ImageField from "./components/ImageField";
 
 /**
  * Les cuisines de « Laissez-vous tenter » : un nom, une image, un ordre.
@@ -31,7 +33,11 @@ const champ = "w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-s
 export default function EatTags({ onLogout, theme, toggleTheme }: EatTagsProps) {
     const [cuisines, setCuisines] = useState<Cuisine[]>([]);
     const [form, setForm] = useState<{ id: number | null; name: string; image: string } | null>(null);
+    // L'image choisie, envoyée seulement à l'enregistrement.
+    const [fichier, setFichier] = useState<File | null>(null);
     const [envoi, setEnvoi] = useState(false);
+
+    useEffect(() => setFichier(null), [form === null, form?.id]);
 
     const api = new ApiService();
 
@@ -54,26 +60,23 @@ export default function EatTags({ onLogout, theme, toggleTheme }: EatTagsProps) 
         return true;
     };
 
-    const televerser = async (fichier: File) => {
-        setEnvoi(true);
-
-        try {
-            const { data } = await api.uploadImage(fichier);
-            if (data.success) setForm((f) => (f === null ? f : { ...f, image: data.data }));
-            else Swal.fire({ icon: "error", title: "Image refusée", text: data.message });
-        } catch (erreur) {
-            Swal.fire({ icon: "error", title: "Envoi impossible", text: String(erreur) });
-        }
-
-        setEnvoi(false);
-    };
-
     const enregistrer = async () => {
         if (!form) return;
 
-        const { data } = await api.postData("v3/admin/eat/tags", form);
+        setEnvoi(true);
 
-        if (echec(data)) return;
+        try {
+            const image = await envoyerSiBesoin(fichier, form.image || null);
+            const { data } = await api.postData("v3/admin/eat/tags", { ...form, image });
+
+            setEnvoi(false);
+
+            if (echec(data)) return;
+        } catch (erreur) {
+            setEnvoi(false);
+            Swal.fire({ icon: "error", title: "Image non envoyée", text: String((erreur as Error).message ?? erreur) });
+            return;
+        }
 
         setForm(null);
         charger();
@@ -148,15 +151,23 @@ export default function EatTags({ onLogout, theme, toggleTheme }: EatTagsProps) 
                             <span className="text-xs font-semibold uppercase text-slate-500">Nom</span>
                             <input className={champ} value={form.name} maxLength={60} placeholder="Ivoirien" onChange={(e) => setForm({ ...form, name: e.target.value })} />
                         </label>
-                        <label>
-                            <span className="text-xs font-semibold uppercase text-slate-500">Image</span>
-                            <input type="file" accept="image/*" className="block mt-1 text-sm" disabled={envoi} onChange={(e) => e.target.files?.[0] && televerser(e.target.files[0])} />
-                        </label>
+                        <ImageField
+                            label="Image"
+                            hint="Carrée, le plat détouré."
+                            adresse={form.image}
+                            fichier={fichier}
+                            owner="ongo"
+                            disabled={envoi}
+                            forme="aspect-square"
+                            onChange={(image, choisi) => {
+                                setForm({ ...form, image });
+                                setFichier(choisi);
+                            }}
+                        />
                         <div className="flex items-center gap-3">
-                            <div className="w-14 h-14 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800">{form.image && <img src={form.image} alt="" className="w-full h-full object-cover" />}</div>
                             <button onClick={() => setForm(null)} className="px-4 py-2 rounded-lg text-sm text-slate-600 dark:text-slate-300">Annuler</button>
                             <button onClick={enregistrer} disabled={!form.name.trim() || envoi} className="px-5 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium disabled:opacity-40 dark:bg-white dark:text-slate-900">
-                                Enregistrer
+                                {envoi ? "Envoi…" : "Enregistrer"}
                             </button>
                         </div>
                     </div>

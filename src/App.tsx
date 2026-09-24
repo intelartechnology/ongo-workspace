@@ -30,8 +30,11 @@ import EatFilters from './pages/EatFilters';
 import EatBanners from './pages/EatBanners';
 import EatCampaigns from './pages/EatCampaigns';
 import EatStores from './pages/EatStores';
+import EatPaymentMethods from './pages/EatPaymentMethods';
 import EatTags from './pages/EatTags';
 import EatSections from './pages/EatSections';
+import EatGallery from './pages/EatGallery';
+import EatCategories from './pages/EatCategories';
 import MerchantSpace from './pages/merchant/MerchantSpace';
 import AddDriver from './pages/AddDriver'
 import DriverDetail from './pages/DriverDetail'
@@ -289,6 +292,14 @@ function App() {
           }
         />
         <Route
+          path="/eat-payment-methods"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <EatPaymentMethods onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/eat-tags"
           element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>
@@ -301,6 +312,22 @@ function App() {
           element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>
               <EatSections onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/eat-gallery"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <EatGallery onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/eat-categories"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <EatCategories onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
             </ProtectedRoute>
           }
         />

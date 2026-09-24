@@ -9,9 +9,13 @@ import Revenue from "./Revenue";
 import Delivery from "./Delivery";
 import Promotions from "./Promotions";
 import Hours from "./Hours";
+import PaymentMethods from "./PaymentMethods";
 import StoreProfile from "./StoreProfile";
 import Reviews from "./Reviews";
 import Team from "./Team";
+import Collections from "./Collections";
+import MediaGallery from "../components/MediaGallery";
+import { galerieMarchand } from "../../services/images";
 
 /**
  * L'espace d'un marchand.
@@ -56,7 +60,7 @@ interface Livreur {
     matricule: string | null;
 }
 
-type Onglet = "commandes" | "horaires" | "boutique" | "catalogue" | "avis" | "promotions" | "livraison" | "livreurs" | "equipe" | "revenus";
+type Onglet = "commandes" | "horaires" | "boutique" | "paiement" | "catalogue" | "avis" | "promotions" | "livraison" | "livreurs" | "equipe" | "photos" | "collections" | "revenus";
 
 export default function MerchantSpace() {
     const { merchantId } = useParams<{ merchantId: string }>();
@@ -204,9 +208,12 @@ export default function MerchantSpace() {
         { cle: "catalogue", libelle: "Catalogue" },
         { cle: "avis", libelle: "Avis" },
         { cle: "promotions", libelle: "Promotions" },
+        { cle: "collections", libelle: "Collections" },
         { cle: "livraison", libelle: "Livraison" },
+        { cle: "paiement", libelle: "Paiement" },
         { cle: "livreurs", libelle: "Livreurs" },
         { cle: "equipe", libelle: "Équipe" },
+        { cle: "photos", libelle: "Photos" },
         { cle: "revenus", libelle: "Revenus" },
     ];
 
@@ -266,14 +273,20 @@ export default function MerchantSpace() {
                     <OrderDesk merchantId={merchantId!} storeId={boutique.id} />
                 ) : onglet === "boutique" ? (
                     <StoreProfile merchantId={merchantId!} storeId={boutique.id} canEdit={marchand.role !== "staff"} />
+                ) : onglet === "paiement" ? (
+                    <PaymentMethods merchantId={merchantId!} storeId={boutique.id} canEdit={marchand.role !== "staff"} />
                 ) : onglet === "avis" ? (
                     <Reviews merchantId={merchantId!} storeId={boutique.id} />
                 ) : onglet === "equipe" ? (
                     <Team merchantId={merchantId!} />
+                ) : onglet === "photos" ? (
+                    <MediaGallery galerie={galerieMarchand(merchantId!)} canDelete={marchand.role !== "staff"} />
                 ) : onglet === "catalogue" ? (
                     <Catalog merchantId={merchantId!} storeId={boutique.id} storeType={boutique.type} />
                 ) : onglet === "horaires" ? (
                     <Hours merchantId={merchantId!} storeId={boutique.id} storeName={boutique.name} canEditWeek={marchand.role !== "staff"} />
+                ) : onglet === "collections" ? (
+                    <Collections merchantId={merchantId!} storeId={boutique.id} canEdit={marchand.role !== "staff"} />
                 ) : onglet === "promotions" ? (
                     <Promotions merchantId={merchantId!} storeId={boutique.id} storeName={boutique.name} />
                 ) : onglet === "livraison" ? (

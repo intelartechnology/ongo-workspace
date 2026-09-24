@@ -24,7 +24,11 @@ async function conduireVersSonEspace(navigate: (chemin: string) => void): Promis
 
         const espaces: { short_id: string }[] = data?.success ? (data.data ?? []) : [];
 
-        if (espaces.length === 1) {
+        // Un marchand va dans son espace, qu'il en tienne un ou dix : le
+        // tableau de bord est réservé aux administrateurs, et l'y envoyer ne
+        // lui vaut qu'un 403. Avec plusieurs enseignes, il ouvre la première
+        // et change depuis le sélecteur de son espace.
+        if (espaces.length > 0) {
             navigate(`/merchant/${espaces[0].short_id}`);
 
             return;

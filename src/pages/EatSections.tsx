@@ -21,6 +21,7 @@ interface Rubrique {
     layout: "cards" | "logos" | "products";
     rule: string;
     params: Record<string, string | number> | null;
+    store_type: "restaurant" | "store" | null;
     limit: number;
     is_horizontal: boolean;
     window_from: string | null;
@@ -42,11 +43,19 @@ interface EatSectionsProps {
 
 const champ = "w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white";
 
-const FORMES: Record<string, string> = { cards: "Grandes cartes", logos: "Pastilles (logos)", products: "Plats" };
+const FORMES: Record<string, string> = {
+    cards: "Grandes cartes",
+    logos: "Pastilles (logos)",
+    products: "Plats",
+    tiles: "Tuiles de logos, 3 par ligne",
+};
+
+/** À qui la rubrique s'adresse. Vide : aux deux. */
+const CIBLES: Record<string, string> = { "": "Restaurants et magasins", restaurant: "Restaurants seulement", store: "Magasins seulement" };
 
 const PARAMETRES: Record<string, { libelle: string; aide: string }> = {
     days: { libelle: "Sur les … derniers jours", aide: "30" },
-    slug: { libelle: "Cuisine", aide: "" },
+    slug: { libelle: "Cuisine ou catégorie", aide: "" },
     amount: { libelle: "Prix maximum (F)", aide: "3000" },
     minutes: { libelle: "Délai maximum (min)", aide: "30" },
 };
@@ -57,6 +66,7 @@ const vide = {
     subtitle: "",
     rule: "for_you",
     layout: "cards",
+    store_type: "" as "" | "restaurant" | "store",
     limit: "10",
     window_from: "",
     window_to: "",
@@ -67,6 +77,7 @@ export default function EatSections({ onLogout, theme, toggleTheme }: EatSection
     const [rubriques, setRubriques] = useState<Rubrique[]>([]);
     const [regles, setRegles] = useState<Record<string, Regle>>({});
     const [cuisines, setCuisines] = useState<{ slug: string; name: string }[]>([]);
+    const [categoriesOngo, setCategoriesOngo] = useState<{ slug: string; name: string }[]>([]);
     const [form, setForm] = useState<typeof vide | null>(null);
 
     const api = new ApiService();
@@ -79,6 +90,7 @@ export default function EatSections({ onLogout, theme, toggleTheme }: EatSection
                 setRubriques(data.data.sections ?? []);
                 setRegles(data.data.rules ?? {});
                 setCuisines(data.data.tags ?? []);
+                setCategoriesOngo(data.data.categories ?? []);
             }
         } catch (erreur) {
             Swal.fire({ icon: "warning", title: "Rubriques illisibles", text: String(erreur) });
@@ -104,6 +116,7 @@ export default function EatSections({ onLogout, theme, toggleTheme }: EatSection
             subtitle: form.subtitle || null,
             rule: form.rule,
             layout: form.layout,
+            store_type: form.store_type || null,
             limit: Number(form.limit),
             is_horizontal: true,
             window_from: form.window_from || null,
@@ -150,6 +163,7 @@ export default function EatSections({ onLogout, theme, toggleTheme }: EatSection
             subtitle: r.subtitle ?? "",
             rule: r.rule,
             layout: r.layout,
+            store_type: r.store_type ?? "",
             limit: String(r.limit),
             window_from: r.window_from ? r.window_from.slice(0, 5) : "",
             window_to: r.window_to ? r.window_to.slice(0, 5) : "",
@@ -209,6 +223,15 @@ export default function EatSections({ onLogout, theme, toggleTheme }: EatSection
                                 </select>
                             </label>
                             <label>
+                                <span className="text-xs font-semibold uppercase text-slate-500">S'adresse à</span>
+                                <select className={champ} value={form.store_type} onChange={(e) => setForm({ ...form, store_type: e.target.value as typeof form.store_type })}>
+                                    {Object.entries(CIBLES).map(([cle, libelle]) => (
+                                        <option key={cle} value={cle}>{libelle}</option>
+                                    ))}
+                                </select>
+                                <span className="text-xs text-slate-400">« Magasins seulement » : la rubrique apparaît sur l'écran Magasins.</span>
+                            </label>
+                            <label>
                                 <span className="text-xs font-semibold uppercase text-slate-500">Forme</span>
                                 <select className={champ} value={form.layout} onChange={(e) => setForm({ ...form, layout: e.target.value })}>
                                     {Object.entries(FORMES).map(([cle, libelle]) => (
@@ -227,7 +250,7 @@ export default function EatSections({ onLogout, theme, toggleTheme }: EatSection
                                     {p === "slug" ? (
                                         <select className={champ} value={form.params[p] ?? ""} onChange={(e) => setForm({ ...form, params: { ...form.params, [p]: e.target.value } })}>
                                             <option value="">Choisir…</option>
-                                            {cuisines.map((c) => (
+                                            {(form.rule === "category" ? categoriesOngo : cuisines).map((c) => (
                                                 <option key={c.slug} value={c.slug}>{c.name}</option>
                                             ))}
                                         </select>
@@ -287,7 +310,10 @@ export default function EatSections({ onLogout, theme, toggleTheme }: EatSection
                                         <p className="font-semibold text-slate-900 dark:text-white">{r.title}</p>
                                         <p className="text-xs text-slate-500">{FORMES[r.layout] ?? r.layout}{r.subtitle ? ` · ${r.subtitle}` : ""}</p>
                                     </td>
-                                    <td className="px-5 py-3 text-xs text-slate-500">{decrire(r)}</td>
+                                    <td className="px-5 py-3 text-xs text-slate-500">
+                                        {decrire(r)}
+                                        {r.store_type && <p className="text-slate-400">{CIBLES[r.store_type]}</p>}
+                                    </td>
                                     <td className="px-5 py-3 text-xs text-slate-500">{r.window_from ? `${r.window_from.slice(0, 5)} – ${r.window_to?.slice(0, 5)}` : "Toute la journée"}</td>
                                     <td className="px-5 py-3">
                                         {!r.is_active ? (

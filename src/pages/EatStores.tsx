@@ -3,6 +3,8 @@ import Swal from "sweetalert2";
 import MainLayout from "./MainLayout";
 import ApiService from "../services/ApiService";
 import StoreProfileForm from "./components/StoreProfileForm";
+import ImageField from "./components/ImageField";
+import { envoyerSiBesoin, galerieMarchand } from "../services/images";
 import type { Cuisine, Fiche } from "./components/StoreProfileForm";
 
 /**
@@ -15,6 +17,8 @@ import type { Cuisine, Fiche } from "./components/StoreProfileForm";
 
 interface Boutique extends Fiche {
     type: string;
+    sponsored_until?: string | null;
+    sponsored_label?: string | null;
     status: string;
     is_featured: boolean;
     public_id: string;
@@ -39,7 +43,19 @@ export default function EatStores({ onLogout, theme, toggleTheme }: EatStoresPro
     const [marchands, setMarchands] = useState<{ id: number; name: string }[]>([]);
     const [recherche, setRecherche] = useState("");
     const [ouverte, setOuverte] = useState<Boutique | null>(null);
-    const [nouvelle, setNouvelle] = useState<{ merchant_id: string; name: string; type: string; city: string; address: string } | null>(null);
+    const [nouvelle, setNouvelle] = useState<{
+        merchant_id: string;
+        name: string;
+        type: string;
+        city: string;
+        address: string;
+        logo: string;
+        banner: string;
+        brand_color: string;
+    } | null>(null);
+
+    /** Les fichiers choisis sur l'ordinateur, envoyés au clic sur « Ouvrir ». */
+    const [images, setImages] = useState<{ logo: File | null; banner: File | null }>({ logo: null, banner: null });
 
     const api = new ApiService();
 
@@ -95,6 +111,41 @@ export default function EatStores({ onLogout, theme, toggleTheme }: EatStoresPro
         charger();
     };
 
+    /**
+     * Mise en avant payée : la boutique passe devant dans les listes, et le
+     * client lit « Sponsorisé » — la mention est obligatoire.
+     */
+    const sponsoriser = async (b: Boutique) => {
+        const actif = !!b.sponsored_until && new Date(b.sponsored_until) > new Date();
+
+        if (actif) {
+            await changer(b, { sponsored_until: null, sponsored_label: null });
+            return;
+        }
+
+        const { value } = await Swal.fire({
+            title: `Sponsoriser ${b.name}`,
+            html:
+                `<input id="jours" class="swal2-input" type="number" min="1" max="90" value="7" placeholder="Jours">` +
+                `<input id="mention" class="swal2-input" value="Sponsorisé" maxlength="40" placeholder="Mention affichée">`,
+            focusConfirm: false,
+            showCancelButton: true,
+            confirmButtonText: "Sponsoriser",
+            cancelButtonText: "Annuler",
+            preConfirm: () => ({
+                jours: Number((document.getElementById("jours") as HTMLInputElement)?.value || 7),
+                mention: (document.getElementById("mention") as HTMLInputElement)?.value || "Sponsorisé",
+            }),
+        });
+
+        if (!value) return;
+
+        const fin = new Date();
+        fin.setDate(fin.getDate() + Math.min(90, Math.max(1, value.jours)));
+
+        await changer(b, { sponsored_until: fin.toISOString().slice(0, 19).replace("T", " "), sponsored_label: value.mention });
+    };
+
     const renommer = async (b: Boutique) => {
         const { value } = await Swal.fire({ title: "Nom de la boutique", input: "text", inputValue: b.name, showCancelButton: true, confirmButtonText: "Renommer", cancelButtonText: "Annuler" });
 
@@ -104,12 +155,24 @@ export default function EatStores({ onLogout, theme, toggleTheme }: EatStoresPro
     const ouvrir = async () => {
         if (!nouvelle) return;
 
-        const { data } = await api.postData("v3/admin/eat/stores/create", { ...nouvelle, merchant_id: Number(nouvelle.merchant_id) });
+        // Les images passent par la galerie du marchand : la boutique n'a pas
+        // encore d'identifiant, on range donc sous celle du marchand.
+        const galerie = galerieMarchand(nouvelle.merchant_id);
+        const logo = await envoyerSiBesoin(images.logo, nouvelle.logo || null, galerie, Number(nouvelle.merchant_id));
+        const banner = await envoyerSiBesoin(images.banner, nouvelle.banner || null, galerie, Number(nouvelle.merchant_id));
+
+        const { data } = await api.postData("v3/admin/eat/stores/create", {
+            ...nouvelle,
+            merchant_id: Number(nouvelle.merchant_id),
+            logo,
+            banner,
+        });
 
         if (!data.success) return Swal.fire({ icon: "error", title: data.message });
 
         Swal.fire({ icon: "success", title: data.message, timer: 1200, showConfirmButton: false });
         setNouvelle(null);
+        setImages({ logo: null, banner: null });
         charger();
     };
 
@@ -124,7 +187,7 @@ export default function EatStores({ onLogout, theme, toggleTheme }: EatStoresPro
                         </p>
                     </div>
                     {!nouvelle && (
-                        <button onClick={() => setNouvelle({ merchant_id: "", name: "", type: "restaurant", city: "Douala", address: "" })} className="px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium dark:bg-white dark:text-slate-900">
+                        <button onClick={() => setNouvelle({ merchant_id: "", name: "", type: "restaurant", city: "Douala", address: "", logo: "", banner: "", brand_color: "#111827" })} className="px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium dark:bg-white dark:text-slate-900">
                             Ouvrir une boutique
                         </button>
                     )}
@@ -165,6 +228,31 @@ export default function EatStores({ onLogout, theme, toggleTheme }: EatStoresPro
                                 <span className="text-xs font-semibold uppercase text-slate-500">Adresse</span>
                                 <input className={champ} value={nouvelle.address} onChange={(e) => setNouvelle({ ...nouvelle, address: e.target.value })} />
                             </label>
+                            <label>
+                                <span className="text-xs font-semibold uppercase text-slate-500">Couleur de l'enseigne</span>
+                                <input type="color" className={`${champ} h-10 p-1`} value={nouvelle.brand_color} onChange={(e) => setNouvelle({ ...nouvelle, brand_color: e.target.value })} />
+                            </label>
+                            <ImageField
+                                label="Logo"
+                                hint="Affiché sur fond de couleur dans « Commerces à proximité »"
+                                forme="aspect-square"
+                                owner="merchants"
+                                galerie={galerieMarchand(nouvelle.merchant_id)}
+                                adresse={nouvelle.logo}
+                                fichier={images.logo}
+                                disabled={!nouvelle.merchant_id}
+                                onChange={(adresse, fichier) => { setNouvelle({ ...nouvelle, logo: adresse }); setImages({ ...images, logo: fichier }); }}
+                            />
+                            <ImageField
+                                label="Bannière"
+                                hint="En haut de la page de la boutique"
+                                owner="merchants"
+                                galerie={galerieMarchand(nouvelle.merchant_id)}
+                                adresse={nouvelle.banner}
+                                fichier={images.banner}
+                                disabled={!nouvelle.merchant_id}
+                                onChange={(adresse, fichier) => { setNouvelle({ ...nouvelle, banner: adresse }); setImages({ ...images, banner: fichier }); }}
+                            />
                         </div>
                         <div className="flex justify-end gap-3 mt-6">
                             <button onClick={() => setNouvelle(null)} className="px-4 py-2 rounded-lg text-sm text-slate-600 dark:text-slate-300">Annuler</button>
@@ -184,7 +272,7 @@ export default function EatStores({ onLogout, theme, toggleTheme }: EatStoresPro
                             </div>
                             <button onClick={() => setOuverte(null)} className="text-sm text-slate-600 dark:text-slate-300">Fermer</button>
                         </div>
-                        <StoreProfileForm key={ouverte.id} fiche={ouverte} cuisines={cuisines} onSave={enregistrer} />
+                        <StoreProfileForm key={ouverte.id} fiche={ouverte} cuisines={cuisines} onSave={enregistrer} merchantId={ouverte.merchant_id} />
                     </div>
                 )}
 
@@ -233,6 +321,9 @@ export default function EatStores({ onLogout, theme, toggleTheme }: EatStoresPro
                                         </button>
                                     </td>
                                     <td className="px-5 py-3 text-right whitespace-nowrap">
+                                        <button onClick={() => sponsoriser(b)} className={`text-sm mr-4 ${b.sponsored_until && new Date(b.sponsored_until) > new Date() ? "text-amber-700 font-medium" : "text-slate-600 dark:text-slate-300"}`}>
+                                            {b.sponsored_until && new Date(b.sponsored_until) > new Date() ? "Sponsorisée" : "Sponsoriser"}
+                                        </button>
                                         <button onClick={() => setOuverte(b)} className="text-sm text-slate-600 dark:text-slate-300 mr-4">Fiche</button>
                                         <button onClick={() => renommer(b)} className="text-sm text-slate-600 dark:text-slate-300 mr-4">Renommer</button>
                                         <button onClick={() => changer(b, { status: b.status === "active" ? "suspended" : "active" })} className={`text-sm ${b.status === "active" ? "text-rose-600" : "text-slate-900 dark:text-white"}`}>

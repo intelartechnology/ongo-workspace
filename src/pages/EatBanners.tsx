@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 import MainLayout from "./MainLayout";
 import ApiService from "../services/ApiService";
+import { apercu, envoyerSiBesoin } from "../services/images";
+import ImageField from "./components/ImageField";
 import EatTargetPicker, { cibleComplete, decrireCible } from "./components/EatTargetPicker";
 import type { TargetOptions, TargetType } from "./components/EatTargetPicker";
 
@@ -17,7 +19,7 @@ import type { TargetOptions, TargetType } from "./components/EatTargetPicker";
  * choisit que l'image, son format, où elle mène et quand elle s'affiche.
  */
 
-type Placement = "hero" | "deals";
+type Placement = "hero" | "deals" | "stores";
 
 interface Banniere {
     id: number;
@@ -44,6 +46,7 @@ const champ = "w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-s
 const EMPLACEMENTS: Record<Placement, { titre: string; aide: string }> = {
     hero: { titre: "Entrée", aide: "Le carrousel en haut de l'accueil. Format large 1240 × 600 px." },
     deals: { titre: "Meilleurs deals", aide: "La rangée sous « Laissez-vous tenter ». Large 1240 × 600 px ou carré 600 × 600 px." },
+    stores: { titre: "Magasins", aide: "En haut de l'écran « Magasins ». Format large 1240 × 600 px." },
 };
 
 const vide = (placement: Placement) => ({
@@ -73,7 +76,11 @@ export default function EatBanners({ onLogout, theme, toggleTheme }: EatBannersP
     const [bannieres, setBannieres] = useState<Banniere[]>([]);
     const [options, setOptions] = useState<TargetOptions>({ stores: [], tags: [], campaigns: [], promo_codes: [] });
     const [form, setForm] = useState<ReturnType<typeof vide> | null>(null);
+    // Le visuel choisi, envoyé seulement à l'enregistrement.
+    const [fichier, setFichier] = useState<File | null>(null);
     const [envoi, setEnvoi] = useState(false);
+
+    useEffect(() => setFichier(null), [form === null, form?.id]);
 
     const api = new ApiService();
 
@@ -88,6 +95,8 @@ export default function EatBanners({ onLogout, theme, toggleTheme }: EatBannersP
                     tags: data.data.tags ?? [],
                     campaigns: data.data.campaigns ?? [],
                     promo_codes: data.data.promo_codes ?? [],
+                    categories: data.data.categories ?? [],
+                    aisles: data.data.aisles ?? [],
                 });
             }
         } catch (erreur) {
@@ -107,40 +116,37 @@ export default function EatBanners({ onLogout, theme, toggleTheme }: EatBannersP
         return true;
     };
 
-    const televerser = async (fichier: File) => {
-        setEnvoi(true);
-
-        try {
-            const { data } = await api.uploadImage(fichier);
-
-            if (data.success) {
-                setForm((f) => (f === null ? f : { ...f, image: data.data }));
-            } else {
-                Swal.fire({ icon: "error", title: "Image refusée", text: data.message });
-            }
-        } catch (erreur) {
-            Swal.fire({ icon: "error", title: "Envoi impossible", text: String(erreur) });
-        }
-
-        setEnvoi(false);
-    };
-
     const enregistrer = async () => {
         if (!form) return;
+
+        setEnvoi(true);
+
+        let image: string | null;
+
+        try {
+            image = await envoyerSiBesoin(fichier, form.image || null);
+        } catch (erreur) {
+            setEnvoi(false);
+            Swal.fire({ icon: "error", title: "Image non envoyée", text: String((erreur as Error).message ?? erreur) });
+            return;
+        }
 
         const { data } = await api.postData("v3/admin/eat/banners", {
             id: form.id,
             placement: form.placement,
             title: form.title,
-            image: form.image,
+            image,
             // L'entrée n'a qu'un format.
-            format: form.placement === "hero" ? "wide" : form.format,
+            // L'entrée et l'écran Magasins n'ont qu'un format.
+            format: form.placement === "deals" ? form.format : "wide",
             promo_code: form.promo_code || null,
             target_type: form.target_type || null,
             target_value: form.target_value || null,
             starts_at: form.starts_at || null,
             ends_at: form.ends_at || null,
         });
+
+        setEnvoi(false);
 
         if (echec(data)) return;
 
@@ -203,7 +209,7 @@ export default function EatBanners({ onLogout, theme, toggleTheme }: EatBannersP
     const enCours = (b: Banniere) =>
         b.is_active && (!b.starts_at || new Date(b.starts_at) <= new Date()) && (!b.ends_at || new Date(b.ends_at) >= new Date());
 
-    const valide = !!form && form.title.trim() !== "" && form.image !== "" && cibleComplete(form.target_type, form.target_value);
+    const valide = !!form && form.title.trim() !== "" && (form.image !== "" || fichier !== null) && cibleComplete(form.target_type, form.target_value);
 
     // L'aperçu d'une rangée, comme dans l'application.
     const Rangee = ({ elements, placement }: { elements: { image: string; format: "wide" | "square" }[]; placement: Placement }) =>
@@ -280,6 +286,7 @@ export default function EatBanners({ onLogout, theme, toggleTheme }: EatBannersP
                                         <select className={champ} value={form.placement} onChange={(e) => setForm({ ...form, placement: e.target.value as Placement })}>
                                             <option value="hero">Entrée (en haut)</option>
                                             <option value="deals">Meilleurs deals</option>
+                                            <option value="stores">Écran Magasins</option>
                                         </select>
                                     </label>
                                     <label>
@@ -310,11 +317,19 @@ export default function EatBanners({ onLogout, theme, toggleTheme }: EatBannersP
                                     </div>
                                 )}
 
-                                <label className="block">
-                                    <span className="text-xs font-semibold uppercase text-slate-500">Visuel du graphiste</span>
-                                    <input type="file" accept="image/*" className="block mt-1 text-sm" disabled={envoi} onChange={(e) => e.target.files?.[0] && televerser(e.target.files[0])} />
-                                    {envoi && <span className="text-xs text-slate-400">Envoi…</span>}
-                                </label>
+                                <ImageField
+                                    label="Visuel du graphiste"
+                                    hint="Depuis la galerie d'Ongo ou l'ordinateur."
+                                    adresse={form.image}
+                                    fichier={fichier}
+                                    owner="ongo"
+                                    disabled={envoi}
+                                    forme={form.placement === "deals" && form.format === "square" ? "aspect-square" : "aspect-[2/1]"}
+                                    onChange={(image, choisi) => {
+                                        setForm({ ...form, image });
+                                        setFichier(choisi);
+                                    }}
+                                />
 
                                 <EatTargetPicker
                                     type={form.target_type}
@@ -351,7 +366,7 @@ export default function EatBanners({ onLogout, theme, toggleTheme }: EatBannersP
                             <div>
                                 <p className="text-xs font-semibold uppercase text-slate-500 mb-2">Aperçu</p>
                                 <div className="p-4 rounded-2xl bg-white border border-slate-200 dark:bg-slate-950 dark:border-slate-800 overflow-hidden">
-                                    <Rangee elements={[{ image: form.image, format: form.format }, { image: "", format: "square" }]} placement={form.placement} />
+                                    <Rangee elements={[{ image: apercu(fichier, form.image), format: form.format }, { image: "", format: "square" }]} placement={form.placement} />
                                 </div>
                                 <p className="text-xs text-slate-400 mt-2">{decrireCible(form.target_type || null, form.target_value, options)}</p>
                             </div>
@@ -366,7 +381,7 @@ export default function EatBanners({ onLogout, theme, toggleTheme }: EatBannersP
                                 disabled={!valide || envoi}
                                 className="px-5 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium disabled:opacity-40 dark:bg-white dark:text-slate-900"
                             >
-                                Enregistrer
+                                {envoi ? "Envoi…" : "Enregistrer"}
                             </button>
                         </div>
                     </div>

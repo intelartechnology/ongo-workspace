@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Swal from "sweetalert2";
-import ApiService from "../../services/ApiService";
+import { apercu, envoyerSiBesoin, GALERIE_ONGO } from "../../services/images";
+import ImageField from "./ImageField";
 
 /**
  * La fiche d'une boutique — commune à l'espace marchand et au workspace.
@@ -38,11 +39,15 @@ interface Props {
     // Enregistrer : l'appelant sait où (espace marchand ou workspace).
     onSave: (champs: Record<string, unknown>) => Promise<boolean>;
     readOnly?: boolean;
+    /** La galerie où choisir et ranger les images : celle du marchand, ou celle d'Ongo. */
+    galerie?: string;
+    /** Depuis le workspace : les nouvelles images vont chez ce marchand. */
+    merchantId?: number | null;
 }
 
 const champ = "w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white disabled:opacity-60";
 
-export default function StoreProfileForm({ fiche, cuisines, onSave, readOnly = false }: Props) {
+export default function StoreProfileForm({ fiche, cuisines, onSave, readOnly = false, galerie = GALERIE_ONGO, merchantId = null }: Props) {
     const [f, setF] = useState({
         description: fiche.description ?? "",
         logo: fiche.logo ?? "",
@@ -56,23 +61,9 @@ export default function StoreProfileForm({ fiche, cuisines, onSave, readOnly = f
         prep_minutes: String(fiche.prep_minutes ?? 20),
         tags: fiche.tags ?? [],
     });
-    const [envoi, setEnvoi] = useState<string | null>(null);
+    // Logo et bannière choisis, envoyés seulement à l'enregistrement.
+    const [fichiers, setFichiers] = useState<{ logo: File | null; banner: File | null }>({ logo: null, banner: null });
     const [enregistrement, setEnregistrement] = useState(false);
-
-    const televerser = async (fichier: File, cle: "logo" | "banner") => {
-        setEnvoi(cle);
-
-        try {
-            const { data } = await new ApiService().uploadImage(fichier);
-
-            if (data.success) setF((x) => ({ ...x, [cle]: data.data }));
-            else Swal.fire({ icon: "error", title: "Image refusée", text: data.message });
-        } catch (erreur) {
-            Swal.fire({ icon: "error", title: "Envoi impossible", text: String(erreur) });
-        }
-
-        setEnvoi(null);
-    };
 
     const basculerCuisine = (slug: string) =>
         setF((x) => ({ ...x, tags: x.tags.includes(slug) ? x.tags.filter((t) => t !== slug) : x.tags.length >= 5 ? x.tags : [...x.tags, slug] }));
@@ -80,12 +71,32 @@ export default function StoreProfileForm({ fiche, cuisines, onSave, readOnly = f
     const enregistrer = async () => {
         setEnregistrement(true);
 
-        await onSave({
+        let logo: string | null;
+        let banner: string | null;
+
+        try {
+            logo = await envoyerSiBesoin(fichiers.logo, f.logo || null, galerie, merchantId);
+            banner = await envoyerSiBesoin(fichiers.banner, f.banner || null, galerie, merchantId);
+        } catch (erreur) {
+            setEnregistrement(false);
+            Swal.fire({ icon: "error", title: "Image non envoyée", text: String((erreur as Error).message ?? erreur) });
+            return;
+        }
+
+        const ok = await onSave({
             ...f,
+            logo,
+            banner,
             prep_minutes: Number(f.prep_minutes),
             latitude: f.latitude === "" ? null : Number(f.latitude),
             longitude: f.longitude === "" ? null : Number(f.longitude),
         });
+
+        // Enregistrées : les adresses remplacent les fichiers.
+        if (ok) {
+            setF((x) => ({ ...x, logo: logo ?? "", banner: banner ?? "" }));
+            setFichiers({ logo: null, banner: null });
+        }
 
         setEnregistrement(false);
     };
@@ -97,16 +108,33 @@ export default function StoreProfileForm({ fiche, cuisines, onSave, readOnly = f
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-8">
             <div className="space-y-5">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <label>
-                        <span className="text-xs font-semibold uppercase text-slate-500">Logo</span>
-                        <input type="file" accept="image/*" className="block mt-1 text-sm" disabled={readOnly || envoi !== null} onChange={(e) => e.target.files?.[0] && televerser(e.target.files[0], "logo")} />
-                        <span className="text-xs text-slate-400">{envoi === "logo" ? "Envoi…" : "Carré, 400 × 400 px"}</span>
-                    </label>
-                    <label>
-                        <span className="text-xs font-semibold uppercase text-slate-500">Bannière</span>
-                        <input type="file" accept="image/*" className="block mt-1 text-sm" disabled={readOnly || envoi !== null} onChange={(e) => e.target.files?.[0] && televerser(e.target.files[0], "banner")} />
-                        <span className="text-xs text-slate-400">{envoi === "banner" ? "Envoi…" : "Paysage, 1200 × 600 px : vos plats, pas votre façade"}</span>
-                    </label>
+                    <ImageField
+                        label="Logo"
+                        hint="Carré, 400 × 400 px"
+                        adresse={f.logo}
+                        fichier={fichiers.logo}
+                        galerie={galerie}
+                        owner={merchantId ? "merchants" : undefined}
+                        disabled={readOnly || enregistrement}
+                        forme="aspect-square"
+                        onChange={(logo, choisi) => {
+                            setF({ ...f, logo });
+                            setFichiers({ ...fichiers, logo: choisi });
+                        }}
+                    />
+                    <ImageField
+                        label="Bannière"
+                        hint="Paysage, 1200 × 600 px : vos plats, pas votre façade"
+                        adresse={f.banner}
+                        fichier={fichiers.banner}
+                        galerie={galerie}
+                        owner={merchantId ? "merchants" : undefined}
+                        disabled={readOnly || enregistrement}
+                        onChange={(banner, choisi) => {
+                            setF({ ...f, banner });
+                            setFichiers({ ...fichiers, banner: choisi });
+                        }}
+                    />
                     <label className="md:col-span-2">
                         <span className="text-xs font-semibold uppercase text-slate-500">Description</span>
                         <textarea className={champ} rows={2} maxLength={500} disabled={readOnly} value={f.description} placeholder="Cuisine camerounaise maison, poulet DG et ndolé tous les jours" onChange={(e) => setF({ ...f, description: e.target.value })} />
@@ -169,10 +197,10 @@ export default function StoreProfileForm({ fiche, cuisines, onSave, readOnly = f
                     <div className="flex justify-end">
                         <button
                             onClick={enregistrer}
-                            disabled={enregistrement || envoi !== null}
+                            disabled={enregistrement}
                             className="px-5 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium disabled:opacity-40 dark:bg-white dark:text-slate-900"
                         >
-                            Enregistrer la fiche
+                            {enregistrement ? "Enregistrement…" : "Enregistrer la fiche"}
                         </button>
                     </div>
                 )}
@@ -182,12 +210,12 @@ export default function StoreProfileForm({ fiche, cuisines, onSave, readOnly = f
             <div>
                 <p className="text-xs font-semibold uppercase text-slate-500 mb-2">Chez le client</p>
                 <div className="rounded-3xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
-                    <div className="h-40 bg-slate-100 dark:bg-slate-800" style={{ background: f.banner ? undefined : f.brand_color }}>
-                        {f.banner && <img src={f.banner} alt="" className="w-full h-full object-cover" />}
+                    <div className="h-40 bg-slate-100 dark:bg-slate-800" style={{ background: apercu(fichiers.banner, f.banner) ? undefined : f.brand_color }}>
+                        {apercu(fichiers.banner, f.banner) && <img src={apercu(fichiers.banner, f.banner)} alt="" className="w-full h-full object-cover" />}
                     </div>
                     <div className="px-4 pb-5 -mt-8">
                         <div className="w-16 h-16 rounded-2xl overflow-hidden border-4 border-white dark:border-slate-950 bg-slate-100">
-                            {f.logo && <img src={f.logo} alt="" className="w-full h-full object-cover" />}
+                            {apercu(fichiers.logo, f.logo) && <img src={apercu(fichiers.logo, f.logo)} alt="" className="w-full h-full object-cover" />}
                         </div>
                         <p className="mt-2 text-2xl font-black uppercase tracking-tight text-slate-900 dark:text-white">{fiche.name}</p>
                         <p className="text-sm text-slate-500">{nomsCuisines.join(", ") || "Aucune cuisine"}</p>

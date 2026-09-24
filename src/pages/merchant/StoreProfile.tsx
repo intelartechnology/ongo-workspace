@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 import ApiService from "../../services/ApiService";
 import StoreProfileForm from "../components/StoreProfileForm";
+import { galerieMarchand } from "../../services/images";
 import type { Cuisine, Fiche } from "../components/StoreProfileForm";
 
 /**
@@ -57,7 +58,7 @@ export default function StoreProfile({ merchantId, storeId, canEdit }: StoreProf
     return (
         <section>
             {!canEdit && <p className="text-sm text-amber-700 mb-4">Seuls le propriétaire et le gérant modifient la fiche.</p>}
-            <StoreProfileForm key={fiche.id} fiche={fiche} cuisines={cuisines} onSave={enregistrer} readOnly={!canEdit} />
+            <StoreProfileForm key={fiche.id} fiche={fiche} cuisines={cuisines} onSave={enregistrer} readOnly={!canEdit} galerie={galerieMarchand(merchantId)} />
         </section>
     );
 }
