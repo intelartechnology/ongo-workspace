@@ -5,7 +5,9 @@ import ApiService from "../../services/ApiService";
 import Loading from "../../components/Loading";
 import OrderDesk from "./OrderDesk";
 import Catalog from "./Catalog";
+import Sponsorships from "./Sponsorships";
 import Revenue from "./Revenue";
+import Stats from "./Stats";
 import Delivery from "./Delivery";
 import Promotions from "./Promotions";
 import Hours from "./Hours";
@@ -29,6 +31,10 @@ import { galerieMarchand } from "../../services/images";
  * requête, et répond la même chose à un marchand inconnu et à un marchand
  * interdit.
  */
+
+interface MerchantSpaceProps {
+    onLogout: () => void;
+}
 
 interface Boutique {
     id: number;
@@ -60,15 +66,99 @@ interface Livreur {
     matricule: string | null;
 }
 
-type Onglet = "commandes" | "horaires" | "boutique" | "paiement" | "catalogue" | "avis" | "promotions" | "livraison" | "livreurs" | "equipe" | "photos" | "collections" | "revenus";
+type Onglet = "commandes" | "horaires" | "boutique" | "paiement" | "catalogue" | "avis" | "promotions" | "livraison" | "livreurs" | "equipe" | "photos" | "collections" | "revenus" | "campagnes" | "statistiques";
 
-export default function MerchantSpace() {
+interface Groupe {
+    cle: string;
+    libelle: string;
+    icone: string;
+    onglets: { cle: Onglet; libelle: string }[];
+}
+
+/**
+ * Les quinze écrans, en six familles.
+ *
+ * Alignés en une seule rangée, ils débordaient de l'écran : « Statistiques »
+ * et « Sponsorings » vivaient derrière un défilement horizontal que personne
+ * ne pense à faire. Groupés, tout se voit d'un coup, et l'ordre raconte la
+ * journée d'un restaurateur — ce qui tourne maintenant, ce qu'il vend, ce
+ * qu'il met en avant, qui livre, ce que ça rapporte, et le reste.
+ *
+ * Le groupe n'est pas un état de plus : il se déduit de l'onglet ouvert. Un
+ * second état pourrait le contredire — groupe « Finances » affiché, écran des
+ * commandes dessous.
+ */
+const GROUPES: Groupe[] = [
+    {
+        cle: "activite",
+        libelle: "Activité",
+        icone: "receipt_long",
+        onglets: [
+            { cle: "commandes", libelle: "Commandes" },
+            { cle: "horaires", libelle: "Horaires" },
+            { cle: "avis", libelle: "Avis" },
+        ],
+    },
+    {
+        cle: "offre",
+        libelle: "Catalogue",
+        icone: "restaurant_menu",
+        onglets: [
+            { cle: "catalogue", libelle: "Produits" },
+            { cle: "collections", libelle: "Collections" },
+            { cle: "photos", libelle: "Photos" },
+        ],
+    },
+    {
+        // La régie : ce qu'il met en avant, et ce que cela rapporte.
+        cle: "marketing",
+        libelle: "Marketing",
+        icone: "campaign",
+        onglets: [
+            { cle: "promotions", libelle: "Promotions" },
+            { cle: "campagnes", libelle: "Sponsorings" },
+            { cle: "statistiques", libelle: "Statistiques" },
+        ],
+    },
+    {
+        cle: "livraison",
+        libelle: "Livraison",
+        icone: "local_shipping",
+        onglets: [
+            { cle: "livraison", libelle: "Frais" },
+            { cle: "livreurs", libelle: "Livreurs" },
+        ],
+    },
+    {
+        cle: "finances",
+        libelle: "Finances",
+        icone: "payments",
+        onglets: [
+            { cle: "revenus", libelle: "Revenus" },
+            { cle: "paiement", libelle: "Moyens de paiement" },
+        ],
+    },
+    {
+        cle: "reglages",
+        libelle: "Réglages",
+        icone: "settings",
+        onglets: [
+            { cle: "boutique", libelle: "Boutique" },
+            { cle: "equipe", libelle: "Équipe" },
+        ],
+    },
+];
+
+export default function MerchantSpace({ onLogout }: MerchantSpaceProps) {
     const { merchantId } = useParams<{ merchantId: string }>();
 
     const [marchand, setMarchand] = useState<Marchand | null>(null);
     const [boutique, setBoutique] = useState<Boutique | null>(null);
     const [onglet, setOnglet] = useState<Onglet>("commandes");
     const [livreurs, setLivreurs] = useState<Livreur[]>([]);
+
+    /** Les types de véhicule qui livrent : moto, tricycle, fourgon. */
+    const [typesVehicule, setTypesVehicule] = useState<{ id: number; libelle: string }[]>([]);
     const [chargement, setChargement] = useState<boolean>(true);
     const [refus, setRefus] = useState<string | null>(null);
 
@@ -101,6 +191,19 @@ export default function MerchantSpace() {
         } catch (erreur) {
             Swal.fire({ icon: "warning", title: "Livreurs illisibles", text: String(erreur) });
         }
+
+        // Les types de véhicule, une fois : la liste ne bouge pas d'une
+        // session à l'autre.
+        if (typesVehicule.length > 0) return;
+
+        try {
+            const { data } = await api.getData(`v3/merchant/${merchantId}/couriers/categories`);
+
+            if (data.success) setTypesVehicule(data.data ?? []);
+        } catch {
+            // Sans la liste, le formulaire retombe sur la moto : c'est le cas
+            // courant, et mieux vaut un ajout possible qu'un écran bloqué.
+        }
     };
 
     useEffect(() => {
@@ -111,32 +214,98 @@ export default function MerchantSpace() {
         if (onglet === "livreurs") chargerLivreurs();
     }, [onglet]);
 
+    /**
+     * Ajouter un livreur, en deux temps.
+     *
+     * Le formulaire demandait « l'identifiant de son compte Ongo » : le
+     * numéro de ligne en base. Un restaurateur ne l'a jamais vu de sa vie —
+     * il connaît le téléphone de son livreur. L'écran était donc inutilisable
+     * sans que quelqu'un ouvre la base à sa place.
+     *
+     * Le nom s'affiche avant de valider, comme pour un envoi d'argent : un
+     * chiffre de trop rattache le livreur de quelqu'un d'autre, et rien à
+     * l'écran ne l'aurait dit.
+     */
     const ajouterLivreur = async () => {
         const choix = await Swal.fire({
             title: "Ajouter un livreur",
             html:
-                `<input id="compte" class="swal2-input" placeholder="Identifiant de son compte Ongo">` +
-                `<input id="matricule" class="swal2-input" placeholder="Immatriculation de sa moto">` +
+                `<input id="phone" class="swal2-input" type="tel" placeholder="Son numéro : 6 55 00 11 22">` +
+                `<input id="matricule" class="swal2-input" placeholder="Immatriculation de son véhicule">` +
                 `<input id="modele" class="swal2-input" placeholder="Modèle (facultatif)">` +
+                (typesVehicule.length > 0
+                    ? `<select id="categorie" class="swal2-select" style="width:min(100%,20.5em);margin:1em auto 0">` +
+                      typesVehicule
+                          .map((t) => `<option value="${t.id}">${t.libelle}</option>`)
+                          .join("") +
+                      `</select>`
+                    : "") +
                 `<p style="font-size:13px;color:#64748b;margin-top:8px">Il doit déjà avoir un compte Ongo — le même que pour commander une course.</p>`,
             focusConfirm: false,
             showCancelButton: true,
-            confirmButtonText: "Ajouter",
+            confirmButtonText: "Continuer",
             cancelButtonText: "Annuler",
             preConfirm: () => ({
-                compte: (document.getElementById("compte") as HTMLInputElement)?.value,
+                phone: (document.getElementById("phone") as HTMLInputElement)?.value,
                 matricule: (document.getElementById("matricule") as HTMLInputElement)?.value,
                 modele: (document.getElementById("modele") as HTMLInputElement)?.value,
+                categorie: (document.getElementById("categorie") as HTMLSelectElement)?.value,
             }),
         });
 
-        if (!choix.isConfirmed || !choix.value?.compte || !choix.value?.matricule) return;
+        if (!choix.isConfirmed || !choix.value?.phone || !choix.value?.matricule) return;
+
+        // Qui est derrière ce numéro ? On le montre avant d'engager quoi que
+        // ce soit.
+        let compte: { nom: string; telephone: string; already: boolean };
+
+        try {
+            const { data } = await api.postData(`v3/merchant/${merchantId}/couriers/lookup`, {
+                phone: choix.value.phone,
+            });
+
+            if (!data.success) {
+                Swal.fire({ icon: "error", title: "Compte introuvable", text: data.message });
+
+                return;
+            }
+
+            compte = data.data;
+        } catch (erreur) {
+            Swal.fire({ icon: "error", title: "Recherche impossible", text: String(erreur) });
+
+            return;
+        }
+
+        if (compte.already) {
+            Swal.fire({
+                icon: "info",
+                title: `${compte.nom} est déjà l'un de vos livreurs`,
+                text: "Rien à ajouter.",
+            });
+
+            return;
+        }
+
+        const confirmation = await Swal.fire({
+            icon: "question",
+            title: compte.nom || compte.telephone,
+            html:
+                `<p style="font-size:14px;color:#334155">${compte.telephone}</p>` +
+                `<p style="font-size:13px;color:#64748b;margin-top:10px">Ajouter cette personne à vos livreurs ?</p>`,
+            showCancelButton: true,
+            confirmButtonText: "Oui, c'est lui",
+            cancelButtonText: "Non",
+        });
+
+        if (!confirmation.isConfirmed) return;
 
         try {
             const { data } = await api.postData(`v3/merchant/${merchantId}/couriers`, {
-                user_id: Number(choix.value.compte),
+                phone: choix.value.phone,
                 matricule: choix.value.matricule,
                 modele: choix.value.modele,
+                categorie_id: choix.value.categorie ? Number(choix.value.categorie) : undefined,
                 store_id: boutique?.id,
             });
 
@@ -196,31 +365,32 @@ export default function MerchantSpace() {
                         Soit ce marchand n'existe pas, soit votre compte n'y a pas sa place. Contactez Ongo si vous
                         pensez qu'il s'agit d'une erreur.
                     </p>
+
+                    {/*
+                        Sans ce bouton, un compte envoyé sur le mauvais espace n'a
+                        plus aucune sortie : ni barre latérale, ni menu, et l'URL
+                        le ramène ici à chaque ouverture.
+                    */}
+                    <button
+                        onClick={onLogout}
+                        className="mt-6 px-5 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium dark:bg-white dark:text-slate-900"
+                    >
+                        Se déconnecter
+                    </button>
                 </div>
             </div>
         );
     }
 
-    const onglets: { cle: Onglet; libelle: string }[] = [
-        { cle: "commandes", libelle: "Commandes" },
-        { cle: "horaires", libelle: "Horaires" },
-        { cle: "boutique", libelle: "Boutique" },
-        { cle: "catalogue", libelle: "Catalogue" },
-        { cle: "avis", libelle: "Avis" },
-        { cle: "promotions", libelle: "Promotions" },
-        { cle: "collections", libelle: "Collections" },
-        { cle: "livraison", libelle: "Livraison" },
-        { cle: "paiement", libelle: "Paiement" },
-        { cle: "livreurs", libelle: "Livreurs" },
-        { cle: "equipe", libelle: "Équipe" },
-        { cle: "photos", libelle: "Photos" },
-        { cle: "revenus", libelle: "Revenus" },
-    ];
-
-    // La cuisine ne touche ni au catalogue ni aux livreurs.
     // La cuisine voit ses commandes, et les horaires pour fermer ou ouvrir
-    // dans la journée ; ni le catalogue, ni les livreurs, ni l'argent.
-    const visibles = marchand.role === "staff" ? onglets.slice(0, 2) : onglets;
+    // dans la journée ; ni le catalogue, ni les livreurs, ni l'argent. Un
+    // seul groupe, donc : sa rangée ne s'affiche pas.
+    const visibles: Groupe[] =
+        marchand.role === "staff"
+            ? [{ ...GROUPES[0], onglets: GROUPES[0].onglets.slice(0, 2) }]
+            : GROUPES;
+
+    const groupeOuvert = visibles.find((g) => g.onglets.some((o) => o.cle === onglet)) ?? visibles[0];
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
@@ -235,21 +405,69 @@ export default function MerchantSpace() {
                             </p>
                         </div>
 
-                        {marchand.stores.length > 1 && (
-                            <select
-                                value={boutique?.id ?? ""}
-                                onChange={(e) => setBoutique(marchand.stores.find((b) => b.id === Number(e.target.value)) ?? null)}
-                                className="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                        <div className="flex items-center gap-3 shrink-0">
+                            {marchand.stores.length > 1 && (
+                                <select
+                                    value={boutique?.id ?? ""}
+                                    onChange={(e) => setBoutique(marchand.stores.find((b) => b.id === Number(e.target.value)) ?? null)}
+                                    className="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                                >
+                                    {marchand.stores.map((b) => (
+                                        <option key={b.public_id} value={b.id}>{b.name}</option>
+                                    ))}
+                                </select>
+                            )}
+
+                            {/*
+                                L'espace marchand n'emprunte pas la barre latérale
+                                d'administration : c'est voulu, mais la déconnexion
+                                y vivait, et un restaurateur restait connecté sans
+                                aucun moyen de sortir.
+                            */}
+                            <button
+                                onClick={onLogout}
+                                title="Se déconnecter"
+                                className="flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-300 text-sm text-slate-600 hover:text-slate-900 dark:border-slate-700 dark:text-slate-300 dark:hover:text-white"
                             >
-                                {marchand.stores.map((b) => (
-                                    <option key={b.public_id} value={b.id}>{b.name}</option>
-                                ))}
-                            </select>
-                        )}
+                                <span className="material-symbols-outlined text-xl">logout</span>
+                                <span className="hidden sm:inline">Déconnexion</span>
+                            </button>
+                        </div>
                     </div>
 
-                    <nav className="flex gap-6 mt-5 overflow-x-auto whitespace-nowrap">
-                        {visibles.map(({ cle, libelle }) => (
+                    {/*
+                        Deux niveaux : la famille, puis l'écran.
+
+                        Ouvrir une famille mène à son premier écran — un groupe
+                        sélectionné qui n'afficherait rien serait un clic pour
+                        rien. Un seul groupe (la cuisine) et sa rangée
+                        disparaît : un onglet unique n'est pas un choix.
+                    */}
+                    {visibles.length > 1 && (
+                        <nav className="flex flex-wrap gap-2 mt-5">
+                            {visibles.map((groupe) => {
+                                const ouvert = groupe.cle === groupeOuvert.cle;
+
+                                return (
+                                    <button
+                                        key={groupe.cle}
+                                        onClick={() => setOnglet(groupe.onglets[0].cle)}
+                                        className={`flex items-center gap-2 px-3.5 py-2 rounded-full text-sm font-medium transition ${
+                                            ouvert
+                                                ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
+                                                : "bg-slate-100 text-slate-600 hover:text-slate-900 dark:bg-slate-800 dark:text-slate-300 dark:hover:text-white"
+                                        }`}
+                                    >
+                                        <span className="material-symbols-outlined text-lg">{groupe.icone}</span>
+                                        {groupe.libelle}
+                                    </button>
+                                );
+                            })}
+                        </nav>
+                    )}
+
+                    <nav className="flex gap-6 mt-4 overflow-x-auto whitespace-nowrap">
+                        {groupeOuvert.onglets.map(({ cle, libelle }) => (
                             <button
                                 key={cle}
                                 onClick={() => setOnglet(cle)}
@@ -293,6 +511,10 @@ export default function MerchantSpace() {
                     <Delivery merchantId={merchantId!} storeId={boutique.id} />
                 ) : onglet === "revenus" ? (
                     <Revenue merchantId={merchantId!} />
+                ) : onglet === "campagnes" ? (
+                    <Sponsorships merchantId={merchantId!} canEdit={marchand.role !== "staff"} />
+                ) : onglet === "statistiques" ? (
+                    <Stats merchantId={merchantId!} />
                 ) : (
                     <section>
                         <div className="flex items-center justify-between mb-6">

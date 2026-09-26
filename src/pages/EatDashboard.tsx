@@ -42,6 +42,8 @@ interface Commande {
     user_id: number | null;
     courier_id: number | null;
     customer: { nom: string | null; telephone: string | null } | null;
+    paid_at?: string | null;
+    refunded_amount?: number;
     courier: { nom: string | null; telephone: string | null } | null;
 }
 
@@ -93,6 +95,138 @@ export default function EatDashboard({ onLogout, theme, toggleTheme }: EatDashbo
         status: statut || undefined,
         q: recherche.trim() || undefined,
     });
+
+    /**
+     * Annuler une commande qui ne peut plus aboutir.
+     *
+     * Un motif, puis le montant à rendre : les deux dans la même fenêtre,
+     * parce qu'on décide des deux en même temps — annuler sans rendre
+     * l'argent d'un client qui a payé n'a pas de sens.
+     */
+    const annuler = async (commande: Commande) => {
+        const reponse = await Swal.fire({
+            icon: "warning",
+            title: `Annuler la commande ${commande.code} ?`,
+            html: `<p class="text-sm text-left">Le client et le marchand seront prévenus.</p>`,
+            input: "text",
+            inputLabel: "Pourquoi ? Le client le lira.",
+            inputPlaceholder: "Livreur introuvable, boutique injoignable…",
+            showCancelButton: true,
+            confirmButtonText: "Annuler la commande",
+            cancelButtonText: "Retour",
+            inputValidator: (valeur) => (valeur.trim() === "" ? "Dites pourquoi" : null),
+        });
+
+        if (!reponse.isConfirmed) return;
+
+        const motif = String(reponse.value ?? "");
+        let montant = 0;
+        let payeur = "platform";
+
+        if (commande.paid_at) {
+            const rendu = await demanderLeMontant(commande, "Rendre au client");
+
+            if (rendu === null) return;
+
+            montant = rendu.montant;
+            payeur = rendu.payeur;
+        }
+
+        const { data } = await api.postData("v3/admin/eat/orders/cancel", {
+            id: commande.id,
+            reason: motif,
+            refund_amount: montant,
+            refund_paid_by: payeur,
+        });
+
+        if (!data.success) {
+            Swal.fire({ icon: "error", title: data.message });
+
+            return;
+        }
+
+        Swal.fire({ icon: "success", title: data.message, timer: 1600, showConfirmButton: false });
+        charger();
+    };
+
+    /** Rembourser sans annuler : le geste d'après-vente. */
+    const rembourser = async (commande: Commande) => {
+        const rendu = await demanderLeMontant(commande, "Rembourser");
+
+        if (rendu === null || rendu.montant <= 0) return;
+
+        const motif = await Swal.fire({
+            icon: "question",
+            title: "Pourquoi ?",
+            input: "text",
+            inputPlaceholder: "Plat manquant, retard, geste commercial…",
+            showCancelButton: true,
+            confirmButtonText: "Rembourser",
+            cancelButtonText: "Retour",
+            inputValidator: (valeur) => (valeur.trim() === "" ? "Dites pourquoi" : null),
+        });
+
+        if (!motif.isConfirmed) return;
+
+        const { data } = await api.postData("v3/admin/eat/orders/refund", {
+            id: commande.id,
+            amount: rendu.montant,
+            paid_by: rendu.payeur,
+            note: String(motif.value ?? ""),
+        });
+
+        if (!data.success) {
+            Swal.fire({ icon: "error", title: data.message });
+
+            return;
+        }
+
+        Swal.fire({ icon: "success", title: data.message, timer: 1600, showConfirmButton: false });
+        charger();
+    };
+
+    /**
+     * Combien rendre, et qui le paie.
+     *
+     * « Qui paie » n'est pas un détail : tout remboursement était jusqu'ici
+     * retenu au marchand, même quand Ongo offrait. Il a cuisiné et livré —
+     * lui retenir de l'argent pour une décision qui n'est pas la sienne
+     * serait lui faire payer notre geste.
+     */
+    const demanderLeMontant = async (
+        commande: Commande,
+        titre: string,
+    ): Promise<{ montant: number; payeur: string } | null> => {
+        const reste = commande.total - (commande.refunded_amount ?? 0);
+
+        const reponse = await Swal.fire({
+            title: `${titre} — jusqu'à ${francs(reste)}`,
+            html: `
+                <input id="montant" type="number" class="swal2-input" placeholder="Montant en F" value="${reste}" />
+                <select id="payeur" class="swal2-input">
+                    <option value="platform">À la charge d'Ongo</option>
+                    <option value="merchant">À la charge du marchand</option>
+                </select>
+            `,
+            showCancelButton: true,
+            confirmButtonText: "Valider",
+            cancelButtonText: "Retour",
+            preConfirm: () => {
+                const montant = Number((document.getElementById("montant") as HTMLInputElement)?.value ?? 0);
+                const payeur = (document.getElementById("payeur") as HTMLSelectElement)?.value ?? "platform";
+
+                if (!Number.isFinite(montant) || montant < 0 || montant > reste) {
+                    Swal.showValidationMessage(`Entre 0 et ${reste} F`);
+
+                    return false;
+                }
+
+                return { montant, payeur };
+            },
+        });
+
+        return reponse.isConfirmed ? (reponse.value as { montant: number; payeur: string }) : null;
+    };
 
     const charger = async () => {
         setChargement(true);
@@ -300,6 +434,31 @@ export default function EatDashboard({ onLogout, theme, toggleTheme }: EatDashbo
                                             </span>
 
                                             <div className="flex gap-1 shrink-0">
+                                                {/* Le recours : passé l'annulation du client et le
+                                                    refus du marchand, plus personne ne pouvait
+                                                    fermer une commande ni rendre l'argent. */}
+                                                {!["canceled", "rejected"].includes(commande.status) && (
+                                                    <button
+                                                        title="Annuler cette commande"
+                                                        onClick={() => annuler(commande)}
+                                                        className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10"
+                                                    >
+                                                        <span className="material-symbols-outlined text-[18px]">cancel</span>
+                                                        Annuler
+                                                    </button>
+                                                )}
+
+                                                {commande.paid_at && (commande.refunded_amount ?? 0) < commande.total && (
+                                                    <button
+                                                        title="Rembourser tout ou partie"
+                                                        onClick={() => rembourser(commande)}
+                                                        className="inline-flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+                                                    >
+                                                        <span className="material-symbols-outlined text-[18px]">currency_exchange</span>
+                                                        Rembourser
+                                                    </button>
+                                                )}
+
                                                 <button
                                                     title="Notifier le client"
                                                     onClick={() =>

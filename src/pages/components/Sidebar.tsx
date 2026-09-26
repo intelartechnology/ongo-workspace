@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocation, Link } from 'react-router-dom';
+import ApiService from '../../services/ApiService';
 
 interface SidebarProps {
     isOpen: boolean;
@@ -10,6 +11,23 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, user, onLogout }) => {
     const location = useLocation();
+
+    /*
+     * Ce qui attend une décision, relu à chaque changement de page.
+     *
+     * Deux `count` sur un index : assez léger pour être demandé partout, et
+     * c'est le seul moyen qu'une proposition ne dorme pas trois jours. Un
+     * échec ne se signale pas — une pastille absente vaut mieux qu'une
+     * fenêtre d'erreur sur un écran qui parle d'autre chose.
+     */
+    const [aRelire, setARelire] = useState<number>(0);
+
+    useEffect(() => {
+        new ApiService()
+            .getData('v3/admin/eat/reviews/pending')
+            .then(({ data }) => setARelire(data?.success ? (data.data?.total ?? 0) : 0))
+            .catch(() => setARelire(0));
+    }, [location.pathname]);
 
     const menuGroups = [
         {
@@ -87,9 +105,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, user, onLogout }) 
                 { icon: 'view_agenda', label: 'Rubriques', path: '/eat-sections' },
                 { icon: 'sell', label: 'Codes promo', path: '/eat-promo-codes' },
                 { icon: 'credit_card', label: 'Paiements', path: '/eat-payment-methods' },
+                { icon: 'public', label: 'Zones', path: '/eat-service-areas' },
                 { icon: 'filter_list', label: 'Filtres', path: '/eat-filters' },
                 { icon: 'view_carousel', label: 'Bannières', path: '/eat-banners' },
-                { icon: 'campaign', label: 'Campagnes', path: '/eat-campaigns' },
+                { icon: 'campaign', label: 'Pages de redirection', path: '/eat-redirects' },
+                // La régie : ce qu'un marchand propose et qui attend une
+                // décision. Sans cette entrée, une campagne dort dans une
+                // liste que personne n'ouvre — et derrière, c'est quelqu'un
+                // qui a payé et qui attend.
+                { icon: 'campaign', label: 'Sponsorings', path: '/eat-sponsorships', badge: 'reviews' },
                 { icon: 'photo_library', label: 'Galerie', path: '/eat-gallery' },
                 { icon: 'storefront', label: 'Marchands', path: '/merchants' },
                 { icon: 'tune', label: 'Réglages', path: '/settings' },
@@ -168,6 +192,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, user, onLogout }) 
                                         {item.icon}
                                     </span>
                                     <span className="text-sm">{item.label}</span>
+
+                                    {/* La pastille ne s'affiche qu'avec un nombre : « 0 à relire »
+                                        attirerait l'œil pour rien, tous les jours. */}
+                                    {'badge' in item && item.badge === 'reviews' && aRelire > 0 && (
+                                        <span className="ml-auto px-1.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500 text-white">
+                                            {aRelire}
+                                        </span>
+                                    )}
                                 </Link>
                             ))}
                         </div>

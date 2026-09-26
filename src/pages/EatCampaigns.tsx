@@ -10,12 +10,17 @@ import EatTargetPicker, { cibleComplete, decrireCible } from "./components/EatTa
 import type { TargetOptions, TargetType } from "./components/EatTargetPicker";
 
 /**
- * Les pages de campagne : « Économisez sur vos courses ».
+ * Les pages de redirection : « Économisez sur vos courses ».
  *
  * Un visuel d'en-tête, un titre, un texte, puis des tuiles du graphiste qui
  * mènent chacune quelque part — une boutique, un rayon, une cuisine, une
  * autre page, un ticket. Elles s'ouvrent depuis une bannière (choisir « Une
- * page de campagne » comme destination) ou depuis la tuile d'une autre page.
+ * page de redirection » comme destination) ou depuis la tuile d'une autre
+ * page.
+ *
+ * **Pas « campagne »**, bien que la table s'appelle ainsi : ce mot désigne
+ * désormais ce qu'un marchand achète, et l'employer pour les deux faisait
+ * chercher ses propositions dans cet écran-ci.
  *
  * Dans l'application, les tuiles se rangent par rangées de trois unités :
  * une large en vaut deux, une carrée une.
@@ -43,6 +48,11 @@ interface Campagne {
     store_ids: number[] | null;
     store_rules: Regles | null;
     tiles: { image: string; format: "wide" | "square"; target_type: TargetType | null; target_value: string | null }[];
+    // La régie : nul, la campagne est d'Ongo ; sinon c'est une proposition de
+    // marchand, qui ne paraît qu'acceptée.
+    merchant_id: number | null;
+    status: "draft" | "pending" | "approved" | "rejected";
+    review_note: string | null;
 }
 
 interface EatCampaignsProps {
@@ -108,7 +118,7 @@ export default function EatCampaigns({ onLogout, theme, toggleTheme }: EatCampai
                 setOptions({ stores: d.stores ?? [], tags: d.tags ?? [], campaigns: d.campaigns ?? [], promo_codes: d.promo_codes ?? [], categories: d.categories ?? [], aisles: d.aisles ?? [] });
             }
         } catch (erreur) {
-            Swal.fire({ icon: "warning", title: "Campagnes illisibles", text: String(erreur) });
+            Swal.fire({ icon: "warning", title: "Pages illisibles", text: String(erreur) });
         }
     };
 
@@ -222,8 +232,14 @@ export default function EatCampaigns({ onLogout, theme, toggleTheme }: EatCampai
             return { ...f, tiles };
         });
 
+    // « Acceptée » est une condition comme les autres : une campagne en
+    // attente ne paraît nulle part, la liste doit le montrer du premier coup
+    // d'œil plutôt que de la faire passer pour en ligne.
     const enLigne = (c: Campagne) =>
-        c.is_active && (!c.starts_at || new Date(c.starts_at) <= new Date()) && (!c.ends_at || new Date(c.ends_at) > new Date());
+        c.is_active
+        && c.status === "approved"
+        && (!c.starts_at || new Date(c.starts_at) <= new Date())
+        && (!c.ends_at || new Date(c.ends_at) > new Date());
 
     const valide = !!form && form.title.trim() !== "" && form.tiles.every((t) => (t.image !== "" || !!t.fichier) && cibleComplete(t.target_type, t.target_value));
 
@@ -232,8 +248,11 @@ export default function EatCampaigns({ onLogout, theme, toggleTheme }: EatCampai
             <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
                 <div className="px-8 py-6 max-w-7xl mx-auto flex items-start justify-between gap-6">
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Pages de campagne</h1>
-                        <p className="text-sm text-slate-500 mt-1">Ouvertes depuis une bannière ou une tuile. Chaque tuile mène quelque part.</p>
+                        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Pages de redirection</h1>
+                        <p className="text-sm text-slate-500 mt-1">
+                            Ouvertes depuis une bannière ou une tuile. Chaque tuile mène quelque part. Les propositions
+                            des marchands apparaissent ici aussi, mais se décident dans « Validations ».
+                        </p>
                     </div>
                     {!form && (
                         <button onClick={() => setForm({ ...vide, tiles: [] })} className="px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium dark:bg-white dark:text-slate-900">
@@ -478,7 +497,7 @@ export default function EatCampaigns({ onLogout, theme, toggleTheme }: EatCampai
                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                             {campagnes.length === 0 && (
                                 <tr>
-                                    <td colSpan={4} className="px-5 py-6 text-center text-slate-500">Aucune page de campagne.</td>
+                                    <td colSpan={4} className="px-5 py-6 text-center text-slate-500">Aucune page de redirection.</td>
                                 </tr>
                             )}
                             {campagnes.map((c) => (
@@ -489,8 +508,26 @@ export default function EatCampaigns({ onLogout, theme, toggleTheme }: EatCampai
                                                 {c.hero_image && <img src={c.hero_image} alt="" className="w-full h-full object-cover" />}
                                             </div>
                                             <div>
-                                                <p className="font-semibold text-slate-900 dark:text-white">{c.title}</p>
+                                                <p className="font-semibold text-slate-900 dark:text-white">
+                                                    {c.title}
+                                                    {/* L'état, sans la décision : celle-ci se prend dans
+                                                        « Validations ». Sans ce badge, on verrait une
+                                                        campagne hors ligne sans comprendre pourquoi. */}
+                                                    {c.status === "pending" && (
+                                                        <span className="ml-2 px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400">
+                                                            À relire
+                                                        </span>
+                                                    )}
+                                                    {c.status === "rejected" && (
+                                                        <span className="ml-2 px-2 py-0.5 rounded text-xs font-medium bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-400">
+                                                            Refusée
+                                                        </span>
+                                                    )}
+                                                </p>
                                                 <p className="text-xs text-slate-500 font-mono">{c.slug}</p>
+                                                {c.merchant_id !== null && (
+                                                    <p className="text-xs text-slate-400">Proposée par un marchand</p>
+                                                )}
                                             </div>
                                         </div>
                                     </td>

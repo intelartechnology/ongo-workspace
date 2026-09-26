@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Swal from "sweetalert2";
 import ApiService from "../../services/ApiService";
 import { apercu, envoyerSiBesoin, galerieMarchand } from "../../services/images";
@@ -78,6 +78,7 @@ interface Rayon {
     id: number;
     name: string;
     parent_id: number | null;
+    period_id?: number | null;
     category_id?: number | null;
     image?: string | null;
     tags?: Cuisine[];
@@ -85,7 +86,13 @@ interface Rayon {
     products: Produit[];
 }
 
-interface Menu {
+/**
+ * Une périodicité : un morceau de catalogue et ses heures.
+ *
+ * Sans heures, elle vaut toute la journée. C'est le repli quand aucune autre
+ * ne couvre l'instant présent.
+ */
+interface Periodicite {
     id: number;
     name: string;
     is_default: boolean;
@@ -101,7 +108,7 @@ interface CatalogProps {
 const francs = (montant: number) => `${(montant ?? 0).toLocaleString("fr-FR")} F`;
 
 export default function Catalog({ merchantId, storeId, storeType }: CatalogProps) {
-    const [menus, setMenus] = useState<Menu[]>([]);
+    const [periodicites, setPeriodicites] = useState<Periodicite[]>([]);
     const [rayons, setRayons] = useState<Rayon[]>([]);
 
     // Les catégories d'Ongo, auxquelles on associe ses rayons.
@@ -121,6 +128,21 @@ export default function Catalog({ merchantId, storeId, storeType }: CatalogProps
 
     useEffect(() => setPhoto(null), [edition === null, edition?.id]);
 
+    /**
+     * Le formulaire du produit vit en haut de page, la liste des rayons en
+     * dessous. « Ajouter un produit » sur le dixième rayon ouvrait donc un
+     * formulaire hors de l'écran : il ne se passait rien de visible, et il
+     * fallait deviner qu'il fallait remonter.
+     *
+     * Les dépendances ne contiennent pas `edition` : l'objet change à chaque
+     * frappe, et la page remonterait à chaque lettre tapée.
+     */
+    const formulaire = useRef<HTMLElement | null>(null);
+
+    useEffect(() => {
+        if (edition) formulaire.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, [edition === null, edition?.id, edition?.section_id]);
+
     const api = new ApiService();
     const base = `v3/merchant/${merchantId}/stores/${storeId}/catalog`;
 
@@ -135,7 +157,7 @@ export default function Catalog({ merchantId, storeId, storeType }: CatalogProps
             const { data } = await api.getData(base);
 
             if (data.success) {
-                setMenus(data.data.menus ?? []);
+                setPeriodicites(data.data.periods ?? []);
                 setRayons(data.data.sections ?? []);
                 setCategories(data.data.categories ?? []);
                 setCuisines(data.data.cuisines ?? []);
@@ -276,14 +298,24 @@ export default function Catalog({ merchantId, storeId, storeType }: CatalogProps
         if (cree) await envoyer("sections", { section_id: cree.id, name: nom, parent_id: parent, category_id: proche.id }, "Catégorie enregistrée");
     };
 
-    const creerMenu = async () => {
+    const creerPeriodicite = async () => {
+        /*
+         * Des sélecteurs d'heure, pas des champs texte.
+         *
+         * « 11h30 », « 11.30 », « 11:30 du matin » : tapée à la main, une
+         * heure s'écrit de dix façons et le serveur n'en accepte qu'une. Le
+         * sélecteur du navigateur produit toujours « HH:MM », et il sort le
+         * clavier des heures sur un téléphone.
+         */
         const choix = await Swal.fire({
-            title: "Nouveau menu",
+            title: "Nouvelle périodicité",
             html:
                 `<input id="nom" class="swal2-input" placeholder="Midi, Petit-déjeuner…">` +
-                `<input id="debut" class="swal2-input" placeholder="11:30" value="11:30">` +
-                `<input id="fin" class="swal2-input" placeholder="14:00" value="14:00">` +
-                `<p style="font-size:13px;color:#64748b;margin-top:8px">Laissez les heures vides pour un menu disponible toute la journée.</p>`,
+                `<div style="display:flex;gap:10px;justify-content:center;margin-top:12px">` +
+                `<label style="font-size:13px;color:#64748b;text-align:left">De<br><input id="debut" type="time" value="11:30" style="margin-top:4px;padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:15px"></label>` +
+                `<label style="font-size:13px;color:#64748b;text-align:left">à<br><input id="fin" type="time" value="14:00" style="margin-top:4px;padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:15px"></label>` +
+                `</div>` +
+                `<p style="font-size:13px;color:#64748b;margin-top:12px">Videz les deux heures pour une carte disponible toute la journée.</p>`,
             focusConfirm: false,
             showCancelButton: true,
             confirmButtonText: "Créer",
@@ -300,12 +332,12 @@ export default function Catalog({ merchantId, storeId, storeType }: CatalogProps
         const { nom, debut, fin } = choix.value;
 
         // Une plage vaut pour les sept jours : un restaurant qui ferme le lundi
-        // le dit par ses horaires de boutique, pas par son menu.
+        // le dit par ses horaires de boutique, pas par sa périodicité.
         const hours = debut && fin
             ? [0, 1, 2, 3, 4, 5, 6].map((weekday) => ({ weekday, starts_at: debut, ends_at: fin }))
             : [];
 
-        await envoyer("menus", { name: nom, hours, is_default: menus.length === 0 }, "Menu créé");
+        await envoyer("periods", { name: nom, hours, is_default: periodicites.length === 0 }, "Périodicité créée");
     };
 
     /**
@@ -438,6 +470,96 @@ export default function Catalog({ merchantId, storeId, storeType }: CatalogProps
         </div>
     );
 
+    /**
+     * Supprimer une périodicité.
+     *
+     * La confirmation dit combien de rayons y sont accrochés : supprimer
+     * « Midi » sans savoir que six rubriques en dépendent, c'est les faire
+     * toutes réapparaître le soir sans s'en rendre compte.
+     */
+    const supprimerPeriodicite = async (periode: Periodicite) => {
+        const accroches = rayons
+            .flatMap((r) => [r, ...(r.children ?? [])])
+            .filter((r) => r.period_id === periode.id).length;
+
+        const confirmation = await Swal.fire({
+            icon: "warning",
+            title: `Supprimer « ${periode.name} » ?`,
+            text: accroches === 0
+                ? "Aucune rubrique ne l'utilise."
+                : `${accroches} rubrique${accroches > 1 ? "s" : ""} l'utilise${accroches > 1 ? "nt" : ""} : elle${accroches > 1 ? "s" : ""} se verra${accroches > 1 ? "ont" : ""} désormais toute la journée.`,
+            showCancelButton: true,
+            confirmButtonText: "Supprimer",
+            cancelButtonText: "Garder",
+            confirmButtonColor: "#dc2626",
+        });
+
+        if (!confirmation.isConfirmed) return;
+
+        await envoyer("periods/delete", { period_id: periode.id }, "Périodicité supprimée");
+    };
+
+    /** Les heures d'une périodicité, en clair. */
+    const heuresDe = (periode: Periodicite) =>
+        periode.hours.length === 0
+            ? "toute la journée"
+            : `${periode.hours[0].starts_at.slice(0, 5)} – ${periode.hours[0].ends_at.slice(0, 5)}`;
+
+    /** Poser ou retirer la périodicité d'un rayon. */
+    const changerPeriodicite = (rayon: Rayon, periodId: number | null) =>
+        envoyer(
+            "sections",
+            { section_id: rayon.id, name: rayon.name, parent_id: rayon.parent_id, period_id: periodId },
+            periodId ? "Périodicité appliquée" : "Périodicité retirée"
+        );
+
+    /**
+     * La périodicité d'un rayon, sur le rayon lui-même.
+     *
+     * Posée, elle se voit — une pastille avec ses heures et une croix pour la
+     * retirer. Sans elle, le rayon se voit toute la journée, et c'est ce que
+     * dit le sélecteur au repos : la valeur vide n'est pas un trou, c'est un
+     * choix qui a un nom.
+     *
+     * Rien ne s'affiche tant qu'aucune périodicité n'existe : proposer un
+     * réglage dont la liste est vide n'apprend rien.
+     */
+    const pastillePeriodicite = (rayon: Rayon) => {
+        if (commerce || periodicites.length === 0) return null;
+
+        const posee = periodicites.find((p) => p.id === rayon.period_id);
+
+        if (posee) {
+            return (
+                <span className="flex items-center gap-1.5 pl-2.5 pr-1 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-300">
+                    <span className="material-symbols-outlined text-sm leading-none">schedule</span>
+                    {posee.name} · {heuresDe(posee)}
+                    <button
+                        onClick={() => changerPeriodicite(rayon, null)}
+                        title="Retirer la périodicité — ce rayon se verra toute la journée"
+                        className="ml-0.5 h-5 w-5 rounded-full flex items-center justify-center hover:bg-indigo-200 dark:hover:bg-indigo-800"
+                    >
+                        <span className="material-symbols-outlined text-sm leading-none">close</span>
+                    </button>
+                </span>
+            );
+        }
+
+        return (
+            <select
+                title="Périodicité"
+                className="px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs text-slate-600 dark:text-slate-300"
+                value=""
+                onChange={(e) => e.target.value && changerPeriodicite(rayon, Number(e.target.value))}
+            >
+                <option value="">Toute la journée</option>
+                {periodicites.map((p) => (
+                    <option key={p.id} value={p.id}>{p.name} · {heuresDe(p)}</option>
+                ))}
+            </select>
+        );
+    };
+
     /** Une ligne produit : photo, nom, prix, disponibilité, modifier. `sectionId` : son rayon ou sous-rayon. */
     const ligneProduit = (produit: Produit, sectionId: number) => (
                                         <div key={produit.public_id} className="p-4 flex items-center gap-4">
@@ -525,30 +647,40 @@ export default function Catalog({ merchantId, storeId, storeType }: CatalogProps
 
                 {!commerce && (
                     <button
-                        onClick={creerMenu}
+                        onClick={creerPeriodicite}
                         className="px-4 py-2 rounded-lg text-sm font-medium border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300"
                     >
-                        Nouveau menu
+                        Nouvelle périodicité
                     </button>
                 )}
             </div>
 
-            {menus.length > 0 && (
+            {periodicites.length > 0 && (
                 <section className="mb-8">
-                    <h3 className="text-sm font-bold uppercase text-slate-500 mb-3">Menus</h3>
+                    <h3 className="text-sm font-bold uppercase text-slate-500 mb-1">Périodicités</h3>
+                    <p className="text-xs text-slate-500 mb-3">
+                        Appliquez-en une à un {motRayon} pour ne le montrer qu'à ces heures. Sans périodicité, un
+                        {" "}{motRayon} se voit toute la journée.
+                    </p>
 
                     <div className="flex flex-wrap gap-3">
-                        {menus.map((menu) => (
-                            <div key={menu.id} className="px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-                                <p className="font-medium text-slate-900 dark:text-white">
-                                    {menu.name}
-                                    {menu.is_default && <span className="ml-2 text-xs text-slate-500">par défaut</span>}
-                                </p>
-                                <p className="text-xs text-slate-500">
-                                    {menu.hours.length === 0
-                                        ? "toute la journée"
-                                        : `${menu.hours[0].starts_at.slice(0, 5)} – ${menu.hours[0].ends_at.slice(0, 5)}`}
-                                </p>
+                        {periodicites.map((periode) => (
+                            <div key={periode.id} className="pl-4 pr-2 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-start gap-3">
+                                <div>
+                                    <p className="font-medium text-slate-900 dark:text-white">
+                                        {periode.name}
+                                        {periode.is_default && <span className="ml-2 text-xs text-slate-500">par défaut</span>}
+                                    </p>
+                                    <p className="text-xs text-slate-500">{heuresDe(periode)}</p>
+                                </div>
+
+                                <button
+                                    onClick={() => supprimerPeriodicite(periode)}
+                                    title="Supprimer cette périodicité"
+                                    className="h-7 w-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30"
+                                >
+                                    <span className="material-symbols-outlined text-base leading-none">delete</span>
+                                </button>
                             </div>
                         ))}
                     </div>
@@ -556,7 +688,7 @@ export default function Catalog({ merchantId, storeId, storeType }: CatalogProps
             )}
 
             {edition && (
-                <section className="mb-8 p-6 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                <section ref={formulaire} className="mb-8 p-6 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 scroll-mt-6">
                     <h3 className="font-semibold text-slate-900 dark:text-white mb-4">
                         {edition.id ? "Modifier le produit" : "Nouveau produit"}
                     </h3>
@@ -743,6 +875,7 @@ export default function Catalog({ merchantId, storeId, storeType }: CatalogProps
                             <div className="flex items-center justify-between mb-3">
                                 <div className="flex items-center gap-3">
                                     <h3 className="font-semibold text-slate-900 dark:text-white">{rayon.name}</h3>
+                                    {pastillePeriodicite(rayon)}
                                     {/* Associé à une catégorie d'Ongo, ce rayon apparaît aussi dans ses pages
                                         « Boissons », « Viande et volaille »… de toutes les boutiques. */}
                                     {commerce && (
@@ -815,6 +948,7 @@ export default function Catalog({ merchantId, storeId, storeType }: CatalogProps
                                     <div className="flex items-center justify-between mb-2">
                                         <div className="flex items-center gap-3">
                                             <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-100">{sous.name}</h4>
+                                            {pastillePeriodicite(sous)}
                                             {categories.length > 0 && (
                                                 <select
                                                     title="Catégorie Ongo"

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 import MainLayout from "./MainLayout";
 import ApiService from "../services/ApiService";
+import SectionShowcase from "./components/SectionShowcase";
 
 /**
  * Les rubriques de l'accueil Ongo Eat : « Sélectionné pour vous »,
@@ -28,6 +29,12 @@ interface Rubrique {
     window_to: string | null;
     is_active: boolean;
     live_count: number;
+    background_color: string | null;
+    background_color_2: string | null;
+    text_color: string | null;
+    decor_image: string | null;
+    see_all_type: string | null;
+    see_all_value: string | null;
 }
 
 interface Regle {
@@ -60,6 +67,24 @@ const PARAMETRES: Record<string, { libelle: string; aide: string }> = {
     minutes: { libelle: "Délai maximum (min)", aide: "30" },
 };
 
+/**
+ * Une couleur assombrie de 55 %, comme `_assombrie` côté application.
+ *
+ * L'aperçu doit montrer le dégradé réel : calculé autrement, il mentirait sur
+ * le rendu — et c'est précisément ce qu'on vient y vérifier.
+ */
+function assombrir(hex: string): string {
+    if (!/^#[0-9A-Fa-f]{6}$/.test(hex)) return "#000000";
+
+    const melange = (c: number) => Math.round(c * 0.45);
+
+    const r = melange(parseInt(hex.slice(1, 3), 16));
+    const v = melange(parseInt(hex.slice(3, 5), 16));
+    const b = melange(parseInt(hex.slice(5, 7), 16));
+
+    return `#${[r, v, b].map((c) => c.toString(16).padStart(2, "0")).join("")}`;
+}
+
 const vide = {
     id: null as number | null,
     title: "",
@@ -71,6 +96,14 @@ const vide = {
     window_from: "",
     window_to: "",
     params: {} as Record<string, string>,
+    // L'habillage : tout est facultatif, une rubrique nue reste du texte sur
+    // le fond de l'écran.
+    background_color: "",
+    background_color_2: "",
+    text_color: "",
+    decor_image: "",
+    see_all_type: "",
+    see_all_value: "",
 };
 
 export default function EatSections({ onLogout, theme, toggleTheme }: EatSectionsProps) {
@@ -79,6 +112,8 @@ export default function EatSections({ onLogout, theme, toggleTheme }: EatSection
     const [cuisines, setCuisines] = useState<{ slug: string; name: string }[]>([]);
     const [categoriesOngo, setCategoriesOngo] = useState<{ slug: string; name: string }[]>([]);
     const [form, setForm] = useState<typeof vide | null>(null);
+    // La rubrique dont on compose la vitrine, ou nulle.
+    const [vitrine, setVitrine] = useState<Rubrique | null>(null);
 
     const api = new ApiService();
 
@@ -114,6 +149,12 @@ export default function EatSections({ onLogout, theme, toggleTheme }: EatSection
             id: form.id,
             title: form.title,
             subtitle: form.subtitle || null,
+            background_color: form.background_color || null,
+            background_color_2: form.background_color_2 || null,
+            text_color: form.text_color || null,
+            decor_image: form.decor_image || null,
+            see_all_type: form.see_all_type || null,
+            see_all_value: form.see_all_value || null,
             rule: form.rule,
             layout: form.layout,
             store_type: form.store_type || null,
@@ -161,6 +202,12 @@ export default function EatSections({ onLogout, theme, toggleTheme }: EatSection
             id: r.id,
             title: r.title,
             subtitle: r.subtitle ?? "",
+            background_color: r.background_color ?? "",
+            background_color_2: r.background_color_2 ?? "",
+            text_color: r.text_color ?? "",
+            decor_image: r.decor_image ?? "",
+            see_all_type: r.see_all_type ?? "",
+            see_all_value: r.see_all_value ?? "",
             rule: r.rule,
             layout: r.layout,
             store_type: r.store_type ?? "",
@@ -273,6 +320,140 @@ export default function EatSections({ onLogout, theme, toggleTheme }: EatSection
                         {form.layout === "products" && (
                             <p className="text-xs text-slate-400 mt-3">« Plats » montre des plats des boutiques ouvertes : avec « Sous un prix », les plats sous ce prix ; avec « Avec des remises », les plats remisés.</p>
                         )}
+
+                        {/*
+                            L'habillage. Une rangée sur fond blanc se confond avec la
+                            suivante ; une couleur et une illustration en font un rayon.
+                            Tout est facultatif : sans couleur, la rubrique reste ce
+                            qu'elle est aujourd'hui.
+                        */}
+                        <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-800">
+                            <p className="text-xs font-semibold uppercase text-slate-500 mb-3">Habillage (facultatif)</p>
+
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                <label>
+                                    <span className="text-xs font-semibold uppercase text-slate-500">Fond</span>
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="color"
+                                            className="h-10 w-10 shrink-0 rounded border border-slate-300 dark:border-slate-700"
+                                            value={form.background_color || "#2B0B3C"}
+                                            onChange={(e) => setForm({ ...form, background_color: e.target.value })}
+                                        />
+                                        <input
+                                            className={champ}
+                                            value={form.background_color}
+                                            placeholder="vide : aucun"
+                                            onChange={(e) => setForm({ ...form, background_color: e.target.value })}
+                                        />
+                                    </div>
+                                </label>
+
+                                <label>
+                                    <span className="text-xs font-semibold uppercase text-slate-500">Fond (2)</span>
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="color"
+                                            className="h-10 w-10 shrink-0 rounded border border-slate-300 dark:border-slate-700"
+                                            value={form.background_color_2 || "#000000"}
+                                            onChange={(e) => setForm({ ...form, background_color_2: e.target.value })}
+                                        />
+                                        <input
+                                            className={champ}
+                                            value={form.background_color_2}
+                                            placeholder="vide : assombri"
+                                            onChange={(e) => setForm({ ...form, background_color_2: e.target.value })}
+                                        />
+                                    </div>
+                                    <span className="text-xs text-slate-400">
+                                        Le bas du dégradé. Vide, on assombrit le fond — ce qui suffit sauf pour un
+                                        changement de teinte, crème vers jaune par exemple.
+                                    </span>
+                                </label>
+
+                                <label>
+                                    <span className="text-xs font-semibold uppercase text-slate-500">Texte</span>
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="color"
+                                            className="h-10 w-10 shrink-0 rounded border border-slate-300 dark:border-slate-700"
+                                            value={form.text_color || "#FFFFFF"}
+                                            onChange={(e) => setForm({ ...form, text_color: e.target.value })}
+                                        />
+                                        <input
+                                            className={champ}
+                                            value={form.text_color}
+                                            placeholder="vide : sombre"
+                                            onChange={(e) => setForm({ ...form, text_color: e.target.value })}
+                                        />
+                                    </div>
+                                </label>
+
+                                <label className="md:col-span-2">
+                                    <span className="text-xs font-semibold uppercase text-slate-500">Illustration</span>
+                                    <input
+                                        className={champ}
+                                        value={form.decor_image}
+                                        placeholder="https://… (PNG détouré)"
+                                        onChange={(e) => setForm({ ...form, decor_image: e.target.value })}
+                                    />
+                                    <span className="text-xs text-slate-400">Posée en haut à droite. Décorative : elle ne mène nulle part.</span>
+                                </label>
+
+                                <label>
+                                    <span className="text-xs font-semibold uppercase text-slate-500">« Tout » mène vers</span>
+                                    <select
+                                        className={champ}
+                                        value={form.see_all_type}
+                                        onChange={(e) => setForm({ ...form, see_all_type: e.target.value, see_all_value: "" })}
+                                    >
+                                        <option value="">Aucun bouton</option>
+                                        <option value="offers">Les promotions</option>
+                                        <option value="tag">Une cuisine</option>
+                                        <option value="category">Une catégorie</option>
+                                        <option value="page">Une campagne</option>
+                                    </select>
+                                </label>
+
+                                {["tag", "category", "page"].includes(form.see_all_type) && (
+                                    <label className="md:col-span-3">
+                                        <span className="text-xs font-semibold uppercase text-slate-500">
+                                            {form.see_all_type === "page" ? "Identifiant de la campagne" : "Slug"}
+                                        </span>
+                                        <input
+                                            className={champ}
+                                            value={form.see_all_value}
+                                            placeholder={form.see_all_type === "page" ? "1" : "grillades"}
+                                            onChange={(e) => setForm({ ...form, see_all_value: e.target.value })}
+                                        />
+                                        <span className="text-xs text-slate-400">Une destination inconnue est refusée à l'enregistrement.</span>
+                                    </label>
+                                )}
+                            </div>
+
+                            {/* L'aperçu : c'est là qu'on voit si le texte se lit sur le fond. */}
+                            {form.background_color && (
+                                <div
+                                    className="mt-4 rounded-2xl p-4"
+                                    style={{
+                                        // Le même dégradé que l'application : en diagonale, du
+                                        // coin de l'illustration vers le coin opposé.
+                                        background: `linear-gradient(to bottom left, ${form.background_color}, ${
+                                            form.background_color_2 || assombrir(form.background_color)
+                                        })`,
+                                    }}
+                                >
+                                    <p className="text-xl font-black uppercase tracking-tight" style={{ color: form.text_color || "#0F172A" }}>
+                                        {form.title || "Titre de la rubrique"}
+                                    </p>
+                                    {form.subtitle && (
+                                        <p className="text-xs font-bold uppercase mt-1" style={{ color: form.text_color || "#0F172A" }}>
+                                            {form.subtitle}
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+                        </div>
                         <div className="flex justify-end gap-3 mt-6">
                             <button onClick={() => setForm(null)} className="px-4 py-2 rounded-lg text-sm text-slate-600 dark:text-slate-300">Annuler</button>
                             <button onClick={enregistrer} disabled={!valide} className="px-5 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium disabled:opacity-40 dark:bg-white dark:text-slate-900">
@@ -325,6 +506,13 @@ export default function EatSections({ onLogout, theme, toggleTheme }: EatSection
                                         )}
                                     </td>
                                     <td className="px-5 py-3 text-right whitespace-nowrap">
+                                        {/* La vitrine n'existe que pour la règle qui la lit :
+                                            ailleurs, le contenu se calcule. */}
+                                        {r.rule === "picked" && (
+                                            <button onClick={() => setVitrine(vitrine?.id === r.id ? null : r)} className="text-sm text-slate-900 dark:text-white mr-4">
+                                                Vitrine
+                                            </button>
+                                        )}
                                         <button onClick={() => modifier(r)} className="text-sm text-slate-600 dark:text-slate-300 mr-4">Modifier</button>
                                         <button onClick={() => basculer(r)} className="text-sm text-slate-900 dark:text-white">{r.is_active ? "Masquer" : "Afficher"}</button>
                                         <button onClick={() => supprimer(r)} className="text-sm text-rose-600 ml-4">Supprimer</button>
@@ -334,6 +522,10 @@ export default function EatSections({ onLogout, theme, toggleTheme }: EatSection
                         </tbody>
                     </table>
                 </div>
+                {vitrine && (
+                    <SectionShowcase sectionId={vitrine.id} title={vitrine.title} onClose={() => setVitrine(null)} />
+                )}
+
                 <p className="text-xs text-slate-400">« En ce moment » : pour un client sans historique, sans adresse. « Sélectionné pour vous » et « Nouvelles saveurs » s'adaptent ensuite à chacun.</p>
             </main>
         </MainLayout>

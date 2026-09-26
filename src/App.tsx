@@ -29,8 +29,10 @@ import EatPromoCodes from './pages/EatPromoCodes';
 import EatFilters from './pages/EatFilters';
 import EatBanners from './pages/EatBanners';
 import EatCampaigns from './pages/EatCampaigns';
+import EatSponsorships from './pages/EatSponsorships';
 import EatStores from './pages/EatStores';
 import EatPaymentMethods from './pages/EatPaymentMethods';
+import EatServiceAreas from './pages/EatServiceAreas';
 import EatTags from './pages/EatTags';
 import EatSections from './pages/EatSections';
 import EatGallery from './pages/EatGallery';
@@ -239,7 +241,7 @@ function App() {
           path="/merchant/:merchantId"
           element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>
-              <MerchantSpace />
+              <MerchantSpace onLogout={handleLogout} />
             </ProtectedRoute>
           }
         />
@@ -275,8 +277,22 @@ function App() {
             </ProtectedRoute>
           }
         />
+        {/* L'ancienne adresse mène à la nouvelle : un favori posé avant le
+            renommage ouvrirait une page blanche. */}
+        <Route path="/eat-reviews" element={<Navigate to="/eat-sponsorships" replace />} />
         <Route
-          path="/eat-campaigns"
+          path="/eat-sponsorships"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <EatSponsorships onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        {/* L'ancienne adresse mène à la nouvelle : un favori posé avant le
+            renommage ouvrirait une page blanche. */}
+        <Route path="/eat-campaigns" element={<Navigate to="/eat-redirects" replace />} />
+        <Route
+          path="/eat-redirects"
           element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>
               <EatCampaigns onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
@@ -288,6 +304,14 @@ function App() {
           element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>
               <EatStores onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/eat-service-areas"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <EatServiceAreas onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
             </ProtectedRoute>
           }
         />

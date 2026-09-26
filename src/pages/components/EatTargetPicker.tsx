@@ -10,7 +10,7 @@ import ApiService from "../../services/ApiService";
  *   section → le rayon d'une boutique (valeur : « idBoutique:idRayon »)
  *   tag     → une cuisine             (valeur : son slug)
  *   offers  → les restaurants qui font des offres
- *   page    → une page de campagne    (valeur : son id)
+ *   page    → une page de redirection (valeur : son id)
  *   promo   → le ticket d'un code     (valeur : le code)
  *   aisle   → un même rayon partout   (valeur : son nom, « Boissons »)
  *   category→ une catégorie d'Ongo    (valeur : son slug)
@@ -47,7 +47,7 @@ const LIBELLES: Record<TargetType, string> = {
     section: "Le rayon d'une boutique",
     tag: "Une cuisine",
     offers: "Les restaurants avec offres",
-    page: "Une page de campagne",
+    page: "Une page de redirection",
     promo: "Le ticket d'un code promo",
     aisle: "Un même rayon, toutes boutiques",
     category: "Une catégorie Ongo, toutes boutiques",
@@ -166,8 +166,8 @@ export default function EatTargetPicker({ type, value, options, onChange, allowe
                     </select>
                     {options.campaigns.filter((c) => c.id !== excludeCampaignId).length === 0 && (
                         <span className="text-xs text-amber-700">
-                            Aucune page de campagne pour l'instant.{" "}
-                            <Link to="/eat-campaigns" className="underline font-medium">Créer une page</Link>, puis revenez la choisir ici.
+                            Aucune page de redirection pour l'instant.{" "}
+                            <Link to="/eat-redirects" className="underline font-medium">Créer une page</Link>, puis revenez la choisir ici.
                         </span>
                     )}
                 </label>
