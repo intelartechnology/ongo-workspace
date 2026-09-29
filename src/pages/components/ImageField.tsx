@@ -70,7 +70,7 @@ export default function ImageField({ label, hint, adresse, fichier, onChange, ga
             />
 
             {ouverte && (
-                <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setOuverte(false)}>
+                <div className="fixed inset-0 z-[70] bg-black/50 flex items-center justify-center p-4" onClick={() => setOuverte(false)}>
                     <div className="bg-slate-50 dark:bg-slate-950 rounded-2xl max-w-5xl w-full max-h-[85vh] overflow-y-auto p-6" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center justify-between mb-4">
                             <p className="text-lg font-semibold text-slate-900 dark:text-white">Choisir une image</p>

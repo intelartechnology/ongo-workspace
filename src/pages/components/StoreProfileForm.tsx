@@ -69,6 +69,17 @@ export default function StoreProfileForm({ fiche, cuisines, onSave, readOnly = f
         setF((x) => ({ ...x, tags: x.tags.includes(slug) ? x.tags.filter((t) => t !== slug) : x.tags.length >= 5 ? x.tags : [...x.tags, slug] }));
 
     const enregistrer = async () => {
+        // Le serveur le refuse aussi — mais lui répond après l'envoi des
+        // images, et l'on perdrait le téléversement pour un champ vide.
+        if (f.phone.trim() === "") {
+            Swal.fire({
+                icon: "warning",
+                title: "Téléphone manquant",
+                text: "Le numéro de la boutique est obligatoire : c'est celui que le livreur appelle quand la commande n'est pas prête.",
+            });
+            return;
+        }
+
         setEnregistrement(true);
 
         let logo: string | null;
@@ -149,8 +160,21 @@ export default function StoreProfileForm({ fiche, cuisines, onSave, readOnly = f
                         <input type="color" className="block mt-1 h-10 w-20 rounded" disabled={readOnly} value={f.brand_color} onChange={(e) => setF({ ...f, brand_color: e.target.value })} />
                     </label>
                     <label>
-                        <span className="text-xs font-semibold uppercase text-slate-500">Téléphone</span>
-                        <input className={champ} disabled={readOnly} value={f.phone} placeholder="+237 6…" onChange={(e) => setF({ ...f, phone: e.target.value })} />
+                        <span className="text-xs font-semibold uppercase text-slate-500">Téléphone <span className="text-rose-500">*</span></span>
+                        <input
+                            className={champ}
+                            disabled={readOnly}
+                            value={f.phone}
+                            placeholder="+237 6…"
+                            onChange={(e) => setF({ ...f, phone: e.target.value })}
+                        />
+                        {/* Le dire, plutôt que de le refuser à l'enregistrement : le champ
+                            était facultatif et aucune boutique ne l'avait rempli. */}
+                        <span className="text-xs text-slate-400">
+                            {f.phone.trim() === ""
+                                ? "Obligatoire : c'est le numéro que le livreur appelle depuis la commande."
+                                : "Le livreur l'appelle depuis la commande."}
+                        </span>
                     </label>
                     <label>
                         <span className="text-xs font-semibold uppercase text-slate-500">Ville</span>

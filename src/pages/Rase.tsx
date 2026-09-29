@@ -654,7 +654,7 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
             {/* Map View Modal */}
             {isMapOpen && selectedMapCourse && (
                 <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+                    className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm"
                     onClick={closeMap}
                 >
                     <div
@@ -688,7 +688,7 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
 
             {/* Reattribution Modal */}
             {isReattributionModalOpen && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[70] p-4">
                     <div className="bg-white dark:bg-slate-900 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
                         <div className="flex justify-between items-center p-4 border-b border-slate-200 dark:border-slate-700">
                             <h3 className="text-xl font-bold text-slate-900 dark:text-white">Réattribuer la Course #{courseToReattribute?.id}</h3>

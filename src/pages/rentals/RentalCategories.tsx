@@ -271,7 +271,7 @@ const RentalCategories: React.FC<RentalCategoriesProps> = ({ onLogout, theme, to
             {/* Confirmation de suppression */}
             {categoryToDelete && (
                 <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4"
+                    className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4"
                     onClick={() => !deleting && setCategoryToDelete(null)}
                 >
                     <div

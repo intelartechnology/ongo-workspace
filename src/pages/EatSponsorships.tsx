@@ -48,6 +48,7 @@ const FORMES: Record<string, string> = {
     store: "Enseigne poussée",
     products: "Articles mis en avant",
     section: "Rayon mis en avant",
+    mosaic: "Tuile d'accueil",
 };
 
 const AUDIENCES: Record<string, string> = {

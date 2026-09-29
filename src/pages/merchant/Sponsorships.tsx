@@ -29,6 +29,7 @@ const FORMES: Record<string, string> = {
     store: "Mon enseigne",
     products: "Des articles",
     section: "Un rayon",
+    mosaic: "Une tuile d'accueil",
 };
 
 const AUDIENCES: Record<string, string> = {

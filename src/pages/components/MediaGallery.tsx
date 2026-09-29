@@ -18,6 +18,9 @@ export interface ImageGalerie {
     id: number;
     url: string;
     name: string | null;
+
+    /** « burger grillades menu midi » : ce qui fait retrouver l'image. */
+    keywords: string | null;
     size: number | null;
     created_at?: string;
     usages: { type: string; label: string }[];
@@ -46,6 +49,34 @@ export default function MediaGallery({ galerie, onPick, canDelete = true, owner,
     const [chargement, setChargement] = useState(true);
     const [envoi, setEnvoi] = useState(0);
     const [ouverte, setOuverte] = useState<ImageGalerie | null>(null);
+
+    /** Les mots-clés en cours d'écriture, et l'envoi. */
+    const [motsCles, setMotsCles] = useState<string>("");
+    const [etiquetage, setEtiquetage] = useState<boolean>(false);
+
+    // Ouvrir une image charge ses mots-clés dans le champ : sans cela, on
+    // repartirait d'un champ vide et on effacerait ce qui était écrit.
+    useEffect(() => setMotsCles(ouverte?.keywords ?? ""), [ouverte?.id]);
+
+    /** Poser les mots-clés d'une image. */
+    const etiqueter = async (image: ImageGalerie) => {
+        setEtiquetage(true);
+
+        try {
+            const { data } = await api.postData(`${galerie}/tag`, { id: image.id, keywords: motsCles });
+
+            if (data?.success) {
+                setOuverte({ ...image, keywords: motsCles.trim() || null });
+                await charger();
+            } else {
+                Swal.fire({ icon: "error", title: "Refusé", text: data?.message });
+            }
+        } catch (erreur) {
+            Swal.fire({ icon: "error", title: "Enregistrement impossible", text: String(erreur) });
+        }
+
+        setEtiquetage(false);
+    };
     const fichiers = useRef<HTMLInputElement>(null);
 
     const api = new ApiService();
@@ -141,7 +172,7 @@ export default function MediaGallery({ galerie, onPick, canDelete = true, owner,
                 <input
                     className="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm w-60"
                     value={recherche}
-                    placeholder="Rechercher par nom"
+                    placeholder="Rechercher par nom ou mot-clé"
                     onChange={(e) => setRecherche(e.target.value)}
                 />
                 {([["", "Toutes"], ["used", "Utilisées"], ["unused", "Inutilisées"]] as const).map(([cle, libelle]) => (
@@ -182,6 +213,13 @@ export default function MediaGallery({ galerie, onPick, canDelete = true, owner,
                                 <p className={`text-[11px] ${image.usages.length ? "text-emerald-700" : "text-slate-400"}`}>
                                     {image.usages.length ? `Utilisée · ${image.usages.length}` : "Inutilisée"}
                                 </p>
+                                {/* Les mots-clés sous la vignette : on voit
+                                    d'un coup d'œil celles qui n'en ont pas. */}
+                                {image.keywords && (
+                                    <p className="text-[11px] text-slate-500 truncate" title={image.keywords}>
+                                        {image.keywords}
+                                    </p>
+                                )}
                             </div>
                         </button>
                     ))}
@@ -190,7 +228,7 @@ export default function MediaGallery({ galerie, onPick, canDelete = true, owner,
 
             {/* Le détail d'une image : où elle sert, et le ménage. */}
             {!onPick && ouverte && (
-                <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setOuverte(null)}>
+                <div className="fixed inset-0 z-[70] bg-black/50 flex items-center justify-center p-4" onClick={() => setOuverte(null)}>
                     <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-3xl w-full grid grid-cols-1 md:grid-cols-2 overflow-hidden" onClick={(e) => e.stopPropagation()}>
                         <div className="bg-slate-100 dark:bg-slate-800 flex items-center justify-center min-h-64">
                             <img src={ouverte.url} alt="" className="max-h-[70vh] w-full object-contain" />
@@ -201,6 +239,34 @@ export default function MediaGallery({ galerie, onPick, canDelete = true, owner,
                                 <p className="text-xs text-slate-500">
                                     {taille(ouverte.size)}
                                     {ouverte.created_at ? ` · ${new Date(ouverte.created_at).toLocaleDateString("fr-FR")}` : ""}
+                                </p>
+                            </div>
+                            {/*
+                                Une chaîne libre, pas une liste d'étiquettes :
+                                on écrit « burger grillades menu midi » comme
+                                on le dirait. Une table d'étiquettes
+                                demanderait un écran de gestion des étiquettes,
+                                que personne n'ouvrirait.
+                            */}
+                            <div>
+                                <p className="text-xs font-semibold uppercase text-slate-500 mb-1">Mots-clés</p>
+                                <div className="flex gap-2">
+                                    <input
+                                        value={motsCles}
+                                        onChange={(e) => setMotsCles(e.target.value)}
+                                        placeholder="burger, grillades, menu midi"
+                                        className="flex-1 px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-white"
+                                    />
+                                    <button
+                                        onClick={() => etiqueter(ouverte)}
+                                        disabled={etiquetage || motsCles === (ouverte.keywords ?? "")}
+                                        className="px-4 py-2 rounded-lg text-sm font-medium bg-slate-900 text-white disabled:bg-slate-200 disabled:text-slate-400 dark:bg-white dark:text-slate-900"
+                                    >
+                                        {etiquetage ? "…" : "Enregistrer"}
+                                    </button>
+                                </div>
+                                <p className="text-[11px] text-slate-400 mt-1">
+                                    Séparez-les par des espaces ou des virgules. C'est là-dessus que porte la recherche.
                                 </p>
                             </div>
                             <div>

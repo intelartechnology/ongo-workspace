@@ -25,6 +25,8 @@ import Settings from './pages/Settings';
 import Merchants from './pages/Merchants';
 import EatDashboard from './pages/EatDashboard';
 import EatPayouts from './pages/EatPayouts';
+import EatTreasury from './pages/EatTreasury';
+import EatCouriers from './pages/EatCouriers';
 import EatPromoCodes from './pages/EatPromoCodes';
 import EatFilters from './pages/EatFilters';
 import EatBanners from './pages/EatBanners';
@@ -35,6 +37,7 @@ import EatPaymentMethods from './pages/EatPaymentMethods';
 import EatServiceAreas from './pages/EatServiceAreas';
 import EatTags from './pages/EatTags';
 import EatSections from './pages/EatSections';
+import EatMosaic from './pages/EatMosaic';
 import EatGallery from './pages/EatGallery';
 import EatCategories from './pages/EatCategories';
 import MerchantSpace from './pages/merchant/MerchantSpace';
@@ -254,6 +257,22 @@ function App() {
           }
         />
         <Route
+          path="/eat-couriers"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <EatCouriers onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/eat-treasury"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <EatTreasury onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/eat-promo-codes"
           element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>
@@ -328,6 +347,14 @@ function App() {
           element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>
               <EatTags onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/eat-mosaic"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <EatMosaic onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
             </ProtectedRoute>
           }
         />

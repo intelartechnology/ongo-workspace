@@ -46,6 +46,16 @@ interface Commande {
     change_for: number | null;
     payment_method: string;
     delivery_address: string | null;
+
+    /** Le livreur, s'il en a un. */
+    courier_id: number | null;
+
+    /**
+     * Où en est la recherche d'un livreur : « merchant » chez vos livreurs,
+     * « platform » chez ceux d'Ongo, **nul** quand la livraison est sortie de
+     * la répartition — un livreur l'a rendue, et c'est à vous de relancer.
+     */
+    dispatch_stage: string | null;
     items: Ligne[];
     customer: { nom: string | null; telephone: string | null } | null;
 }
@@ -303,6 +313,48 @@ export default function OrderDesk({ merchantId, storeId }: OrderDeskProps) {
         );
     };
 
+    /**
+     * Où en est le livreur de cette commande.
+     *
+     * Une livraison qu'un livreur a rendue **n'est proposée à personne** : elle
+     * attend un geste de votre part. Sans cette ligne, elle restait dans la
+     * colonne « Prêtes » sans que rien ne dise qu'aucun livreur ne viendra.
+     */
+    const livreur = (commande: Commande) => {
+        if (commande.dining_mode !== "delivery" || commande.status === "pending") return null;
+
+        if (commande.courier_id !== null) {
+            return (
+                <p className="mt-2 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                    Livreur en route
+                </p>
+            );
+        }
+
+        if (commande.dispatch_stage === null) {
+            return (
+                <div className="mt-2 p-2 rounded-lg bg-amber-50 border border-amber-300 dark:bg-amber-950/30 dark:border-amber-800">
+                    <p className="text-xs text-amber-800 dark:text-amber-300">
+                        Aucun livreur : la course a été rendue. Relancez la recherche quand la commande peut repartir.
+                    </p>
+
+                    <button
+                        onClick={() => agir("orders/dispatch", { order_id: commande.id }, "Recherche d'un livreur lancée")}
+                        className="mt-2 px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-600 text-white"
+                    >
+                        Chercher un livreur
+                    </button>
+                </div>
+            );
+        }
+
+        return (
+            <p className="mt-2 text-xs text-slate-500">
+                Recherche d'un livreur{commande.dispatch_stage === "merchant" ? " parmi les vôtres" : ""}…
+            </p>
+        );
+    };
+
     const carte = (commande: Commande, actions: React.ReactNode) => {
         const deployee = ouverte === commande.public_id;
         const urgente = commande.status === "pending"
@@ -331,6 +383,8 @@ export default function OrderDesk({ merchantId, storeId }: OrderDeskProps) {
                 </div>
 
                 {reductions(commande)}
+
+                {livreur(commande)}
 
                 <button
                     onClick={() => setOuverte(deployee ? null : commande.public_id)}

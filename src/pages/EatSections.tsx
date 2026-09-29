@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 import MainLayout from "./MainLayout";
 import ApiService from "../services/ApiService";
+import ImageField from "./components/ImageField";
+import { envoyerSiBesoin, estDetouree } from "../services/images";
 import SectionShowcase from "./components/SectionShowcase";
 
 /**
@@ -35,6 +37,15 @@ interface Rubrique {
     decor_image: string | null;
     see_all_type: string | null;
     see_all_value: string | null;
+    in_mosaic: boolean;
+    mosaic_position: number | null;
+    tile_label: string | null;
+    tile_w: number;
+    tile_min_w: number;
+    tile_h: number;
+    tile_image: string | null;
+    tile_tint: string | null;
+    tile_tint_dark: string | null;
 }
 
 interface Regle {
@@ -104,6 +115,17 @@ const vide = {
     decor_image: "",
     see_all_type: "",
     see_all_value: "",
+    // La tuile de mosaïque : décochée, la rubrique reste une rangée et rien
+    // de ce qui suit ne compte.
+    in_mosaic: false,
+    mosaic_position: "3",
+    tile_label: "",
+    tile_w: "2",
+    tile_min_w: "1",
+    tile_h: "1",
+    tile_image: "",
+    tile_tint: "",
+    tile_tint_dark: "",
 };
 
 export default function EatSections({ onLogout, theme, toggleTheme }: EatSectionsProps) {
@@ -112,6 +134,9 @@ export default function EatSections({ onLogout, theme, toggleTheme }: EatSection
     const [cuisines, setCuisines] = useState<{ slug: string; name: string }[]>([]);
     const [categoriesOngo, setCategoriesOngo] = useState<{ slug: string; name: string }[]>([]);
     const [form, setForm] = useState<typeof vide | null>(null);
+
+    // La découpe choisie sur l'ordinateur, pas encore envoyée dans la galerie.
+    const [decoupe, setDecoupe] = useState<File | null>(null);
     // La rubrique dont on compose la vitrine, ou nulle.
     const [vitrine, setVitrine] = useState<Rubrique | null>(null);
 
@@ -136,6 +161,23 @@ export default function EatSections({ onLogout, theme, toggleTheme }: EatSection
         charger();
     }, []);
 
+    /*
+     * « Ouvrir la rubrique » depuis l'écran Mosaïque.
+     *
+     * On attend que la liste soit là : le formulaire se remplit à partir de
+     * la rubrique chargée, pas d'un identifiant seul.
+     */
+    useEffect(() => {
+        const vise = Number(new URLSearchParams(window.location.search).get("open"));
+
+        if (!vise || form) return;
+
+        const trouvee = rubriques.find((r) => r.id === vise);
+
+        if (trouvee) modifier(trouvee);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [rubriques]);
+
     const echec = (data: { success: boolean; message: string }) => {
         if (data.success) return false;
         Swal.fire({ icon: "error", title: data.message });
@@ -144,6 +186,20 @@ export default function EatSections({ onLogout, theme, toggleTheme }: EatSection
 
     const enregistrer = async () => {
         if (!form) return;
+
+        /*
+         * Une image choisie sur l'ordinateur part d'abord dans la galerie :
+         * ce qu'on enregistre est toujours une adresse.
+         */
+        let adresseDecoupe: string | null = form.tile_image || null;
+
+        try {
+            adresseDecoupe = await envoyerSiBesoin(decoupe, form.tile_image || null);
+        } catch (erreur) {
+            Swal.fire({ icon: "error", title: "Image non envoyée", text: String((erreur as Error).message ?? erreur) });
+
+            return;
+        }
 
         const { data } = await api.postData("v3/admin/eat/sections", {
             id: form.id,
@@ -155,6 +211,15 @@ export default function EatSections({ onLogout, theme, toggleTheme }: EatSection
             decor_image: form.decor_image || null,
             see_all_type: form.see_all_type || null,
             see_all_value: form.see_all_value || null,
+            in_mosaic: form.in_mosaic,
+            mosaic_position: form.in_mosaic ? Number(form.mosaic_position) : null,
+            tile_label: form.tile_label || null,
+            tile_w: Number(form.tile_w),
+            tile_min_w: Number(form.tile_min_w),
+            tile_h: Number(form.tile_h),
+            tile_image: adresseDecoupe || null,
+            tile_tint: form.tile_tint || null,
+            tile_tint_dark: form.tile_tint_dark || null,
             rule: form.rule,
             layout: form.layout,
             store_type: form.store_type || null,
@@ -169,6 +234,7 @@ export default function EatSections({ onLogout, theme, toggleTheme }: EatSection
 
         Swal.fire({ icon: "success", title: data.message, timer: 1200, showConfirmButton: false });
         setForm(null);
+        setDecoupe(null);
         charger();
     };
 
@@ -197,7 +263,9 @@ export default function EatSections({ onLogout, theme, toggleTheme }: EatSection
         if (!echec(data)) charger();
     };
 
-    const modifier = (r: Rubrique) =>
+    const modifier = (r: Rubrique) => {
+        setDecoupe(null);
+
         setForm({
             id: r.id,
             title: r.title,
@@ -206,6 +274,15 @@ export default function EatSections({ onLogout, theme, toggleTheme }: EatSection
             background_color_2: r.background_color_2 ?? "",
             text_color: r.text_color ?? "",
             decor_image: r.decor_image ?? "",
+            in_mosaic: r.in_mosaic ?? false,
+            mosaic_position: String(r.mosaic_position ?? 3),
+            tile_label: r.tile_label ?? "",
+            tile_w: String(r.tile_w ?? 2),
+            tile_min_w: String(r.tile_min_w ?? 1),
+            tile_h: String(r.tile_h ?? 1),
+            tile_image: r.tile_image ?? "",
+            tile_tint: r.tile_tint ?? "",
+            tile_tint_dark: r.tile_tint_dark ?? "",
             see_all_type: r.see_all_type ?? "",
             see_all_value: r.see_all_value ?? "",
             rule: r.rule,
@@ -216,6 +293,7 @@ export default function EatSections({ onLogout, theme, toggleTheme }: EatSection
             window_to: r.window_to ? r.window_to.slice(0, 5) : "",
             params: Object.fromEntries(Object.entries(r.params ?? {}).map(([k, v]) => [k, String(v)])),
         });
+    };
 
     const decrire = (r: Rubrique) => {
         const regle = regles[r.rule]?.label ?? r.rule;
@@ -242,7 +320,7 @@ export default function EatSections({ onLogout, theme, toggleTheme }: EatSection
                         <p className="text-sm text-slate-500 mt-1">Entre « Meilleurs deals » et la liste des restaurants. Le contenu se calcule ; une rubrique vide ne s'affiche pas.</p>
                     </div>
                     {!form && (
-                        <button onClick={() => setForm({ ...vide, params: {} })} className="px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium dark:bg-white dark:text-slate-900">
+                        <button onClick={() => { setDecoupe(null); setForm({ ...vide, params: {} }); }} className="px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium dark:bg-white dark:text-slate-900">
                             Nouvelle rubrique
                         </button>
                     )}
@@ -400,6 +478,208 @@ export default function EatSections({ onLogout, theme, toggleTheme }: EatSection
                                     <span className="text-xs text-slate-400">Posée en haut à droite. Décorative : elle ne mène nulle part.</span>
                                 </label>
 
+                            </div>
+                        </div>
+
+                        {/*
+                          * La tuile de mosaïque.
+                          *
+                          * Une rubrique est une rangée ; elle peut en plus tenir une place en haut
+                          * de l'accueil. Les deux ne se règlent pas ensemble — une rangée peut être
+                          * la septième de la page et la troisième tuile de la mosaïque.
+                          */}
+                        <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-800">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    checked={form.in_mosaic}
+                                    onChange={(e) => setForm({ ...form, in_mosaic: e.target.checked })}
+                                    className="w-4 h-4 accent-slate-900 dark:accent-white"
+                                />
+                                <span className="text-xs font-semibold uppercase text-slate-500">
+                                    Lui donner aussi une tuile dans la mosaïque d'accueil
+                                </span>
+                            </label>
+
+                            <p className="text-xs text-slate-400 mt-1">
+                                La mosaïque fait quatre colonnes sur deux rangées. « Restaurants » et
+                                « Magasins » en occupent l'essentiel — il reste une place, celle-ci. Une
+                                rubrique vide ne s'y affiche pas, comme partout ailleurs.
+                            </p>
+
+                            <p className="text-xs text-slate-400 mt-1">
+                                En la touchant, le client ouvre <b>cette rubrique en entier</b> — la même page
+                                que son « Voir plus ». Rien à régler : une tuile porte le nom d'une rubrique,
+                                on s'attend à y trouver ce qu'elle contient.
+                            </p>
+
+                            {form.in_mosaic && (
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                                    <label>
+                                        <span className="text-xs font-semibold uppercase text-slate-500">Place</span>
+                                        <input
+                                            type="number"
+                                            min={1}
+                                            max={99}
+                                            className={champ}
+                                            value={form.mosaic_position}
+                                            onChange={(e) => setForm({ ...form, mosaic_position: e.target.value })}
+                                        />
+                                        <span className="text-xs text-slate-400">
+                                            1 et 2 sont prises. 3 est la première libre.
+                                        </span>
+                                    </label>
+
+                                    <label>
+                                        <span className="text-xs font-semibold uppercase text-slate-500">Nom sur la tuile</span>
+                                        <input
+                                            className={champ}
+                                            maxLength={40}
+                                            value={form.tile_label}
+                                            placeholder={form.title || "le titre de la rangée"}
+                                            onChange={(e) => setForm({ ...form, tile_label: e.target.value })}
+                                        />
+                                        <span className="text-xs text-slate-400">
+                                            Deux lignes courtes. Un titre de rangée tient sur toute la largeur de
+                                            l'écran ; une tuile, non — laissez vide s'il est déjà court.
+                                        </span>
+                                    </label>
+
+                                    <label>
+                                        <span className="text-xs font-semibold uppercase text-slate-500">Largeur voulue</span>
+                                        <select
+                                            className={champ}
+                                            value={form.tile_w}
+                                            onChange={(e) => setForm({ ...form, tile_w: e.target.value })}
+                                        >
+                                            <option value="1">1 colonne</option>
+                                            <option value="2">2 colonnes</option>
+                                        </select>
+                                    </label>
+
+                                    <label>
+                                        <span className="text-xs font-semibold uppercase text-slate-500">Largeur acceptée</span>
+                                        <select
+                                            className={champ}
+                                            value={form.tile_min_w}
+                                            onChange={(e) => setForm({ ...form, tile_min_w: e.target.value })}
+                                        >
+                                            <option value="1">1 colonne</option>
+                                            <option value="2">2 colonnes</option>
+                                        </select>
+                                        <span className="text-xs text-slate-400">
+                                            La plus petite qu'elle tolère. Plus étroite que la voulue, elle se rabat
+                                            quand la place manque au lieu de disparaître.
+                                        </span>
+                                    </label>
+
+                                    <label>
+                                        <span className="text-xs font-semibold uppercase text-slate-500">Hauteur</span>
+                                        <select
+                                            className={champ}
+                                            value={form.tile_h}
+                                            onChange={(e) => setForm({ ...form, tile_h: e.target.value })}
+                                        >
+                                            <option value="1">1 rangée</option>
+                                            <option value="2">2 rangées</option>
+                                        </select>
+                                    </label>
+
+                                    <div className="md:col-span-2">
+                                        {/*
+                                          * Le même champ que les bannières et les réglages :
+                                          * aperçu, galerie, téléversement. Une zone de texte
+                                          * obligeait à ouvrir la Galerie dans un autre onglet,
+                                          * copier une adresse, la coller — puis découvrir le
+                                          * résultat sur un téléphone.
+                                          *
+                                          * L'aperçu est posé sur la teinte de la tuile : un
+                                          * fond resté opaque s'y voit avant l'enregistrement,
+                                          * ce qu'un aperçu sur blanc ne montre pas.
+                                          */}
+                                        <div
+                                            className="p-2 rounded-lg inline-block"
+                                            style={{
+                                                background: /^#[0-9a-fA-F]{6}$/.test(form.tile_tint)
+                                                    ? form.tile_tint
+                                                    : "#FBE7C8",
+                                            }}
+                                        >
+                                            <ImageField
+                                                label="Découpe"
+                                                adresse={form.tile_image}
+                                                fichier={decoupe}
+                                                forme="aspect-square"
+                                                onChange={(tile_image, fichier) => {
+                                                    setForm({ ...form, tile_image });
+                                                    setDecoupe(fichier);
+                                                }}
+                                            />
+                                        </div>
+                                        <span className="text-xs text-slate-400">
+                                            Posée en haut à droite sur la teinte, jamais recadrée — donc une image
+                                            <b> détourée</b>, en PNG ou WebP. Une photo jpg ne peut pas l'être : son
+                                            rectangle se verrait. Cadrez au plus serré : chaque pixel transparent en
+                                            bordure éloigne le dessin du coin. Sans découpe, la tuile montre sa
+                                            teinte et son nom.
+                                        </span>
+
+                                        {/* Une adresse posée avant la règle : conservée, mais pas servie. */}
+                                        {form.tile_image !== "" && !decoupe && !estDetouree(form.tile_image) && (
+                                            <span className="block mt-2 p-2 rounded-lg text-xs bg-amber-50 border border-amber-200 text-amber-700 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-400">
+                                                Cette image n'est pas affichée : son fond n'est pas transparent.
+                                                L'application montre le dessin de secours à la place. Récupérez-la,
+                                                détourez-la, et reposez un PNG.
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    <label>
+                                        <span className="text-xs font-semibold uppercase text-slate-500">Teinte claire</span>
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="color"
+                                                className="h-10 w-10 shrink-0 rounded border border-slate-300 dark:border-slate-700"
+                                                value={/^#[0-9a-fA-F]{6}$/.test(form.tile_tint) ? form.tile_tint : "#FFE2D3"}
+                                                onChange={(e) => setForm({ ...form, tile_tint: e.target.value.toUpperCase() })}
+                                            />
+                                            <input
+                                                className={champ}
+                                                value={form.tile_tint}
+                                                placeholder="vide : le fond"
+                                                onChange={(e) => setForm({ ...form, tile_tint: e.target.value.toUpperCase() })}
+                                            />
+                                        </div>
+                                    </label>
+
+                                    <label>
+                                        <span className="text-xs font-semibold uppercase text-slate-500">Teinte sombre</span>
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="color"
+                                                className="h-10 w-10 shrink-0 rounded border border-slate-300 dark:border-slate-700"
+                                                value={/^#[0-9a-fA-F]{6}$/.test(form.tile_tint_dark) ? form.tile_tint_dark : "#5E1608"}
+                                                onChange={(e) => setForm({ ...form, tile_tint_dark: e.target.value.toUpperCase() })}
+                                            />
+                                            <input
+                                                className={champ}
+                                                value={form.tile_tint_dark}
+                                                placeholder="vide : celle livrée"
+                                                onChange={(e) => setForm({ ...form, tile_tint_dark: e.target.value.toUpperCase() })}
+                                            />
+                                        </div>
+                                        <span className="text-xs text-slate-400">
+                                            Prend le relais la nuit et en mode sombre.
+                                        </span>
+                                    </label>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-800">
+                            <p className="text-xs font-semibold uppercase text-slate-500 mb-3">Destination</p>
+
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                                 <label>
                                     <span className="text-xs font-semibold uppercase text-slate-500">« Tout » mène vers</span>
                                     <select
@@ -455,7 +735,7 @@ export default function EatSections({ onLogout, theme, toggleTheme }: EatSection
                             )}
                         </div>
                         <div className="flex justify-end gap-3 mt-6">
-                            <button onClick={() => setForm(null)} className="px-4 py-2 rounded-lg text-sm text-slate-600 dark:text-slate-300">Annuler</button>
+                            <button onClick={() => { setDecoupe(null); setForm(null); }} className="px-4 py-2 rounded-lg text-sm text-slate-600 dark:text-slate-300">Annuler</button>
                             <button onClick={enregistrer} disabled={!valide} className="px-5 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium disabled:opacity-40 dark:bg-white dark:text-slate-900">
                                 Enregistrer
                             </button>

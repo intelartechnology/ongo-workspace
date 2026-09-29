@@ -4,6 +4,7 @@ import ApiService from "../../services/ApiService";
 import BannerFields from "./BannerFields";
 import { Carte } from "./BannerPreview";
 import type { Rendu, Position } from "./BannerPreview";
+import ImageField from "./ImageField";
 import { envoyerSiBesoin } from "../../services/images";
 
 /**
@@ -43,7 +44,7 @@ export interface Article {
 
 export interface Sponsoring {
     id: number;
-    kind: "banner" | "store" | "products" | "section";
+    kind: "banner" | "store" | "products" | "section" | "mosaic";
     title: string;
     merchant_id: number;
     merchant_name: string | null;
@@ -60,6 +61,10 @@ export interface Sponsoring {
     ends_at: string | null;
     banner: Banniere | null;
     products: Article[];
+    tile_image: string | null;
+    tile_tint: string | null;
+    tile_tint_dark: string | null;
+    position: number;
     impressions: number | null;
     clicks: number | null;
 }
@@ -97,6 +102,12 @@ const FORMES: { cle: Sponsoring["kind"]; libelle: string; aide: string; icone: s
     { cle: "store", libelle: "L'enseigne", aide: "La boutique poussée dans une rangée", icone: "storefront" },
     { cle: "products", libelle: "Des articles", aide: "Quelques plats, avec l'enseigne en tête", icone: "restaurant" },
     { cle: "section", libelle: "Un rayon", aide: "La boutique, ouverte sur un rayon précis", icone: "category" },
+    {
+        cle: "mosaic",
+        libelle: "Une tuile d'accueil",
+        aide: "Une place dans la mosaïque, tout en haut — la surface la plus chère",
+        icone: "grid_view",
+    },
 ];
 
 const EMPLACEMENTS: Record<string, string> = {
@@ -141,6 +152,14 @@ const vide = {
     section_id: "",
     subsection_id: "",
     product_ids: [] as number[],
+
+    // La tuile d'accueil : sa découpe, ses deux teintes, et la case visée.
+    // Les deux premières portent « Restaurants » et « Magasins » — elles ne
+    // se louent pas.
+    tile_image: "",
+    tile_tint: "",
+    tile_tint_dark: "",
+    tile_position: "3",
 };
 
 export default function SponsorshipForm({
@@ -155,6 +174,10 @@ export default function SponsorshipForm({
 }: Props) {
     const [form, setForm] = useState({ ...vide, merchant_id: merchantId ?? 0 });
     const [visuel, setVisuel] = useState<File | null>(null);
+
+    // La découpe de la tuile, quand elle vient de l'ordinateur plutôt que de
+    // la galerie.
+    const [decoupeFichier, setDecoupeFichier] = useState<File | null>(null);
     const [envoi, setEnvoi] = useState(false);
 
     const api = new ApiService();
@@ -203,6 +226,10 @@ export default function SponsorshipForm({
 
             // À la relecture, la cible enregistrée peut être un sous-rayon :
             // on remonte à son parent pour que les deux listes se replacent.
+            tile_image: sponsoring.tile_image ?? "",
+            tile_tint: sponsoring.tile_tint ?? "",
+            tile_tint_dark: sponsoring.tile_tint_dark ?? "",
+            tile_position: String(sponsoring.position ?? 3),
             section_id: sponsoring.kind === "section" ? String(parentDe(sponsoring.target_value) ?? "") : "",
             subsection_id:
                 sponsoring.kind === "section" && parentDe(sponsoring.target_value) !== null
@@ -212,6 +239,7 @@ export default function SponsorshipForm({
         });
 
         setVisuel(null);
+        setDecoupeFichier(null);
     }, [sponsoring?.id, merchantId]);
 
     /** Les boutiques du marchand choisi, et d'elles seules. */
@@ -260,9 +288,24 @@ export default function SponsorshipForm({
                 return;
             }
 
+            // La découpe suit le même chemin que le visuel d'une bannière :
+            // choisie dans la galerie ou envoyée depuis l'ordinateur, mais ce
+            // qu'on enregistre est toujours une adresse.
+            const decoupe =
+                form.kind === "mosaic" ? await envoyerSiBesoin(decoupeFichier, form.tile_image || null, galerie) : null;
+
+            if (form.kind === "mosaic" && !decoupe) {
+                setEnvoi(false);
+                Swal.fire({ icon: "info", title: "Donnez la découpe de la tuile" });
+
+                return;
+            }
+
             const { data } = await api.postData(base, {
                 ...form,
                 image,
+                tile_image: decoupe,
+                tile_position: Number(form.tile_position),
                 starts_at: form.starts_at || null,
                 ends_at: form.ends_at || null,
                 // Le sous-rayon l'emporte : qui a pris la peine de le
@@ -413,6 +456,116 @@ export default function SponsorshipForm({
                                         </option>
                                     ))}
                                 </select>
+                            </label>
+                        </>
+                    )}
+
+                    {form.kind === "mosaic" && (
+                        <>
+                            {/*
+                              * L'aperçu avant le formulaire.
+                              *
+                              * C'est une surface minuscule et chère : voir ce qu'on achète
+                              * évite de découvrir sur un téléphone qu'un nom trop long se
+                              * coupe, ou qu'une découpe claire disparaît sur sa teinte.
+                              */}
+                            <div className="sm:col-span-2">
+                                <span className="text-xs font-semibold uppercase text-slate-500">Aperçu</span>
+                                <div
+                                    className="mt-2 relative w-56 h-28 rounded-2xl overflow-hidden"
+                                    style={{ background: form.tile_tint || "#FBE7C8" }}
+                                >
+                                    {form.tile_image && (
+                                        <img
+                                            src={form.tile_image}
+                                            alt=""
+                                            className="absolute object-contain"
+                                            style={{ width: "62%", top: "-5%", right: "-6%" }}
+                                        />
+                                    )}
+                                    <span className="absolute left-2 top-2 px-1.5 py-0.5 rounded text-[9px] font-extrabold tracking-wide bg-black/10 text-black/60">
+                                        Sponsorisé
+                                    </span>
+                                    <span className="absolute left-3 bottom-3 text-base font-extrabold leading-tight text-[#14110D]">
+                                        {form.title || "Le titre de la tuile"}
+                                    </span>
+                                </div>
+                                <span className="block text-xs text-slate-400 mt-1">
+                                    La mention « Sponsorisé » est toujours affichée. Une place payée qui se
+                                    présenterait comme un choix d'Ongo tromperait le client.
+                                </span>
+                            </div>
+
+                            <div className="sm:col-span-2">
+                                <ImageField
+                                    label="Découpe"
+                                    hint="Posée en haut à droite, jamais recadrée — donc une image détourée, à fond transparent."
+                                    adresse={form.tile_image}
+                                    fichier={decoupeFichier}
+                                    owner={galerie === undefined ? owner : undefined}
+                                    galerie={galerie}
+                                    disabled={envoi}
+                                    forme="aspect-square"
+                                    onChange={(tile_image, choisi) => {
+                                        setForm({ ...form, tile_image });
+                                        setDecoupeFichier(choisi);
+                                    }}
+                                />
+                            </div>
+
+                            <label className="block">
+                                <span className="text-xs font-semibold uppercase text-slate-500">Teinte claire</span>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="color"
+                                        className="h-10 w-10 shrink-0 rounded border border-slate-300 dark:border-slate-700"
+                                        value={/^#[0-9a-fA-F]{6}$/.test(form.tile_tint) ? form.tile_tint : "#FBE7C8"}
+                                        onChange={(e) => setForm({ ...form, tile_tint: e.target.value.toUpperCase() })}
+                                    />
+                                    <input
+                                        className={champ}
+                                        value={form.tile_tint}
+                                        placeholder="vide : celle d'Ongo"
+                                        onChange={(e) => setForm({ ...form, tile_tint: e.target.value.toUpperCase() })}
+                                    />
+                                </div>
+                            </label>
+
+                            <label className="block">
+                                <span className="text-xs font-semibold uppercase text-slate-500">Teinte sombre</span>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="color"
+                                        className="h-10 w-10 shrink-0 rounded border border-slate-300 dark:border-slate-700"
+                                        value={/^#[0-9a-fA-F]{6}$/.test(form.tile_tint_dark) ? form.tile_tint_dark : "#4A2A10"}
+                                        onChange={(e) => setForm({ ...form, tile_tint_dark: e.target.value.toUpperCase() })}
+                                    />
+                                    <input
+                                        className={champ}
+                                        value={form.tile_tint_dark}
+                                        placeholder="vide : celle d'Ongo"
+                                        onChange={(e) => setForm({ ...form, tile_tint_dark: e.target.value.toUpperCase() })}
+                                    />
+                                </div>
+                                <span className="block text-xs text-slate-400 mt-1">
+                                    Prend le relais la nuit et en mode sombre.
+                                </span>
+                            </label>
+
+                            <label className="block">
+                                <span className="text-xs font-semibold uppercase text-slate-500">Place</span>
+                                <input
+                                    type="number"
+                                    min={3}
+                                    max={99}
+                                    className={champ}
+                                    value={form.tile_position}
+                                    onChange={(e) => setForm({ ...form, tile_position: e.target.value })}
+                                />
+                                <span className="block text-xs text-slate-400 mt-1">
+                                    3 est la première libre. Les deux premières portent « Restaurants » et
+                                    « Magasins » : elles ne se louent pas.
+                                </span>
                             </label>
                         </>
                     )}

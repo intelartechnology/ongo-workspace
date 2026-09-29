@@ -55,3 +55,25 @@ export const envoyerSiBesoin = async (
 
     return data.data.url as string;
 };
+
+/**
+ * Cette adresse peut-elle porter un fond transparent ?
+ *
+ * Le pendant exact de `CutOut::supported` côté serveur. Un JPEG n'a pas de
+ * canal alpha : posé dans un coin de tuile, son rectangle se verrait sur la
+ * teinte. Le dire ici évite d'enregistrer pour se faire refuser, et surtout
+ * de croire qu'une image est servie alors qu'elle est ignorée.
+ *
+ * On lit l'extension du **chemin**, pas de l'adresse entière : une adresse de
+ * stockage finit par `?alt=media&token=…`, et un `?x=.png` ne doit pas sauver
+ * un jpg.
+ */
+export const estDetouree = (adresse?: string | null): boolean => {
+    const valeur = (adresse ?? "").trim();
+
+    if (!valeur) return false;
+
+    const chemin = decodeURIComponent(valeur.split("?")[0]).toLowerCase();
+
+    return [".png", ".webp", ".svg", ".gif"].some((format) => chemin.endsWith(format));
+};

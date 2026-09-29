@@ -263,9 +263,31 @@ export default function Delivery({ merchantId, storeId }: DeliveryProps) {
                                 inputMode="decimal"
                             />
                         </label>
+                        {/*
+                            Le rayon est obligatoire, et l'écran le dit.
+
+                            Laissé vide, il voulait dire « je livre partout » :
+                            une boutique de Douala acceptait une commande à
+                            Bertoua, 445 km. Un marchand qui n'a pas rempli ce
+                            champ n'a pas voulu dire cela — il n'a pas vu la
+                            question.
+                        */}
                         <label>
-                            <span className="text-xs font-semibold uppercase text-slate-500">Ne pas livrer au-delà de (km)</span>
-                            <input className={champ} value={f.max_distance} placeholder="sans limite" onChange={(e) => modifier(source, { max_distance: e.target.value })} inputMode="decimal" />
+                            <span className="text-xs font-semibold uppercase text-slate-500">
+                                Ne pas livrer au-delà de (km) <span className="text-red-600">*</span>
+                            </span>
+                            <input
+                                className={champ}
+                                value={f.max_distance}
+                                placeholder="10"
+                                required
+                                onChange={(e) => modifier(source, { max_distance: e.target.value })}
+                                inputMode="decimal"
+                            />
+                            <span className="text-xs text-slate-400">
+                                Obligatoire. Au-delà, vos clients verront que vous ne livrez pas chez eux — avant de
+                                remplir leur panier.
+                            </span>
                         </label>
                     </div>
                 )}

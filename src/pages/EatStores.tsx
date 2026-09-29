@@ -25,6 +25,16 @@ interface Boutique extends Fiche {
     rating_count: number;
     merchant_id: number;
     merchant_name: string | null;
+
+    /**
+     * Son compte est-il ouvert ?
+     *
+     * C'est lui qui détient sa caisse : un portefeuille appartient à un
+     * utilisateur, et verser au marchand créditait le compte personnel de son
+     * propriétaire. Sans compte, rien ne peut être versé à ce restaurant sur un
+     * portefeuille.
+     */
+    has_account: boolean;
 }
 
 interface EatStoresProps {
@@ -49,6 +59,7 @@ export default function EatStores({ onLogout, theme, toggleTheme }: EatStoresPro
         type: string;
         city: string;
         address: string;
+        phone: string;
         logo: string;
         banner: string;
         brand_color: string;
@@ -102,6 +113,86 @@ export default function EatStores({ onLogout, theme, toggleTheme }: EatStoresPro
         if (ouverte?.id === b.id) setOuverte({ ...ouverte, ...data.data });
         charger();
     };
+
+    /**
+     * Ouvrir le compte d'un restaurant.
+     *
+     * Le mot de passe provisoire est affiché **une seule fois** : il n'est
+     * stocké nulle part en clair. Celui qui ouvre le compte le transmet au
+     * propriétaire, qui le change depuis l'application.
+     */
+    const ouvrirLeCompte = async (b: Boutique) => {
+        const confirmation = await Swal.fire({
+            icon: "question",
+            title: `Ouvrir le compte de ${b.name} ?`,
+            html:
+                `<p style="font-size:14px">Ce compte détiendra la caisse du restaurant, séparée de celle de son propriétaire.</p>` +
+                `<p style="font-size:13px;color:#64748b;margin-top:8px">Identifiant : <b>${b.phone ?? "—"}</b></p>`,
+            showCancelButton: true,
+            confirmButtonText: "Ouvrir",
+            cancelButtonText: "Annuler",
+        });
+
+        if (!confirmation.isConfirmed) return;
+
+        try {
+            const { data } = await api.postData("v3/admin/eat/stores/account", { store_id: b.id });
+
+            if (!data.success) {
+                Swal.fire({ icon: "error", title: "Compte non ouvert", text: data.message });
+                return;
+            }
+
+            await montrerLeMotDePasse(b, data.data.password, data.data.telephone);
+            await charger();
+        } catch (erreur) {
+            Swal.fire({ icon: "warning", title: "Ouverture impossible", text: String(erreur) });
+        }
+    };
+
+    /** Refaire le mot de passe, quand il a été perdu. */
+    const renouvelerLeCompte = async (b: Boutique) => {
+        const confirmation = await Swal.fire({
+            icon: "warning",
+            title: `Refaire le mot de passe de ${b.name} ?`,
+            text: "L'ancien ne fonctionnera plus. Le nouveau ne s'affichera qu'une fois.",
+            showCancelButton: true,
+            confirmButtonText: "Refaire",
+            cancelButtonText: "Annuler",
+        });
+
+        if (!confirmation.isConfirmed) return;
+
+        try {
+            const { data } = await api.postData("v3/admin/eat/stores/account/reset", { store_id: b.id });
+
+            if (!data.success) {
+                Swal.fire({ icon: "error", title: "Non renouvelé", text: data.message });
+                return;
+            }
+
+            await montrerLeMotDePasse(b, data.data.password, data.data.telephone);
+        } catch (erreur) {
+            Swal.fire({ icon: "warning", title: "Renouvellement impossible", text: String(erreur) });
+        }
+    };
+
+    /**
+     * Le montrer, une fois, en disant qu'il ne reviendra pas.
+     *
+     * Il n'est stocké nulle part en clair : fermer cette fenêtre sans l'avoir
+     * noté oblige à en refaire un.
+     */
+    const montrerLeMotDePasse = (b: Boutique, motDePasse: string, numero: string) =>
+        Swal.fire({
+            icon: "success",
+            title: `Compte de ${b.name}`,
+            html:
+                `<p style="font-size:14px">Identifiant <b>${numero}</b></p>` +
+                `<p style="font-size:28px;font-weight:800;letter-spacing:4px;margin:12px 0">${motDePasse}</p>` +
+                `<p style="font-size:13px;color:#b91c1c">Notez-le maintenant : il ne s'affichera plus. Transmettez-le au propriétaire, qui le changera depuis l'application.</p>`,
+            confirmButtonText: "J'ai noté",
+        });
 
     const mettreEnAvant = async (b: Boutique) => {
         const { data } = await api.postData("v3/admin/eat/stores/feature", { id: b.id, is_featured: !b.is_featured });
@@ -170,7 +261,33 @@ export default function EatStores({ onLogout, theme, toggleTheme }: EatStoresPro
 
         if (!data.success) return Swal.fire({ icon: "error", title: data.message });
 
-        Swal.fire({ icon: "success", title: data.message, timer: 1200, showConfirmButton: false });
+        /*
+         * Le compte du restaurant naît avec lui.
+         *
+         * C'est celui qui détiendra sa caisse. Le mot de passe provisoire ne
+         * s'affiche qu'une fois : il n'est stocké nulle part en clair.
+         */
+        if (data.data?.account_password) {
+            await Swal.fire({
+                icon: "success",
+                title: "Boutique ouverte",
+                html:
+                    `<p style="font-size:14px">Son compte est ouvert : c'est lui qui détiendra sa caisse.</p>` +
+                    `<p style="font-size:13px;color:#64748b;margin-top:8px">Identifiant <b>${nouvelle.phone}</b></p>` +
+                    `<p style="font-size:28px;font-weight:800;letter-spacing:4px;margin:12px 0">${data.data.account_password}</p>` +
+                    `<p style="font-size:13px;color:#b91c1c">Notez-le maintenant : il ne s'affichera plus. Transmettez-le au propriétaire, qui le changera depuis l'application.</p>`,
+                confirmButtonText: "J'ai noté",
+            });
+        } else if (data.data?.account_message) {
+            await Swal.fire({
+                icon: "warning",
+                title: "Boutique ouverte, compte non ouvert",
+                text: data.data.account_message,
+            });
+        } else {
+            Swal.fire({ icon: "success", title: data.message, timer: 1200, showConfirmButton: false });
+        }
+
         setNouvelle(null);
         setImages({ logo: null, banner: null });
         charger();
@@ -187,7 +304,7 @@ export default function EatStores({ onLogout, theme, toggleTheme }: EatStoresPro
                         </p>
                     </div>
                     {!nouvelle && (
-                        <button onClick={() => setNouvelle({ merchant_id: "", name: "", type: "restaurant", city: "Douala", address: "", logo: "", banner: "", brand_color: "#111827" })} className="px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium dark:bg-white dark:text-slate-900">
+                        <button onClick={() => setNouvelle({ merchant_id: "", name: "", type: "restaurant", city: "Douala", address: "", phone: "", logo: "", banner: "", brand_color: "#111827" })} className="px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium dark:bg-white dark:text-slate-900">
                             Ouvrir une boutique
                         </button>
                     )}
@@ -224,6 +341,13 @@ export default function EatStores({ onLogout, theme, toggleTheme }: EatStoresPro
                                 <span className="text-xs font-semibold uppercase text-slate-500">Ville</span>
                                 <input className={champ} value={nouvelle.city} onChange={(e) => setNouvelle({ ...nouvelle, city: e.target.value })} />
                             </label>
+                            <label>
+                                <span className="text-xs font-semibold uppercase text-slate-500">Téléphone <span className="text-rose-500">*</span></span>
+                                <input className={champ} value={nouvelle.phone} placeholder="+237 6…" onChange={(e) => setNouvelle({ ...nouvelle, phone: e.target.value })} />
+                                {/* Obligatoire : c'est le numéro que le livreur appelle depuis
+                                    la commande. Facultatif, aucune boutique ne l'avait rempli. */}
+                                <span className="text-xs text-slate-400">Le livreur l'appelle quand la commande n'est pas prête.</span>
+                            </label>
                             <label className="md:col-span-2">
                                 <span className="text-xs font-semibold uppercase text-slate-500">Adresse</span>
                                 <input className={champ} value={nouvelle.address} onChange={(e) => setNouvelle({ ...nouvelle, address: e.target.value })} />
@@ -256,7 +380,7 @@ export default function EatStores({ onLogout, theme, toggleTheme }: EatStoresPro
                         </div>
                         <div className="flex justify-end gap-3 mt-6">
                             <button onClick={() => setNouvelle(null)} className="px-4 py-2 rounded-lg text-sm text-slate-600 dark:text-slate-300">Annuler</button>
-                            <button onClick={ouvrir} disabled={!nouvelle.merchant_id || !nouvelle.name.trim()} className="px-5 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium disabled:opacity-40 dark:bg-white dark:text-slate-900">
+                            <button onClick={ouvrir} disabled={!nouvelle.merchant_id || !nouvelle.name.trim() || !nouvelle.phone.trim()} className="px-5 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium disabled:opacity-40 dark:bg-white dark:text-slate-900">
                                 Ouvrir
                             </button>
                         </div>
@@ -323,6 +447,19 @@ export default function EatStores({ onLogout, theme, toggleTheme }: EatStoresPro
                                     <td className="px-5 py-3 text-right whitespace-nowrap">
                                         <button onClick={() => sponsoriser(b)} className={`text-sm mr-4 ${b.sponsored_until && new Date(b.sponsored_until) > new Date() ? "text-amber-700 font-medium" : "text-slate-600 dark:text-slate-300"}`}>
                                             {b.sponsored_until && new Date(b.sponsored_until) > new Date() ? "Sponsorisée" : "Sponsoriser"}
+                                        </button>
+                                        <button
+                                            onClick={() => (b.has_account ? renouvelerLeCompte(b) : ouvrirLeCompte(b))}
+                                            className={`text-sm mr-4 ${
+                                                b.has_account ? "text-slate-600 dark:text-slate-300" : "text-amber-700 font-medium"
+                                            }`}
+                                            title={
+                                                b.has_account
+                                                    ? "Refaire son mot de passe"
+                                                    : "Ouvrir le compte qui détiendra sa caisse"
+                                            }
+                                        >
+                                            {b.has_account ? "Compte" : "Ouvrir le compte"}
                                         </button>
                                         <button onClick={() => setOuverte(b)} className="text-sm text-slate-600 dark:text-slate-300 mr-4">Fiche</button>
                                         <button onClick={() => renommer(b)} className="text-sm text-slate-600 dark:text-slate-300 mr-4">Renommer</button>

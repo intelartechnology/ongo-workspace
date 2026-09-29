@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import ApiService from '../../services/ApiService';
 
@@ -8,6 +8,125 @@ interface SidebarProps {
     user: any;
     onLogout: () => void;
 }
+
+interface Entree {
+    icon: string;
+    label: string;
+    path: string;
+    badge?: 'reviews';
+}
+
+interface Groupe {
+    cle: string;
+    titre: string;
+    entrees: Entree[];
+}
+
+/**
+ * Les familles du back-office.
+ *
+ * Elles suivent les métiers, pas l'histoire du code. « Plateforme » comptait
+ * dix-sept lignes — la moitié du menu — où tout Ongo Eat était à plat ;
+ * « Pilotage » était un titre sans rien dessous ; et « Location » figurait
+ * deux fois, dans deux groupes, vers la même page.
+ *
+ * Hors « Ongo Eat », qui est un module entier, aucun groupe ne dépasse
+ * quatre entrées. Et tous se replient : ce qui compte n'est pas leur taille,
+ * c'est qu'on n'en voie qu'un à la fois.
+ */
+const GROUPES: Groupe[] = [
+    {
+        /*
+         * Tout Ongo Eat au meme endroit.
+         *
+         * C'etait eclate en trois familles — le module, la vitrine, le
+         * catalogue —, ce qui obligeait a se demander laquelle porte les
+         * codes promo avant de les chercher. Un seul groupe, replie par
+         * defaut : on l'ouvre quand on travaille sur Eat, et on ne le voit
+         * pas le reste du temps.
+         *
+         * L'ordre suit l'usage, du quotidien au rarement touche.
+         */
+        cle: 'eat',
+        titre: 'Ongo Eat',
+        entrees: [
+            { icon: 'restaurant', label: 'Tableau de bord', path: '/eat' },
+            { icon: 'local_mall', label: 'Boutiques', path: '/eat-stores' },
+            { icon: 'storefront', label: 'Marchands', path: '/merchants' },
+            // La régie : ce qu'un marchand propose et qui attend une décision.
+            // Sans cette entrée, une campagne dort dans une liste que personne
+            // n'ouvre — et derrière, c'est quelqu'un qui a payé et qui attend.
+            { icon: 'campaign', label: 'Sponsorings', path: '/eat-sponsorships', badge: 'reviews' },
+            { icon: 'payments', label: 'Reversements', path: '/eat-payouts' },
+            // La tresorerie : le livre d'Ongo, qu'aucun ecran ne lisait. Le
+            // tableau de bord recalcule ; ici on lit ce qui est ecrit.
+            { icon: 'account_balance', label: 'Trésorerie', path: '/eat-treasury' },
+            // Qui livre pour Ongo : la liste que la repartition consultait sans
+            // que personne ne puisse l'ecrire.
+            { icon: 'two_wheeler', label: 'Livreurs', path: '/eat-couriers' },
+            { icon: 'sell', label: 'Codes promo', path: '/eat-promo-codes' },
+            // La mosaique se regle a trois endroits ; elle se lit ici.
+            { icon: 'grid_view', label: 'Mosaïque', path: '/eat-mosaic' },
+            { icon: 'view_agenda', label: 'Rubriques', path: '/eat-sections' },
+            { icon: 'view_carousel', label: 'Bannières', path: '/eat-banners' },
+            { icon: 'link', label: 'Pages de redirection', path: '/eat-redirects' },
+            { icon: 'category', label: 'Catégories', path: '/eat-categories' },
+            { icon: 'ramen_dining', label: 'Cuisines', path: '/eat-tags' },
+            { icon: 'filter_list', label: 'Filtres', path: '/eat-filters' },
+            { icon: 'public', label: 'Zones de service', path: '/eat-service-areas' },
+            { icon: 'credit_card', label: 'Moyens de paiement', path: '/eat-payment-methods' },
+            { icon: 'photo_library', label: 'Galerie', path: '/eat-gallery' },
+        ],
+    },
+    {
+        cle: 'courses',
+        titre: 'Courses et flotte',
+        entrees: [
+            { icon: 'directions_car', label: 'Courses', path: '/courses' },
+            { icon: 'person_outline', label: 'Chauffeurs', path: '/drivers' },
+            { icon: 'car_rental', label: 'Véhicules', path: '/vehicles' },
+            { icon: 'person_search', label: 'Demandes', path: '/requests' },
+        ],
+    },
+    {
+        cle: 'covoiturage',
+        titre: 'Covoiturage',
+        entrees: [
+            { icon: 'groups', label: 'Activité', path: '/carpool' },
+            { icon: 'how_to_reg', label: 'Covoitureurs', path: '/carpoolers' },
+            { icon: 'currency_exchange', label: 'Remboursements', path: '/carpool-refunds' },
+        ],
+    },
+    {
+        cle: 'location',
+        titre: 'Location',
+        entrees: [
+            { icon: 'calendar_month', label: 'Réservations', path: '/rentals' },
+            { icon: 'directions_car_filled', label: 'Véhicules', path: '/rental-vehicles' },
+            { icon: 'category', label: 'Catégories', path: '/rental-categories' },
+        ],
+    },
+    {
+        cle: 'comptes',
+        titre: 'Comptes',
+        entrees: [
+            { icon: 'group', label: 'Utilisateurs', path: '/users' },
+            // Avertir, bloquer, rendre un compte : un seul endroit, à côté de
+            // la liste des utilisateurs, là où on vient les chercher.
+            { icon: 'gavel', label: 'Modération', path: '/moderation' },
+            { icon: 'handshake', label: 'Partenaires', path: '/partners' },
+            { icon: 'volunteer_activism', label: 'Contributeurs', path: '/contributors' },
+        ],
+    },
+    {
+        cle: 'finance',
+        titre: 'Finance',
+        entrees: [{ icon: 'payments', label: 'Transactions', path: '/transactions' }],
+    },
+];
+
+/** Ce que les groupes dépliés d'une session gardent d'une visite à l'autre. */
+const MEMOIRE = 'ongo.sidebar.ouverts';
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, user, onLogout }) => {
     const location = useLocation();
@@ -29,108 +148,78 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, user, onLogout }) 
             .catch(() => setARelire(0));
     }, [location.pathname]);
 
-    const menuGroups = [
-        {
-            title: 'Pilotage',
-            items: [
-           /*      { icon: 'bar_chart', label: 'Statistiques', path: '/stats' },
-                { icon: 'visibility', label: 'Aperçu', path: '/overview' },
-                { icon: 'map', label: 'Map', path: '/map' },
-                { icon: 'navigation', label: 'Race Position', path: '/race-position' }, */
-            ]
-        },
-        {
-            title: 'Utilisateurs',
-            items: [
-                { icon: 'group', label: 'Utilisateurs', path: '/users' },
-                // Avertir, bloquer, rendre un compte : un seul endroit, a cote
-                // de la liste des utilisateurs, la ou on vient les chercher.
-                { icon: 'gavel', label: 'Modération', path: '/moderation' },
-             /*    { icon: 'admin_panel_settings', label: 'Administrateurs', path: '/admins' },
-                { icon: 'business_center', label: 'Commerciaux', path: '/sales' },
-                { icon: 'handshake', label: 'Partenaires', path: '/partners' }, */
-                 { icon: 'handshake', label: 'Partenaires', path: '/partners' },
-                 { icon: 'volunteer_activism', label: 'Contributeurs', path: '/contributors' },
-            ]
-        },
-        {
-            title: 'Exploitation',
-            items: [
-                { icon: 'directions_car', label: 'Courses', path: '/courses' },
-              /*   { icon: 'event_available', label: 'Réservation', path: '/reservations' },*/
-                { icon: 'location_on', label: 'Location', path: '/rentals' }, 
-            ]
-        },
-        {
-            title: 'Location',
-            items: [
-                { icon: 'calendar_month', label: 'Réservations', path: '/rentals' },
-                { icon: 'car_rental', label: 'Véhicules Location', path: '/rental-vehicles' },
-                { icon: 'category', label: 'Catégories', path: '/rental-categories' },
-            ]
-        },
-        {
-            title: 'Finance',
-            items: [
-                { icon: 'payments', label: 'Transactions', path: '/transactions' },
-            ]
-        },
-        {
-            title: 'Covoiturage',
-            items: [
-                { icon: 'groups', label: 'Activité', path: '/carpool' },
-                { icon: 'how_to_reg', label: 'Covoitureurs', path: '/carpoolers' },
-                { icon: 'currency_exchange', label: 'Remboursements', path: '/carpool-refunds' },
-            ]
-        },
-        {
-            title: 'Flotte',
-            items: [
-                { icon: 'car_rental', label: 'Véhicules', path: '/vehicles' },
-                { icon: 'person_outline', label: 'Chauffeurs', path: '/drivers' },
-                { icon: 'person_search', label: 'Demandes', path: '/requests' },
-             /*    { icon: 'category', label: 'Modèles', path: '/models' }, */
-            ]
-        },
-        {
-            title: 'Plateforme',
-            items: [
-                // Commissions et delais : ce qui se changeait par un
-                // deploiement se change ici.
-                { icon: 'restaurant', label: 'Ongo Eat', path: '/eat' },
-                { icon: 'payments', label: 'Reversements', path: '/eat-payouts' },
-                { icon: 'local_mall', label: 'Boutiques', path: '/eat-stores' },
-                { icon: 'ramen_dining', label: 'Cuisines', path: '/eat-tags' },
-                { icon: 'category', label: 'Catégories', path: '/eat-categories' },
-                { icon: 'view_agenda', label: 'Rubriques', path: '/eat-sections' },
-                { icon: 'sell', label: 'Codes promo', path: '/eat-promo-codes' },
-                { icon: 'credit_card', label: 'Paiements', path: '/eat-payment-methods' },
-                { icon: 'public', label: 'Zones', path: '/eat-service-areas' },
-                { icon: 'filter_list', label: 'Filtres', path: '/eat-filters' },
-                { icon: 'view_carousel', label: 'Bannières', path: '/eat-banners' },
-                { icon: 'campaign', label: 'Pages de redirection', path: '/eat-redirects' },
-                // La régie : ce qu'un marchand propose et qui attend une
-                // décision. Sans cette entrée, une campagne dort dans une
-                // liste que personne n'ouvre — et derrière, c'est quelqu'un
-                // qui a payé et qui attend.
-                { icon: 'campaign', label: 'Sponsorings', path: '/eat-sponsorships', badge: 'reviews' },
-                { icon: 'photo_library', label: 'Galerie', path: '/eat-gallery' },
-                { icon: 'storefront', label: 'Marchands', path: '/merchants' },
-                { icon: 'tune', label: 'Réglages', path: '/settings' },
-            ],
-        }/* ,
-        {
-            title: 'Support & Litiges',
-            items: [
-                { icon: 'warning', label: 'Litiges', path: '/disputes' },
-                { icon: 'help', label: 'Raisons', path: '/reasons' },
-            ]
-        } */
-    ];
+    /** Le groupe où se trouve la page ouverte. */
+    const groupeCourant = useMemo(
+        () => GROUPES.find((g) => g.entrees.some((e) => e.path === location.pathname))?.cle,
+        [location.pathname],
+    );
+
+    /*
+     * Les groupes se replient.
+     *
+     * Trente entrées dépliées font une liste qu'on balaie au lieu de la lire,
+     * et la moitié demande un défilement. Repliées, il en reste huit — et
+     * celle qu'on regarde est toujours ouverte.
+     */
+    const [ouverts, setOuverts] = useState<string[]>(() => {
+        try {
+            const garde = localStorage.getItem(MEMOIRE);
+
+            return garde ? (JSON.parse(garde) as string[]) : ['eat'];
+        } catch {
+            return ['eat'];
+        }
+    });
+
+    useEffect(() => {
+        try {
+            localStorage.setItem(MEMOIRE, JSON.stringify(ouverts));
+        } catch {
+            // Un navigateur qui refuse le stockage ne doit pas casser le menu.
+        }
+    }, [ouverts]);
+
+    const basculer = (cle: string) =>
+        setOuverts((precedent) => (precedent.includes(cle) ? precedent.filter((c) => c !== cle) : [...precedent, cle]));
+
+    const lien = (item: Entree) => {
+        const actif = location.pathname === item.path;
+
+        return (
+            <Link
+                key={item.path}
+                to={item.path}
+                onClick={() => setIsOpen(false)}
+                className={`flex items-center gap-3 pl-3 pr-2 py-2 rounded-lg text-[13.5px] transition-colors ${
+                    actif
+                        ? 'bg-primary/10 text-primary font-semibold'
+                        : 'text-slate-600 dark:text-slate-400 font-medium hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'
+                }`}
+            >
+                <span
+                    className="material-symbols-outlined text-[20px] shrink-0"
+                    style={{ fontVariationSettings: actif ? "'FILL' 1" : "'FILL' 0" }}
+                >
+                    {item.icon}
+                </span>
+                <span className="truncate">{item.label}</span>
+
+                {/* La pastille ne s'affiche qu'avec un nombre : « 0 à relire »
+                    attirerait l'œil pour rien, tous les jours. */}
+                {item.badge === 'reviews' && aRelire > 0 && (
+                    <span className="ml-auto px-1.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500 text-white">
+                        {aRelire}
+                    </span>
+                )}
+            </Link>
+        );
+    };
+
+    const initiales = user ? `${user.nom?.[0] ?? ''}${user.prenom?.[0] ?? ''}`.toUpperCase() : 'O';
 
     return (
         <>
-            {/* Sidebar Overlay (Mobile only) */}
+            {/* Le voile, sur petit écran seulement. Il reste sous le menu qu'il assombrit. */}
             {isOpen && (
                 <div
                     className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 lg:hidden transition-opacity"
@@ -138,86 +227,88 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, user, onLogout }) 
                 />
             )}
 
-            {/* Sidebar Navigation */}
-            <aside className={`
-                w-72 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 
-                flex flex-col fixed h-full z-[60] transition-all duration-300
-                ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-            `}>
-                <div className="p-6 flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                        <img src="/logo.png" alt="Ongo 237" className="h-10 w-auto object-contain" />
-                        <div>
-                            <h1 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white leading-none">Ongo 237</h1>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 uppercase tracking-wider font-semibold">Super Admin</p>
+            <aside
+                className={`
+                    w-[268px] bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800
+                    flex flex-col fixed h-full z-[60] transition-transform duration-300
+                    ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+                `}
+            >
+                <div className="px-5 py-5 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                        <img src="/logo.png" alt="Ongo 237" className="h-9 w-auto object-contain shrink-0" />
+                        <div className="min-w-0">
+                            <h1 className="text-[17px] font-bold tracking-tight text-slate-900 dark:text-white leading-none truncate">
+                                Ongo 237
+                            </h1>
+                            <p className="text-[11px] text-slate-400 mt-1 font-medium">Back-office</p>
                         </div>
                     </div>
-                    {/* Close Sidebar (Mobile only) */}
-                    <button onClick={() => setIsOpen(false)} className="lg:hidden text-slate-400 hover:text-slate-600 dark:hover:text-white">
+
+                    <button
+                        onClick={() => setIsOpen(false)}
+                        className="lg:hidden text-slate-400 hover:text-slate-600 dark:hover:text-white"
+                    >
                         <span className="material-symbols-outlined">close</span>
                     </button>
                 </div>
-                <nav className="flex-1 px-4 py-4 space-y-6 overflow-y-auto custom-scrollbar">
-                    {/* Primary Dashboard Link */}
-                    <div className="space-y-1">
-                        <Link
-                            to="/dashboard"
-                            className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all group font-medium ${location.pathname === '/dashboard'
-                                ? 'bg-primary text-white shadow-sm shadow-primary/20'
-                                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-primary'
-                                }`}
-                        >
-                            <span className="material-symbols-outlined text-[20px]">grid_view</span>
-                            <span className="text-sm">Tableau de bord</span>
-                        </Link>
-                    </div>
 
-                    {menuGroups.map((group) => (
-                        <div key={group.title} className="space-y-1">
-                            <h3 className="px-3 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">
-                                {group.title}
-                            </h3>
-                            {group.items.map((item) => (
-                                <Link
-                                    key={item.label}
-                                    to={item.path}
-                                    className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all group font-medium ${location.pathname === item.path
-                                        ? 'bg-primary/10 text-primary'
-                                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-primary'
-                                        }`}
+                <nav className="flex-1 px-3 pb-4 space-y-1 overflow-y-auto custom-scrollbar">
+                    {lien({ icon: 'grid_view', label: 'Tableau de bord', path: '/dashboard' })}
+
+                    <div className="h-2" />
+
+                    {GROUPES.map((groupe) => {
+                        // Le groupe de la page ouverte se déplie, même replié à
+                        // la main : on ne cache pas à quelqu'un où il se trouve.
+                        const deplie = ouverts.includes(groupe.cle) || groupeCourant === groupe.cle;
+
+                        return (
+                            <div key={groupe.cle}>
+                                <button
+                                    onClick={() => basculer(groupe.cle)}
+                                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wide text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
                                 >
-                                    <span className={`material-symbols-outlined text-[20px] group-hover:scale-110 transition-transform ${location.pathname === item.path ? 'fill-1' : ''}`}
-                                        style={{ fontVariationSettings: location.pathname === item.path ? "'FILL' 1" : "'FILL' 0" }}
+                                    <span className="truncate">{groupe.titre}</span>
+                                    <span
+                                        className={`material-symbols-outlined text-[18px] ml-auto transition-transform ${deplie ? 'rotate-180' : ''}`}
                                     >
-                                        {item.icon}
+                                        expand_more
                                     </span>
-                                    <span className="text-sm">{item.label}</span>
+                                </button>
 
-                                    {/* La pastille ne s'affiche qu'avec un nombre : « 0 à relire »
-                                        attirerait l'œil pour rien, tous les jours. */}
-                                    {'badge' in item && item.badge === 'reviews' && aRelire > 0 && (
-                                        <span className="ml-auto px-1.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500 text-white">
-                                            {aRelire}
-                                        </span>
-                                    )}
-                                </Link>
-                            ))}
-                        </div>
-                    ))}
+                                {deplie && <div className="space-y-0.5 pb-1">{groupe.entrees.map(lien)}</div>}
+                            </div>
+                        );
+                    })}
+
+                    <div className="h-2" />
+
+                    {/* Les réglages de la plateforme entière : ni Eat, ni courses. */}
+                    {lien({ icon: 'tune', label: 'Réglages', path: '/settings' })}
                 </nav>
-                <div className="p-3 md:p-4 border-t border-slate-200 dark:border-slate-800 transition-colors duration-300">
-                    <div className="flex items-center gap-3 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 transition-colors duration-300">
-                        <div className="size-10 rounded-full bg-slate-300 overflow-hidden bg-cover bg-center" style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuC14Liz0AzEVQJFmePmumr1iV43lKqVH_zoyWDOBXbt0uLg-4l3hcE621Zbt9QuqPsEq-kjHY2GW8u_i5BvxQkTot9e3vEY9rG_4VwFn7SxUFqK6FvPQ1NXT1-9OK5J5sWU2lN5Ky_hD6XpV4RxxThvO14bztidPZzljEAc474Op3GqF0CZ-Xq9-3QVzY8AHV7eaSYgAGupYIrFzdJtOruYcJkpXFx2x8cotjQ28k2C7xR0Pm4_yclHCMOS8zTXtgswze_ijD622pc')" }}></div>
+
+                <div className="p-3 border-t border-slate-200 dark:border-slate-800">
+                    <div className="flex items-center gap-3 p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50">
+                        {/* Les initiales : une photo codée en dur montrait le
+                            même visage à tout le monde. */}
+                        <div className="size-9 shrink-0 rounded-full bg-primary/10 text-primary grid place-items-center text-[13px] font-bold">
+                            {initiales || 'O'}
+                        </div>
                         <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                                {user ? `${user.nom} ${user.prenom || ''}` : 'Ongo Admin'}
+                            <p className="text-[13px] font-semibold text-slate-900 dark:text-white truncate">
+                                {user ? `${user.nom ?? ''} ${user.prenom || ''}`.trim() : 'Ongo Admin'}
                             </p>
-                            <p className="text-xs text-slate-500 truncate">
+                            <p className="text-[11px] text-slate-500 truncate">
                                 {user ? user.email : 'admin@ongo237.com'}
                             </p>
                         </div>
-                        <button onClick={onLogout} className="text-slate-400 hover:text-slate-600">
-                            <span className="material-symbols-outlined text-xl">logout</span>
+                        <button
+                            onClick={onLogout}
+                            title="Se déconnecter"
+                            className="text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors"
+                        >
+                            <span className="material-symbols-outlined text-[20px]">logout</span>
                         </button>
                     </div>
                 </div>

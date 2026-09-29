@@ -64,7 +64,7 @@ const DriverRequestDetailModal: React.FC<DriverRequestDetailModalProps> = ({ isO
   const vehicle = driver.vehicules[0]; // Assuming one vehicle per driver for simplicity
 
   return (
-    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex justify-center items-center">
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-[70] flex justify-center items-center">
       <div className="relative p-8 border w-full max-w-2xl md:max-w-3xl shadow-lg rounded-md bg-white dark:bg-slate-800">
         <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Détails de la Demande Chauffeur</h3>
         <button

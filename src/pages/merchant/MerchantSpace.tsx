@@ -510,7 +510,7 @@ export default function MerchantSpace({ onLogout }: MerchantSpaceProps) {
                 ) : onglet === "livraison" ? (
                     <Delivery merchantId={merchantId!} storeId={boutique.id} />
                 ) : onglet === "revenus" ? (
-                    <Revenue merchantId={merchantId!} />
+                    <Revenue merchantId={merchantId!} storeId={boutique?.id ?? null} isOwner={marchand.role === "owner"} />
                 ) : onglet === "campagnes" ? (
                     <Sponsorships merchantId={merchantId!} canEdit={marchand.role !== "staff"} />
                 ) : onglet === "statistiques" ? (
