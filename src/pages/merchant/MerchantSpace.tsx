@@ -6,6 +6,7 @@ import Loading from "../../components/Loading";
 import OrderDesk from "./OrderDesk";
 import Catalog from "./Catalog";
 import Sponsorships from "./Sponsorships";
+import Audiences from "./Audiences";
 import Revenue from "./Revenue";
 import Stats from "./Stats";
 import Delivery from "./Delivery";
@@ -66,7 +67,7 @@ interface Livreur {
     matricule: string | null;
 }
 
-type Onglet = "commandes" | "horaires" | "boutique" | "paiement" | "catalogue" | "avis" | "promotions" | "livraison" | "livreurs" | "equipe" | "photos" | "collections" | "revenus" | "campagnes" | "statistiques";
+type Onglet = "commandes" | "horaires" | "boutique" | "paiement" | "catalogue" | "avis" | "promotions" | "livraison" | "livreurs" | "equipe" | "photos" | "collections" | "revenus" | "campagnes" | "audiences" | "statistiques";
 
 interface Groupe {
     cle: string;
@@ -117,6 +118,10 @@ const GROUPES: Groupe[] = [
         onglets: [
             { cle: "promotions", libelle: "Promotions" },
             { cle: "campagnes", libelle: "Sponsorings" },
+            // À qui il s'adresse. Juste après les sponsorings : c'est en
+            // composant une opération qu'on découvre qu'on voudrait viser ceux
+            // qui aiment les grillades.
+            { cle: "audiences", libelle: "Audiences" },
             { cle: "statistiques", libelle: "Statistiques" },
         ],
     },
@@ -513,6 +518,8 @@ export default function MerchantSpace({ onLogout }: MerchantSpaceProps) {
                     <Revenue merchantId={merchantId!} storeId={boutique?.id ?? null} isOwner={marchand.role === "owner"} />
                 ) : onglet === "campagnes" ? (
                     <Sponsorships merchantId={merchantId!} canEdit={marchand.role !== "staff"} />
+                ) : onglet === "audiences" ? (
+                    <Audiences merchantId={merchantId!} canEdit={marchand.role !== "staff"} />
                 ) : onglet === "statistiques" ? (
                     <Stats merchantId={merchantId!} />
                 ) : (

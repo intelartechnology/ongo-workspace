@@ -6,22 +6,32 @@ import { Carte } from "./components/BannerPreview";
 import type { Apercu, Rendu, Position } from "./components/BannerPreview";
 import { apercu, envoyerSiBesoin } from "../services/images";
 import BannerFields from "./components/BannerFields";
+import ImageField from "./components/ImageField";
 import EatTargetPicker, { cibleComplete, decrireCible } from "./components/EatTargetPicker";
 import type { TargetOptions, TargetType } from "./components/EatTargetPicker";
 
 /**
- * Les bannières de l'accueil Ongo Eat, en deux emplacements :
+ * Les bannières de l'accueil Ongo Eat, en trois emplacements :
  *
  *   - **Entrée** : le carrousel en haut, une bannière par page, qui avance
  *     seule. C'est là que vivent les tickets de code promo.
  *   - **Meilleurs deals** : la rangée sous « Laissez-vous tenter », cartes larges
  *     et carrées mêlées.
+ *   - **Magasins** : en haut de l'écran des enseignes.
+ *   - **Accueil de l'application** : la carte d'Ongo Eat posée à côté de la
+ *     course et de la location, vue avant d'entrer dans Ongo Eat. Elle change
+ *     avec la ville du client et avec ce qu'il a déjà commandé ; sans rien de
+ *     configuré, l'application garde sa carte par défaut.
  *
  * Le graphiste fait le visuel en entier — texte, dégradé, logo. Ici on ne
  * choisit que l'image, son format, où elle mène et quand elle s'affiche.
+ *
+ * **La page de transition** est facultative sur chacune : une page qui s'ouvre
+ * quand on touche la bannière, dit ce qu'il y a à dire, et porte un bouton vers
+ * la destination déjà configurée. Rien ne s'ouvre tout seul.
  */
 
-type Placement = "hero" | "deals" | "stores";
+type Placement = "hero" | "deals" | "stores" | "home";
 
 interface Banniere {
     id: number;
@@ -39,6 +49,17 @@ interface Banniere {
     impressions?: number;
     clicks?: number;
     audience?: Audience;
+
+    /** La cible composée, quand elle en porte une : le profil ci-dessus sinon. */
+    audience_id?: number | null;
+
+    /** La page de transition, quand la bannière en traverse une. */
+    splash_image?: string | null;
+    splash_logo?: string | null;
+    splash_title?: string | null;
+    splash_text?: string | null;
+    splash_cta_label?: string | null;
+
     max_views_per_user?: number | null;
     render?: Rendu;
     background_color?: string | null;
@@ -82,6 +103,12 @@ const EMPLACEMENTS: Record<Placement, { titre: string; aide: string }> = {
     hero: { titre: "Entrée", aide: "Le carrousel en haut de l'accueil. Format large 1240 × 600 px." },
     deals: { titre: "Meilleurs deals", aide: "La rangée sous « Laissez-vous tenter ». Large 1240 × 600 px ou carré 600 × 600 px." },
     stores: { titre: "Magasins", aide: "En haut de l'écran « Magasins ». Format large 1240 × 600 px." },
+    home: {
+        titre: "Accueil de l'application",
+        aide:
+            "La carte d'Ongo Eat sur l'accueil, à côté de la course et de la location — vue avant d'entrer dans " +
+            "Ongo Eat. Format large 1240 × 600 px. Rien de configuré : la carte par défaut de l'application reste.",
+    },
 };
 
 const vide = (placement: Placement) => ({
@@ -98,15 +125,35 @@ const vide = (placement: Placement) => ({
     // Aucune ville cochée : la bannière s'affiche partout.
     areas: [] as number[],
     audience: "all" as Audience,
+    // La cible composée, quand quatre profils ne suffisent pas. Zéro : aucune,
+    // c'est alors le profil ci-dessus qui décide.
+    audience_id: 0,
     // Vide : sans plafond.
     max_views_per_user: "",
-    render: "image" as Rendu,
+    // L'accueil compose son titre par-dessus la photo : c'est le gabarit, pas
+    // le visuel du graphiste. Ailleurs, l'image telle quelle reste le défaut.
+    render: (placement === "home" ? "template" : "image") as Rendu,
     background_color: "",
     title_color: "",
     subtitle_color: "",
     badge: "",
     subtitle: "",
-    text_position: "top_left" as Position,
+    /*
+     * Où le texte se pose sur le visuel.
+     *
+     * En bas à gauche sur l'accueil de l'application : la carte y fait cent
+     * points de haut, la photo doit respirer, et le titre posé en bas sur un
+     * dégradé montant est ce qui se lit le mieux à cette taille. Ailleurs, en
+     * haut à gauche comme avant — et cela reste un choix, pas une règle.
+     */
+    text_position: (placement === "home" ? "bottom_left" : "top_left") as Position,
+
+    // La page de transition : vide, la bannière mène droit à sa destination.
+    splash_image: "",
+    splash_logo: "",
+    splash_title: "",
+    splash_text: "",
+    splash_cta_label: "",
 });
 
 // La carte telle qu'elle apparaîtra : même hauteur pour toutes.
@@ -119,9 +166,20 @@ export default function EatBanners({ onLogout, theme, toggleTheme }: EatBannersP
     const [form, setForm] = useState<ReturnType<typeof vide> | null>(null);
     // Le visuel choisi, envoyé seulement à l'enregistrement.
     const [fichier, setFichier] = useState<File | null>(null);
+
+    // Le fond et le logo d'une page de transition, choisis de la même façon.
+    const [fichierSplash, setFichierSplash] = useState<File | null>(null);
+    const [fichierLogo, setFichierLogo] = useState<File | null>(null);
     const [envoi, setEnvoi] = useState(false);
 
-    useEffect(() => setFichier(null), [form === null, form?.id]);
+    /** Les audiences composées, pour viser autrement que par profil. */
+    const [audiences, setAudiences] = useState<{ id: number; name: string; reach: number | null }[]>([]);
+
+    useEffect(() => {
+        setFichier(null);
+        setFichierSplash(null);
+        setFichierLogo(null);
+    }, [form === null, form?.id]);
 
     const api = new ApiService();
 
@@ -132,6 +190,7 @@ export default function EatBanners({ onLogout, theme, toggleTheme }: EatBannersP
             if (data.success) {
                 setBannieres(data.data.banners ?? []);
                 setZones(data.data.areas ?? []);
+                setAudiences(data.data.audiences ?? []);
                 setOptions({
                     stores: data.data.stores ?? [],
                     tags: data.data.tags ?? [],
@@ -164,9 +223,17 @@ export default function EatBanners({ onLogout, theme, toggleTheme }: EatBannersP
         setEnvoi(true);
 
         let image: string | null;
+        let splashImage: string | null;
+        let splashLogo: string | null;
 
         try {
             image = await envoyerSiBesoin(fichier, form.image || null);
+
+            // Le fond et le logo de la page de transition partent par le même
+            // chemin : il n'y a qu'une façon d'envoyer une image, et deux en
+            // feraient diverger une le jour où la galerie change.
+            splashImage = await envoyerSiBesoin(fichierSplash, form.splash_image || null);
+            splashLogo = await envoyerSiBesoin(fichierLogo, form.splash_logo || null);
         } catch (erreur) {
             setEnvoi(false);
             Swal.fire({ icon: "error", title: "Image non envoyée", text: String((erreur as Error).message ?? erreur) });
@@ -188,6 +255,9 @@ export default function EatBanners({ onLogout, theme, toggleTheme }: EatBannersP
             ends_at: form.ends_at || null,
             areas: form.areas,
             audience: form.audience,
+            // Zéro veut dire « aucune audience » : l'envoyer tel quel
+            // désignerait l'audience 0.
+            audience_id: form.audience_id || null,
             max_views_per_user: form.max_views_per_user === "" ? null : Number(form.max_views_per_user),
             render: form.render,
             background_color: form.background_color || null,
@@ -196,6 +266,11 @@ export default function EatBanners({ onLogout, theme, toggleTheme }: EatBannersP
             badge: form.badge || null,
             subtitle: form.subtitle || null,
             text_position: form.text_position,
+            splash_image: splashImage || null,
+            splash_logo: splashLogo || null,
+            splash_title: form.splash_title || null,
+            splash_text: form.splash_text || null,
+            splash_cta_label: form.splash_cta_label || null,
         });
 
         setEnvoi(false);
@@ -257,6 +332,7 @@ export default function EatBanners({ onLogout, theme, toggleTheme }: EatBannersP
             starts_at: b.starts_at ? b.starts_at.slice(0, 16) : "",
             areas: (b.areas ?? []).map((z) => z.id),
             audience: b.audience ?? "all",
+            audience_id: b.audience_id ?? 0,
             render: b.render ?? "image",
             background_color: b.background_color ?? "",
             title_color: b.title_color ?? "",
@@ -266,6 +342,11 @@ export default function EatBanners({ onLogout, theme, toggleTheme }: EatBannersP
             text_position: b.text_position ?? "top_left",
             max_views_per_user: b.max_views_per_user == null ? "" : String(b.max_views_per_user),
             ends_at: b.ends_at ? b.ends_at.slice(0, 16) : "",
+            splash_image: b.splash_image ?? "",
+            splash_logo: b.splash_logo ?? "",
+            splash_title: b.splash_title ?? "",
+            splash_text: b.splash_text ?? "",
+            splash_cta_label: b.splash_cta_label ?? "",
         });
 
     // « Acceptée » compte autant que la période : une bannière en attente ne
@@ -277,7 +358,10 @@ export default function EatBanners({ onLogout, theme, toggleTheme }: EatBannersP
         && (!b.starts_at || new Date(b.starts_at) <= new Date())
         && (!b.ends_at || new Date(b.ends_at) >= new Date());
 
-    const valide = !!form && form.title.trim() !== "" && (form.image !== "" || fichier !== null) && cibleComplete(form.target_type, form.target_value);
+    const valide = !!form
+        && form.title.trim() !== ""
+        && (form.image !== "" || fichier !== null)
+        && cibleComplete(form.target_type, form.target_value);
 
     // L'aperçu d'une rangée, comme dans l'application.
     const Rangee = ({ elements, placement }: { elements: Apercu[]; placement: Placement }) =>
@@ -366,8 +450,108 @@ export default function EatBanners({ onLogout, theme, toggleTheme }: EatBannersP
                                         <option value="hero">Entrée (en haut)</option>
                                         <option value="deals">Meilleurs deals</option>
                                         <option value="stores">Écran Magasins</option>
+                                        <option value="home">Accueil de l'application</option>
                                     </select>
+                                    <span className="text-xs text-slate-400 mt-1 block">
+                                        {EMPLACEMENTS[form.placement].aide}
+                                    </span>
                                 </label>
+
+                                {/*
+                                  * La page de transition, facultative sur n'importe
+                                  * quelle bannière.
+                                  *
+                                  * Poser un fond ou un titre suffit à la demander : pas
+                                  * de case à cocher, qui se désynchroniserait du contenu
+                                  * — une page activée et vide, ou remplie et jamais
+                                  * montrée. Ce qui manque est repris de la bannière.
+                                  */}
+                                <div className="p-4 rounded-lg border border-slate-200 dark:border-slate-800 space-y-4">
+                                    <div>
+                                        <p className="text-xs font-semibold uppercase text-slate-500">
+                                            Page de transition — facultative
+                                        </p>
+                                        <p className="text-xs text-slate-400 mt-1">
+                                            Quand on touche la bannière, cette page s'ouvre d'abord ; son bouton mène
+                                            à la destination ci-dessus. Laissez tout vide pour y aller directement.
+                                        </p>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <ImageField
+                                            label="Fond de la page"
+                                            hint="Vertical, 1240 × 2200 px. Vide : le visuel de la bannière."
+                                            forme="aspect-[2/3]"
+                                            owner="ongo"
+                                            adresse={form.splash_image}
+                                            fichier={fichierSplash}
+                                            disabled={envoi}
+                                            onChange={(adresse: string, choisi: File | null) => {
+                                                setForm({ ...form, splash_image: adresse });
+                                                setFichierSplash(choisi);
+                                            }}
+                                        />
+
+                                        <ImageField
+                                            label="Logo de la marque"
+                                            hint="Carré, 400 × 400 px. Posé au centre, sur fond blanc."
+                                            forme="aspect-square"
+                                            owner="ongo"
+                                            adresse={form.splash_logo}
+                                            fichier={fichierLogo}
+                                            disabled={envoi}
+                                            onChange={(adresse: string, choisi: File | null) => {
+                                                setForm({ ...form, splash_logo: adresse });
+                                                setFichierLogo(choisi);
+                                            }}
+                                        />
+                                    </div>
+
+                                    <label className="block">
+                                        <span className="text-xs font-semibold uppercase text-slate-500">Titre</span>
+                                        <input
+                                            className={champ}
+                                            maxLength={120}
+                                            value={form.splash_title}
+                                            placeholder="Gagnez une paire de baskets"
+                                            onChange={(e) => setForm({ ...form, splash_title: e.target.value })}
+                                        />
+                                        <span className="text-xs text-slate-400 mt-1 block">
+                                            Vide : le titre de la bannière. Un titre seul suffit à demander la page.
+                                        </span>
+                                    </label>
+
+                                    <label className="block">
+                                        <span className="text-xs font-semibold uppercase text-slate-500">Texte</span>
+                                        <textarea
+                                            className={champ}
+                                            rows={3}
+                                            maxLength={400}
+                                            value={form.splash_text}
+                                            placeholder="Commandez un menu à 8 500 F pour tenter votre chance"
+                                            onChange={(e) => setForm({ ...form, splash_text: e.target.value })}
+                                        />
+                                        <span className="text-xs text-slate-400 mt-1 block">
+                                            Vide : le sous-titre de la bannière.
+                                        </span>
+                                    </label>
+
+                                    <label className="block">
+                                        <span className="text-xs font-semibold uppercase text-slate-500">
+                                            Libellé du bouton
+                                        </span>
+                                        <input
+                                            className={champ}
+                                            maxLength={32}
+                                            value={form.splash_cta_label}
+                                            placeholder="Commander"
+                                            onChange={(e) => setForm({ ...form, splash_cta_label: e.target.value })}
+                                        />
+                                        <span className="text-xs text-slate-400 mt-1 block">
+                                            Vide, le bouton dira « Découvrir » — une page sans sortie est une impasse.
+                                        </span>
+                                    </label>
+                                </div>
 
                                 {form.placement === "deals" && (
                                     <div>
@@ -461,11 +645,36 @@ export default function EatBanners({ onLogout, theme, toggleTheme }: EatBannersP
                                     </div>
                                 )}
 
+                                {/* L'audience composée passe avant le profil : quand elle est
+                                    posée, c'est elle qui décide, et le profil est ignoré. */}
+                                <label className="block">
+                                    <span className="text-xs font-semibold uppercase text-slate-500">Audience</span>
+                                    <select
+                                        className={champ}
+                                        value={String(form.audience_id)}
+                                        onChange={(e) => setForm({ ...form, audience_id: Number(e.target.value) })}
+                                    >
+                                        <option value="0">Aucune — s'en tenir au public ci-dessous</option>
+
+                                        {audiences.map((a) => (
+                                            <option key={a.id} value={a.id}>
+                                                {a.name}
+                                                {a.reach === null ? "" : ` — ${a.reach.toLocaleString("fr-FR")} personnes`}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <span className="text-xs text-slate-400 mt-1 block">
+                                        Composée dans « Audiences » : ceux qui ont commandé un plat, aiment une
+                                        cuisine, ou ont laissé un panier.
+                                    </span>
+                                </label>
+
                                 <div className="grid grid-cols-2 gap-4">
                                     <label>
                                         <span className="text-xs font-semibold uppercase text-slate-500">Public</span>
                                         <select
                                             className={champ}
+                                            disabled={form.audience_id !== 0}
                                             value={form.audience}
                                             onChange={(e) => setForm({ ...form, audience: e.target.value as Audience })}
                                         >
@@ -476,7 +685,9 @@ export default function EatBanners({ onLogout, theme, toggleTheme }: EatBannersP
                                             ))}
                                         </select>
                                         <span className="text-xs text-slate-400 mt-1 block">
-                                            {AUDIENCES.find((a) => a.valeur === form.audience)?.aide}
+                                            {form.audience_id !== 0
+                                                ? "Ignoré : l'audience ci-dessus décide."
+                                                : AUDIENCES.find((a) => a.valeur === form.audience)?.aide}
                                         </span>
                                     </label>
                                     <label>

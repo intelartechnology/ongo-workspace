@@ -57,6 +57,10 @@ const GROUPES: Groupe[] = [
             // Sans cette entrée, une campagne dort dans une liste que personne
             // n'ouvre — et derrière, c'est quelqu'un qui a payé et qui attend.
             { icon: 'campaign', label: 'Sponsorings', path: '/eat-sponsorships', badge: 'reviews' },
+            // A qui les mises en avant s'adressent. Juste apres les
+            // sponsorings : c'est en composant une operation qu'on decouvre
+            // qu'on voudrait viser ceux qui aiment les grillades.
+            { icon: 'group', label: 'Audiences', path: '/eat-audiences' },
             { icon: 'payments', label: 'Reversements', path: '/eat-payouts' },
             // La tresorerie : le livre d'Ongo, qu'aucun ecran ne lisait. Le
             // tableau de bord recalcule ; ici on lit ce qui est ecrit.

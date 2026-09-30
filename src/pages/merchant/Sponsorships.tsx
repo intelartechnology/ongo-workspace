@@ -174,7 +174,10 @@ export default function Sponsorships({ merchantId, canEdit }: Props) {
 
                             <p className="text-xs text-slate-500 mt-2">
                                 {etat.aide}
-                                {s.audience !== "all" && ` · ${AUDIENCES[s.audience]}`}
+                                {/* L'audience d'abord : elle décide, le profil est alors ignoré. */}
+                                {s.audience_id
+                                    ? ` · ${(cibles?.audience_list ?? []).find((a) => a.id === s.audience_id)?.name ?? "audience composée"}`
+                                    : s.audience !== "all" && ` · ${AUDIENCES[s.audience]}`}
                             </p>
 
                             {s.status === "rejected" && s.review_note && (

@@ -357,9 +357,16 @@ export default function EatSponsorships({ onLogout, theme, toggleTheme }: Props)
                                                             <dd className="inline">{s.target_label ?? "—"}</dd>
                                                         </div>
                                                         <div>
+                                                            {/* L'audience nomme la cible réelle : afficher le profil
+                                                                pendant qu'une audience décide ferait relire « Tout le
+                                                                monde » sur une opération vendue aux amateurs de
+                                                                grillades. */}
                                                             <dt className="inline font-medium">À qui : </dt>
                                                             <dd className="inline">
-                                                                {AUDIENCES[s.audience] ?? s.audience}
+                                                                {s.audience_id
+                                                                    ? (cibles?.audience_list ?? []).find((a) => a.id === s.audience_id)?.name
+                                                                        ?? "Audience composée"
+                                                                    : AUDIENCES[s.audience] ?? s.audience}
                                                             </dd>
                                                         </div>
                                                         <div>

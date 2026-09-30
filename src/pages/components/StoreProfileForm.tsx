@@ -80,6 +80,22 @@ export default function StoreProfileForm({ fiche, cuisines, onSave, readOnly = f
             return;
         }
 
+        /*
+         * La position aussi, et pour la même raison qu'elle est obligatoire côté
+         * serveur : elle fait les frais de livraison, le délai annoncé, la
+         * couverture — et c'est autour d'elle que la répartition cherche les
+         * livreurs. Une boutique sans coordonnées ne reçoit aucun candidat, et
+         * rien à l'écran ne dirait pourquoi.
+         */
+        if (f.latitude.trim() === "" || f.longitude.trim() === "" || !Number.isFinite(Number(f.latitude)) || !Number.isFinite(Number(f.longitude))) {
+            Swal.fire({
+                icon: "warning",
+                title: "Position manquante",
+                text: "La latitude et la longitude sont obligatoires : elles font les frais et le délai, et ce sont elles qui trouvent les livreurs autour de la boutique.",
+            });
+            return;
+        }
+
         setEnregistrement(true);
 
         let logo: string | null;
@@ -99,8 +115,8 @@ export default function StoreProfileForm({ fiche, cuisines, onSave, readOnly = f
             logo,
             banner,
             prep_minutes: Number(f.prep_minutes),
-            latitude: f.latitude === "" ? null : Number(f.latitude),
-            longitude: f.longitude === "" ? null : Number(f.longitude),
+            latitude: Number(f.latitude),
+            longitude: Number(f.longitude),
         });
 
         // Enregistrées : les adresses remplacent les fichiers.
@@ -185,13 +201,17 @@ export default function StoreProfileForm({ fiche, cuisines, onSave, readOnly = f
                         <input className={champ} disabled={readOnly} value={f.address} placeholder="Rue Joss, face pharmacie du Centre, Akwa" onChange={(e) => setF({ ...f, address: e.target.value })} />
                     </label>
                     <label>
-                        <span className="text-xs font-semibold uppercase text-slate-500">Latitude</span>
-                        <input className={champ} disabled={readOnly} value={f.latitude} inputMode="decimal" onChange={(e) => setF({ ...f, latitude: e.target.value })} />
+                        <span className="text-xs font-semibold uppercase text-slate-500">Latitude <span className="text-rose-500">*</span></span>
+                        <input className={champ} disabled={readOnly} value={f.latitude} inputMode="decimal" placeholder="4.0483" onChange={(e) => setF({ ...f, latitude: e.target.value })} />
                     </label>
                     <label>
-                        <span className="text-xs font-semibold uppercase text-slate-500">Longitude</span>
-                        <input className={champ} disabled={readOnly} value={f.longitude} inputMode="decimal" onChange={(e) => setF({ ...f, longitude: e.target.value })} />
-                        <span className="text-xs text-slate-400">Elles font les délais et les frais de livraison.</span>
+                        <span className="text-xs font-semibold uppercase text-slate-500">Longitude <span className="text-rose-500">*</span></span>
+                        <input className={champ} disabled={readOnly} value={f.longitude} inputMode="decimal" placeholder="9.7043" onChange={(e) => setF({ ...f, longitude: e.target.value })} />
+                        <span className="text-xs text-slate-400">
+                            {f.latitude.trim() === "" || f.longitude.trim() === ""
+                                ? "Obligatoires : sans elles, aucun livreur ne vous est proposé."
+                                : "Elles font les délais, les frais, et trouvent les livreurs autour de vous."}
+                        </span>
                     </label>
                 </div>
 

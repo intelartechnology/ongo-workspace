@@ -94,6 +94,18 @@ export default function Merchants({ onLogout, theme, toggleTheme }: MerchantsPro
         store_name: "",
         store_phone: "",
         store_type: "restaurant",
+
+        /*
+         * La position de la première boutique, dès l'étape 1.
+         *
+         * Obligatoire, et ici plutôt qu'à l'étape de la fiche : le serveur
+         * l'exige à la création, et rien n'oblige celui qui crée à aller
+         * jusqu'à l'étape 2. Une boutique sans coordonnées n'est proposée à
+         * aucun livreur — `CourierDispatch` les cherche autour d'elle — et rien
+         * à l'écran ne dirait pourquoi elle ne reçoit personne.
+         */
+        latitude: "",
+        longitude: "",
     });
 
     /** Le compte Ongo retenu comme responsable, affiché avant la création. */
@@ -162,10 +174,28 @@ export default function Merchants({ onLogout, theme, toggleTheme }: MerchantsPro
             return;
         }
 
+        if (!Number.isFinite(Number(nouveau.latitude)) || nouveau.latitude.trim() === ""
+            || !Number.isFinite(Number(nouveau.longitude)) || nouveau.longitude.trim() === "") {
+            Swal.fire({
+                icon: "info",
+                title: "Position manquante",
+                text: "La latitude et la longitude de la boutique sont obligatoires : sans elles, aucun livreur ne lui est proposé.",
+            });
+
+            return;
+        }
+
         setEnvoi(true);
 
         try {
-            const { data } = await api.postData("v3/admin/merchants", { ...nouveau, owner_id: responsable.id });
+            const { data } = await api.postData("v3/admin/merchants", {
+                ...nouveau,
+                owner_id: responsable.id,
+
+                // Des nombres : le serveur les valide entre −90 et 90.
+                latitude: Number(nouveau.latitude),
+                longitude: Number(nouveau.longitude),
+            });
 
             if (data.success) {
                 /*
@@ -186,6 +216,7 @@ export default function Merchants({ onLogout, theme, toggleTheme }: MerchantsPro
                 setNouveau({
                     name: "", phone: "", email: "",
                     store_name: "", store_phone: "", store_type: "restaurant",
+                    latitude: "", longitude: "",
                 });
                 setResponsable(null);
                 await charger();
@@ -412,6 +443,8 @@ export default function Merchants({ onLogout, theme, toggleTheme }: MerchantsPro
                                 { cle: "email", libelle: "Email", exemple: "contact@chezmama.cm" },
                                 { cle: "store_name", libelle: "Première boutique", exemple: "Chez Mama Akwa" },
                                 { cle: "store_phone", libelle: "Téléphone de la boutique", exemple: "699 00 00 01" },
+                                { cle: "latitude", libelle: "Latitude de la boutique *", exemple: "4.0483" },
+                                { cle: "longitude", libelle: "Longitude de la boutique *", exemple: "9.7043" },
                             ].map((champ) => (
                                 <label key={champ.cle} className="block">
                                     <span className="text-xs font-semibold text-slate-500 uppercase">{champ.libelle}</span>
@@ -443,6 +476,11 @@ export default function Merchants({ onLogout, theme, toggleTheme }: MerchantsPro
                             <div className="md:col-span-2">
                                 <OwnerPicker choisi={responsable} onChoisir={setResponsable} />
                             </div>
+
+                            <p className="md:col-span-2 text-xs text-slate-400">
+                                La position est obligatoire : elle fait les frais et le délai, et c'est autour d'elle
+                                qu'on cherche les livreurs. Sans elle, la boutique ne reçoit aucune proposition.
+                            </p>
                         </div>
 
                         <button

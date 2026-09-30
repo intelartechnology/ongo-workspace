@@ -60,6 +60,8 @@ export default function EatStores({ onLogout, theme, toggleTheme }: EatStoresPro
         city: string;
         address: string;
         phone: string;
+        latitude: string;
+        longitude: string;
         logo: string;
         banner: string;
         brand_color: string;
@@ -255,6 +257,11 @@ export default function EatStores({ onLogout, theme, toggleTheme }: EatStoresPro
         const { data } = await api.postData("v3/admin/eat/stores/create", {
             ...nouvelle,
             merchant_id: Number(nouvelle.merchant_id),
+
+            // Des nombres, pas les chaînes du formulaire : le serveur les
+            // valide entre −90 et 90, et « 4,0483 » n'est pas un nombre.
+            latitude: Number(nouvelle.latitude),
+            longitude: Number(nouvelle.longitude),
             logo,
             banner,
         });
@@ -304,7 +311,7 @@ export default function EatStores({ onLogout, theme, toggleTheme }: EatStoresPro
                         </p>
                     </div>
                     {!nouvelle && (
-                        <button onClick={() => setNouvelle({ merchant_id: "", name: "", type: "restaurant", city: "Douala", address: "", phone: "", logo: "", banner: "", brand_color: "#111827" })} className="px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium dark:bg-white dark:text-slate-900">
+                        <button onClick={() => setNouvelle({ merchant_id: "", name: "", type: "restaurant", city: "Douala", address: "", phone: "", latitude: "", longitude: "", logo: "", banner: "", brand_color: "#111827" })} className="px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium dark:bg-white dark:text-slate-900">
                             Ouvrir une boutique
                         </button>
                     )}
@@ -352,6 +359,18 @@ export default function EatStores({ onLogout, theme, toggleTheme }: EatStoresPro
                                 <span className="text-xs font-semibold uppercase text-slate-500">Adresse</span>
                                 <input className={champ} value={nouvelle.address} onChange={(e) => setNouvelle({ ...nouvelle, address: e.target.value })} />
                             </label>
+                            {/* La position, obligatoire : elle fait les frais et le délai,
+                                et c'est autour d'elle qu'on cherche les livreurs. Une
+                                boutique sans coordonnées n'est proposée à personne. */}
+                            <label>
+                                <span className="text-xs font-semibold uppercase text-slate-500">Latitude <span className="text-rose-500">*</span></span>
+                                <input className={champ} inputMode="decimal" value={nouvelle.latitude} placeholder="4.0483" onChange={(e) => setNouvelle({ ...nouvelle, latitude: e.target.value })} />
+                            </label>
+                            <label>
+                                <span className="text-xs font-semibold uppercase text-slate-500">Longitude <span className="text-rose-500">*</span></span>
+                                <input className={champ} inputMode="decimal" value={nouvelle.longitude} placeholder="9.7043" onChange={(e) => setNouvelle({ ...nouvelle, longitude: e.target.value })} />
+                                <span className="text-xs text-slate-400">Sans elles, aucun livreur ne lui est proposé.</span>
+                            </label>
                             <label>
                                 <span className="text-xs font-semibold uppercase text-slate-500">Couleur de l'enseigne</span>
                                 <input type="color" className={`${champ} h-10 p-1`} value={nouvelle.brand_color} onChange={(e) => setNouvelle({ ...nouvelle, brand_color: e.target.value })} />
@@ -380,7 +399,7 @@ export default function EatStores({ onLogout, theme, toggleTheme }: EatStoresPro
                         </div>
                         <div className="flex justify-end gap-3 mt-6">
                             <button onClick={() => setNouvelle(null)} className="px-4 py-2 rounded-lg text-sm text-slate-600 dark:text-slate-300">Annuler</button>
-                            <button onClick={ouvrir} disabled={!nouvelle.merchant_id || !nouvelle.name.trim() || !nouvelle.phone.trim()} className="px-5 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium disabled:opacity-40 dark:bg-white dark:text-slate-900">
+                            <button onClick={ouvrir} disabled={!nouvelle.merchant_id || !nouvelle.name.trim() || !nouvelle.phone.trim() || nouvelle.latitude.trim() === "" || nouvelle.longitude.trim() === ""} className="px-5 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium disabled:opacity-40 dark:bg-white dark:text-slate-900">
                                 Ouvrir
                             </button>
                         </div>

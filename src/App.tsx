@@ -28,6 +28,7 @@ import EatPayouts from './pages/EatPayouts';
 import EatTreasury from './pages/EatTreasury';
 import EatCouriers from './pages/EatCouriers';
 import EatPromoCodes from './pages/EatPromoCodes';
+import EatAudiences from './pages/EatAudiences';
 import EatFilters from './pages/EatFilters';
 import EatBanners from './pages/EatBanners';
 import EatCampaigns from './pages/EatCampaigns';
@@ -285,6 +286,14 @@ function App() {
           element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>
               <EatFilters onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/eat-audiences"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <EatAudiences onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
             </ProtectedRoute>
           }
         />

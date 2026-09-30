@@ -53,6 +53,10 @@ export interface Sponsoring {
     target_value: string | null;
     target_label: string | null;
     audience: string;
+
+    /** La cible composée, quand il en porte une. Le segment ci-dessus sinon. */
+    audience_id: number | null;
+
     status: string;
     state: string;
     review_note: string | null;
@@ -71,6 +75,16 @@ export interface Sponsoring {
 
 export interface Cibles {
     merchant_id?: number;
+
+    /**
+     * Les audiences qu'on peut désigner : celles d'Ongo, et les siennes.
+     *
+     * Composées dans l'écran « Audiences » : ici on ne fait que les choisir. Une
+     * audience se réutilise — la redéfinir à chaque opération, c'est la définir
+     * différemment à chaque fois.
+     */
+    audience_list?: { id: number; merchant_id: number | null; name: string; reach: number | null }[];
+
     merchants?: { id: number; name: string }[];
     stores: { id: number; merchant_id?: number; name: string; type: string }[];
     sections: { id: number; store_id: number; name: string; parent_id?: number | null }[];
@@ -133,6 +147,7 @@ const vide = {
     merchant_id: 0,
     store_id: 0,
     audience: "all",
+    audience_id: 0,
     starts_at: "",
     ends_at: "",
 
@@ -210,6 +225,7 @@ export default function SponsorshipForm({
             merchant_id: sponsoring.merchant_id,
             store_id: sponsoring.store_id,
             audience: sponsoring.audience ?? "all",
+            audience_id: sponsoring.audience_id ?? 0,
             starts_at: pourChamp(sponsoring.starts_at),
             ends_at: pourChamp(sponsoring.ends_at),
 
@@ -306,6 +322,10 @@ export default function SponsorshipForm({
                 image,
                 tile_image: decoupe,
                 tile_position: Number(form.tile_position),
+
+                // Zéro veut dire « aucune audience » : c'est alors le segment
+                // qui décide. L'envoyer tel quel désignerait l'audience 0.
+                audience_id: form.audience_id || null,
                 starts_at: form.starts_at || null,
                 ends_at: form.ends_at || null,
                 // Le sous-rayon l'emporte : qui a pris la peine de le
@@ -681,10 +701,44 @@ export default function SponsorshipForm({
                         </div>
                     )}
 
+                    {/*
+                      * À qui. Deux façons de le dire, et la seconde ne sert que
+                      * si la première est vide : une audience composée porte des
+                      * critères — les plats commandés, les cuisines, la ville, le
+                      * panier — là où le segment n'en porte qu'un.
+                      */}
                     <label className="block">
-                        <span className="text-xs font-semibold uppercase text-slate-500">À qui</span>
+                        <span className="text-xs font-semibold uppercase text-slate-500">À qui · audience</span>
                         <select
                             className={champ}
+                            value={String(form.audience_id)}
+                            onChange={(e) => setForm({ ...form, audience_id: Number(e.target.value) })}
+                        >
+                            <option value="0">Aucune — s'en tenir au profil ci-dessous</option>
+
+                            {(cibles.audience_list ?? [])
+                                // Celles d'Ongo, et celles du marchand composé.
+                                // Le serveur le revérifie : la liste n'est
+                                // qu'une politesse.
+                                .filter((a) => a.merchant_id === null || a.merchant_id === form.merchant_id)
+                                .map((a) => (
+                                <option key={a.id} value={a.id}>
+                                    {a.name}
+                                    {a.reach === null ? "" : ` — ${a.reach.toLocaleString("fr-FR")} personnes`}
+                                </option>
+                            ))}
+                        </select>
+                        <span className="text-xs text-slate-400">
+                            Composée dans « Audiences » : ceux qui ont commandé un plat, aiment une cuisine, ou ont
+                            laissé un panier.
+                        </span>
+                    </label>
+
+                    <label className="block">
+                        <span className="text-xs font-semibold uppercase text-slate-500">À qui · profil</span>
+                        <select
+                            className={champ}
+                            disabled={form.audience_id !== 0}
                             value={form.audience}
                             onChange={(e) => setForm({ ...form, audience: e.target.value })}
                         >
@@ -694,6 +748,11 @@ export default function SponsorshipForm({
                                 </option>
                             ))}
                         </select>
+                        {form.audience_id !== 0 && (
+                            <span className="text-xs text-slate-400">
+                                Ignoré : l'audience ci-dessus décide.
+                            </span>
+                        )}
                     </label>
 
                     <div className="grid grid-cols-2 gap-4">
