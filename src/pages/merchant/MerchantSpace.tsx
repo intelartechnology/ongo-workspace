@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import Swal from "sweetalert2";
 import ApiService from "../../services/ApiService";
 import Loading from "../../components/Loading";
+import Dispatch from "./Dispatch";
 import OrderDesk from "./OrderDesk";
 import Catalog from "./Catalog";
 import Sponsorships from "./Sponsorships";
@@ -67,7 +68,7 @@ interface Livreur {
     matricule: string | null;
 }
 
-type Onglet = "commandes" | "horaires" | "boutique" | "paiement" | "catalogue" | "avis" | "promotions" | "livraison" | "livreurs" | "equipe" | "photos" | "collections" | "revenus" | "campagnes" | "audiences" | "statistiques";
+type Onglet = "commandes" | "livraisons" | "horaires" | "boutique" | "paiement" | "catalogue" | "avis" | "promotions" | "livraison" | "livreurs" | "equipe" | "photos" | "collections" | "revenus" | "campagnes" | "audiences" | "statistiques";
 
 interface Groupe {
     cle: string;
@@ -96,6 +97,10 @@ const GROUPES: Groupe[] = [
         icone: "receipt_long",
         onglets: [
             { cle: "commandes", libelle: "Commandes" },
+            // Juste après le comptoir : c'est la suite du même geste, et la
+            // personne qui s'occupe des départs n'a pas à traverser l'écran de
+            // la cuisine pour la trouver.
+            { cle: "livraisons", libelle: "Livraisons" },
             { cle: "horaires", libelle: "Horaires" },
             { cle: "avis", libelle: "Avis" },
         ],
@@ -387,12 +392,16 @@ export default function MerchantSpace({ onLogout }: MerchantSpaceProps) {
         );
     }
 
-    // La cuisine voit ses commandes, et les horaires pour fermer ou ouvrir
-    // dans la journée ; ni le catalogue, ni les livreurs, ni l'argent. Un
-    // seul groupe, donc : sa rangée ne s'affiche pas.
+    // La cuisine voit ses commandes, ses livraisons — c'est elle qui relance un
+    // livreur qui ne vient pas — et les horaires pour fermer ou ouvrir dans la
+    // journée ; ni le catalogue, ni la liste des livreurs, ni l'argent. Un seul
+    // groupe, donc : sa rangée ne s'affiche pas.
+    //
+    // Le nombre suit la liste : « Livraisons » s'est glissée en deuxième
+    // position, et un `slice(0, 2)` aurait silencieusement retiré les horaires.
     const visibles: Groupe[] =
         marchand.role === "staff"
-            ? [{ ...GROUPES[0], onglets: GROUPES[0].onglets.slice(0, 2) }]
+            ? [{ ...GROUPES[0], onglets: GROUPES[0].onglets.slice(0, 3) }]
             : GROUPES;
 
     const groupeOuvert = visibles.find((g) => g.onglets.some((o) => o.cle === onglet)) ?? visibles[0];
@@ -494,6 +503,8 @@ export default function MerchantSpace({ onLogout }: MerchantSpaceProps) {
                     <p className="text-slate-500">Aucune boutique n'est rattachée à ce compte.</p>
                 ) : onglet === "commandes" ? (
                     <OrderDesk merchantId={merchantId!} storeId={boutique.id} />
+                ) : onglet === "livraisons" ? (
+                    <Dispatch merchantId={merchantId!} storeId={boutique.id} />
                 ) : onglet === "boutique" ? (
                     <StoreProfile merchantId={merchantId!} storeId={boutique.id} canEdit={marchand.role !== "staff"} />
                 ) : onglet === "paiement" ? (
