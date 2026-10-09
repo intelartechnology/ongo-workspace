@@ -37,6 +37,34 @@ interface Groupe {
 const GROUPES: Groupe[] = [
     {
         /*
+         * Les courses en tete, le covoiturage juste apres.
+         *
+         * Ongo Eat ouvrait la barre parce qu'il est le dernier arrive et le
+         * plus fourni — quinze entrees contre quatre. Mais ce n'est pas ce
+         * qu'on surveille le plus : les courses tournent toute la journee, et
+         * c'est par elles qu'on entre. L'ordre suit l'usage, pas l'anciennete
+         * ni le nombre de pages.
+         */
+        cle: 'courses',
+        titre: 'Courses et flotte',
+        entrees: [
+            { icon: 'directions_car', label: 'Courses', path: '/courses' },
+            { icon: 'person_outline', label: 'Chauffeurs', path: '/drivers' },
+            { icon: 'car_rental', label: 'Véhicules', path: '/vehicles' },
+            { icon: 'person_search', label: 'Demandes', path: '/requests' },
+        ],
+    },
+    {
+        cle: 'covoiturage',
+        titre: 'Covoiturage',
+        entrees: [
+            { icon: 'groups', label: 'Activité', path: '/carpool' },
+            { icon: 'how_to_reg', label: 'Covoitureurs', path: '/carpoolers' },
+            { icon: 'currency_exchange', label: 'Remboursements', path: '/carpool-refunds' },
+        ],
+    },
+    {
+        /*
          * Tout Ongo Eat au meme endroit.
          *
          * C'etait eclate en trois familles — le module, la vitrine, le
@@ -80,25 +108,6 @@ const GROUPES: Groupe[] = [
             { icon: 'public', label: 'Zones de service', path: '/eat-service-areas' },
             { icon: 'credit_card', label: 'Moyens de paiement', path: '/eat-payment-methods' },
             { icon: 'photo_library', label: 'Galerie', path: '/eat-gallery' },
-        ],
-    },
-    {
-        cle: 'courses',
-        titre: 'Courses et flotte',
-        entrees: [
-            { icon: 'directions_car', label: 'Courses', path: '/courses' },
-            { icon: 'person_outline', label: 'Chauffeurs', path: '/drivers' },
-            { icon: 'car_rental', label: 'Véhicules', path: '/vehicles' },
-            { icon: 'person_search', label: 'Demandes', path: '/requests' },
-        ],
-    },
-    {
-        cle: 'covoiturage',
-        titre: 'Covoiturage',
-        entrees: [
-            { icon: 'groups', label: 'Activité', path: '/carpool' },
-            { icon: 'how_to_reg', label: 'Covoitureurs', path: '/carpoolers' },
-            { icon: 'currency_exchange', label: 'Remboursements', path: '/carpool-refunds' },
         ],
     },
     {

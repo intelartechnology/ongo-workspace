@@ -121,10 +121,19 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout, theme, toggleTheme }) =
                                                         <p className="text-[11px] text-slate-500 font-mono">{item.chauffeurs?.telephone}</p>
                                                     </div>
                                                 </div>
-                                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${item.courses.statut === 'Annulée' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                                                    }`}>
-                                                    {item.courses.statut}
-                                                </span>
+                                                <div className="flex items-center gap-1.5">
+                                                    {/* Une livraison se lit comme une course — meme depart, meme
+                                                        chauffeur, meme montant. Rien ne la distinguerait sans ce mot. */}
+                                                    {item.est_livraison && (
+                                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                                                            Livraison
+                                                        </span>
+                                                    )}
+                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${item.courses.statut === 'Annulée' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                                        }`}>
+                                                        {item.courses.statut}
+                                                    </span>
+                                                </div>
                                             </div>
 
                                             <div className="flex items-center justify-between text-xs py-2 border-y border-slate-50 dark:border-slate-800/50">
@@ -242,6 +251,11 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout, theme, toggleTheme }) =
                                                         {item.courses.montant} FCFA
                                                     </td>
                                                     <td className="px-6 py-4 whitespace-nowrap text-center">
+                                                        {item.est_livraison && (
+                                                            <span className="inline-flex items-center px-2 py-0.5 mb-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                                                                Livraison
+                                                            </span>
+                                                        )}
                                                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${item.courses.statut === 'Annulée' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
                                                             }`}>
                                                             {item.courses.statut}

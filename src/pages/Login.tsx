@@ -38,7 +38,9 @@ async function conduireVersSonEspace(navigate: (chemin: string) => void): Promis
         // retombe sur le tableau de bord, qui refusera de lui-même si besoin.
     }
 
-    navigate("/dashboard");
+    // Les courses, et non le tableau de bord : on ouvre le poste pour voir ce
+    // qui roule, les totaux viennent apres.
+    navigate("/courses");
 }
 
 const Login: React.FC<LoginProps> = ({ onLogin }) => {

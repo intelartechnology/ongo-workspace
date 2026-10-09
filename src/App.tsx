@@ -131,12 +131,16 @@ function App() {
     <div className={`font-display min-h-screen w-full transition-colors duration-300 ${theme === 'dark' ? 'bg-background-dark' : 'bg-white'}`}>
       <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover theme={theme} />
       <Routes>
-        <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login onLogin={() => { }} />} />
+        {/* On entre par les courses.
+            C'est ce qu'on vient regarder en ouvrant le poste le matin : ce qui
+            roule maintenant. Le tableau de bord reste a sa place, on y va quand
+            on veut des totaux — pas l'inverse. */}
+        <Route path="/login" element={isAuthenticated ? <Navigate to="/courses" replace /> : <Login onLogin={() => { }} />} />
         <Route
           path="/"
           element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>
-              <Dashboard onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+              <Navigate to="/courses" replace />
             </ProtectedRoute>
           }
         />
