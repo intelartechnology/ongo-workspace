@@ -51,15 +51,19 @@
   --color-on-tertiary-fixed: #380d00;
   --color-on-tertiary-fixed-variant: #802900;
   
-  --font-headline: "Manrope", sans-serif;
-  --font-body: "Inter", sans-serif;
-  --font-label: "Inter", sans-serif;
-  --font-display: "Inter", sans-serif;
+  --font-headline: "DM Sans", sans-serif;
+  --font-body: "DM Sans", sans-serif;
+  --font-label: "DM Sans", sans-serif;
+  --font-display: "DM Sans", sans-serif;
 }
 
 @layer base {
   body {
-    font-family: 'Inter', sans-serif;
+    font-family: 'DM Sans', 'Inter', sans-serif;
+    /* Les chiffres de meme chasse : sans cela, un montant qui passe de 9 000 a
+       10 000 decale toute la colonne a chaque rafraichissement. */
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
   }
 }
 

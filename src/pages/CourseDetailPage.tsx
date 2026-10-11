@@ -286,7 +286,10 @@ export default function CourseDetailPage({
                                                         radio_button_checked
                                                     </span>
                                                     <div className="w-0.5 h-12 bg-slate-200 dark:bg-slate-700" />
-                                                    <span className="material-symbols-outlined text-red-500">
+                                                    {/* Pas de rouge a l'arrivee : le depart et l'arrivee ne
+                                                        sont pas deux etats, ce sont deux points d'un meme
+                                                        trajet. Le rouge y annoncerait un incident. */}
+                                                    <span className="material-symbols-outlined text-primary">
                                                         location_on
                                                     </span>
                                                 </div>

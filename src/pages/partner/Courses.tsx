@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Trajet from '../components/Trajet';
 import { useNavigate } from 'react-router-dom';
 import PartnerLayout from '../../components/partner/PartnerLayout';
 import ApiService from '../../services/ApiService';
@@ -225,14 +226,7 @@ const PartnerCourses: React.FC<PartnerCoursesProps> = ({ onLogout, user }) => {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="flex flex-col gap-1 max-w-[200px]">
-                                                <p className="text-xs font-medium truncate" title={attr.courses?.lieu_depart}>
-                                                    <span className="text-[#00327d] mr-1">●</span> {attr.courses?.lieu_depart}
-                                                </p>
-                                                <p className="text-xs font-medium truncate" title={attr.courses?.lieu_arrive}>
-                                                    <span className="text-[#00327d] mr-1">○</span> {attr.courses?.lieu_arrive}
-                                                </p>
-                                            </div>
+                                            <Trajet depart={attr.courses?.lieu_depart} arrivee={attr.courses?.lieu_arrive} largeur="max-w-[200px]" />
                                         </td>
                                         <td className="px-6 py-4">
                                             <p className="text-sm font-bold text-[#191b22]">{attr.chauffeurs?.vehicules?.[0]?.matricule || 'N/A'}</p>

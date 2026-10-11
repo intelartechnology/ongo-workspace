@@ -127,10 +127,21 @@ const PartnerDashboard: React.FC<PartnerDashboardProps> = ({ onLogout, user }) =
                 <div className="md:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-[#c3c6d5]/15 flex flex-col justify-between group hover:border-[#00327d]/30 transition-colors">
                     <div className="flex justify-between items-start">
                         <div>
-                            <p className="text-[#434653] font-semibold text-[10px] uppercase tracking-widest mb-1 opacity-70">Total Revenue</p>
+                            {/* « Total Revenue » affichait 80 % du montant — la part
+                                du chauffeur, qui n'est ni le chiffre d'affaires du
+                                partenaire ni ce qu'il gagne. L'API rend desormais le
+                                brut, et la commission a cote. */}
+                            <p className="text-[#434653] font-semibold text-[10px] uppercase tracking-widest mb-1 opacity-70">Chiffre d'affaires</p>
                             <h3 className="text-4xl font-black text-[#00327d]">
                                 {partnerStats?.total_revenue?.toLocaleString() || '0'} <span className="text-lg font-bold opacity-30">FCFA</span>
                             </h3>
+                            <p className="text-[#434653] text-xs font-semibold mt-2 opacity-70">
+                                Votre commission :{' '}
+                                <strong className="text-[#00327d]">
+                                    {partnerStats?.total_commission?.toLocaleString() || '0'} FCFA
+                                </strong>
+                                {partnerStats?.commission_rate != null && ` · ${partnerStats.commission_rate} %`}
+                            </p>
                         </div>
                         <div className="bg-[#0047ab]/10 p-3 rounded-2xl group-hover:scale-110 transition-transform">
                             <span className="material-symbols-outlined text-[#00327d] text-3xl">payments</span>

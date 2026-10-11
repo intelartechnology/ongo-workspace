@@ -6,7 +6,7 @@ import ApiService from '../../services/ApiService';
 import { LOGIN_ACTION } from '../../store/authReducers';
 
 const PartnerLogin: React.FC = () => {
-    const [email, setEmail] = useState('');
+    const [identifiant, setIdentifiant] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
@@ -18,20 +18,22 @@ const PartnerLogin: React.FC = () => {
         setLoading(true);
         try {
             const response = await api.postData('utilisateur/loginDash', {
-                telephone: email,
+                telephone: identifiant,
                 password: password,
             });
 
             if (response.data.success) {
                 const user = response.data.data;
-                console.log(response.data.data)
-                console.log(user)
                 if (user.is_partner) {
                     localStorage.setItem('token', user.token);
                     localStorage.setItem('isAuthenticated', JSON.stringify(user));
                     dispatch(LOGIN_ACTION(user));
                     toast.success('Bienvenue dans votre espace partenaire');
-                    navigate('/partner/dashboard');
+                    // L'espace est désormais cadré par l'URL. On y va
+                    // directement quand le serveur rend l'identifiant ;
+                    // sinon on garde l'ancienne route, qui fonctionne encore.
+                    const cle = user.partner_uuid ?? user.partner_id;
+                    navigate(cle ? `/partner/${cle}` : '/partner/dashboard');
                 } else {
                     toast.error("Vous n'êtes pas autorisé à accéder à cet espace.");
                 }
@@ -64,16 +66,17 @@ const PartnerLogin: React.FC = () => {
 
                     <form className="space-y-5 md:space-y-6" onSubmit={handleSubmit}>
                         <div className="space-y-2">
-                            <label className="block font-medium text-sm text-[#434653]" htmlFor="email">Email professionnel ou Téléphone</label>
+                            <label className="block font-medium text-sm text-[#434653]" htmlFor="identifiant">Numéro de téléphone</label>
                             <div className="relative group">
                                 <input
                                     className="w-full bg-[#f3f3fc] border-none rounded-md px-4 py-3.5 text-[#191b22] focus:ring-2 focus:ring-[#00327d] focus:bg-[#e2e2eb] transition-all duration-200 outline-none placeholder:text-slate-400"
-                                    id="email"
-                                    name="email"
-                                    placeholder="nom@entreprise.com"
+                                    id="identifiant"
+                                    name="identifiant"
+                                    inputMode="tel"
+                                    placeholder="6XX XX XX XX"
                                     type="text"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
+                                    value={identifiant}
+                                    onChange={(e) => setIdentifiant(e.target.value)}
                                     required
                                 />
                             </div>

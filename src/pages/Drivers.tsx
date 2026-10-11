@@ -6,6 +6,7 @@ import Helpers from "../functions/helpers";
 import Loading from "../components/Loading";
 import MainLayout from "./MainLayout";
 import { useNavigate } from 'react-router-dom';
+import { SearchBar, Button } from "../components/ui";
 
 interface DriversProps {
     onLogout?: () => void;
@@ -162,32 +163,21 @@ export default function Drivers({ onLogout = () => {}, theme = 'light', toggleTh
             <div className="p-8 space-y-6">
                 {/* Filters & Search */}
                 <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-wrap gap-4 items-center">
-                    <div className="flex-1 min-w-[300px] relative">
-                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
-                        <input 
-                            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm focus:ring-2 focus:ring-primary transition-all outline-none" 
-                            placeholder="Rechercher par Numéro de téléphone" 
-                            type="text"
-                            onChange={(e) => setInputValue(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                    getFilter(inputValue, "utilisateur/filtre-driver", false);
-                                }
-                            }}
-                        />
-                    </div>
+                    <SearchBar
+                        value={inputValue}
+                        onChange={setInputValue}
+                        onSearch={() => getFilter(inputValue, "utilisateur/filtre-driver", false)}
+                        placeholder="Rechercher par numéro de téléphone"
+                        minWidth={300}
+                    />
                     <div className="flex gap-2">
-                        <button 
-                            className="px-4 py-2.5 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-lg text-sm font-medium flex items-center gap-2 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                        <Button
+                            icon="filter_list"
                             onClick={() => getFilter(inputValue, "utilisateur/filtre-driver", false)}
                         >
-                            <span className="material-symbols-outlined text-sm">filter_list</span>
                             Rechercher
-                        </button>
-                        <button className="px-4 py-2.5 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-lg text-sm font-medium flex items-center gap-2 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-                            <span className="material-symbols-outlined text-sm">download</span>
-                            Exporter
-                        </button>
+                        </Button>
+                        <Button icon="download">Exporter</Button>
                     </div>
                 </div>
 

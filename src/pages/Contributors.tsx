@@ -4,6 +4,7 @@ import Loading from "../components/Loading";
 import MainLayout from "./MainLayout";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import { SearchBar, Button } from "../components/ui";
 
 
 interface ContributorsProps {
@@ -83,19 +84,13 @@ export default function Contributors({ onLogout = () => {}, theme = "light", tog
                     {/* Search & Table */}
                     <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
                         <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex flex-wrap items-center gap-4">
-                            <div className="flex-1 min-w-[260px] relative">
-                                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
-                                <input
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                    onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none"
-                                    placeholder="Rechercher un contributeur (nom, matricule)..."
-                                />
-                            </div>
-                            <button onClick={handleSearch} className="flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-primary px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 transition-all">
-                                <span className="material-symbols-outlined text-sm">filter_list</span>Filtrer
-                            </button>
+                            <SearchBar
+                                value={search}
+                                onChange={setSearch}
+                                onSearch={handleSearch}
+                                placeholder="Rechercher un contributeur (nom, matricule)..."
+                            />
+                            <Button icon="filter_list" onClick={handleSearch}>Filtrer</Button>
                             <p className="text-xs text-slate-400 ml-auto italic">
                                 {meta ? `${meta.from || 0} - ${meta.to || 0} sur ${meta.total || 0} contributeurs` : ""}
                             </p>

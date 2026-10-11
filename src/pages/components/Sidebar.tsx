@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import ApiService from '../../services/ApiService';
 
@@ -128,6 +128,7 @@ const GROUPES: Groupe[] = [
             // la liste des utilisateurs, là où on vient les chercher.
             { icon: 'gavel', label: 'Modération', path: '/moderation' },
             { icon: 'handshake', label: 'Partenaires', path: '/partners' },
+            { icon: 'query_stats', label: 'Activité partenaires', path: '/partners/activity' },
             { icon: 'volunteer_activism', label: 'Contributeurs', path: '/contributors' },
         ],
     },
@@ -140,6 +141,24 @@ const GROUPES: Groupe[] = [
 
 /** Ce que les groupes dépliés d'une session gardent d'une visite à l'autre. */
 const MEMOIRE = 'ongo.sidebar.ouverts';
+
+/*
+ * Où en était le défilement du menu.
+ *
+ * Le menu est rendu par **chaque page** : changer d'écran le détruit et le
+ * recrée, et son défilement repart donc du haut. Avec une trentaine d'entrées,
+ * celui qui travaillait en bas de la colonne devait redescendre après chaque
+ * clic.
+ *
+ * Gardée hors du composant, cette position survit au démontage sans passer par
+ * le stockage du navigateur : c'est un nombre, le temps d'une session, et il
+ * n'a aucune raison d'être relu demain.
+ *
+ * Le vrai remède serait de hisser la mise en page dans le routeur, pour que le
+ * menu ne soit monté qu'une fois. Cela touche la soixantaine de routes de
+ * `App.tsx` — à faire, mais pas au détour d'une correction de défilement.
+ */
+let positionDuMenu = 0;
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, user, onLogout }) => {
     const location = useLocation();
@@ -192,10 +211,34 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, user, onLogout }) 
         }
     }, [ouverts]);
 
+    /*
+     * Entrer dans un groupe l'ouvre — une fois.
+     *
+     * Il etait **force** ouvert tant qu'on y etait : le replier ne produisait
+     * rien, et le chevron tournait sur un groupe qui ne bougeait pas. On
+     * l'ouvre donc en y arrivant, et le toucher reprend la main ensuite.
+     *
+     * Rejouer cet effet a chaque page du meme groupe le rouvrirait : la cle ne
+     * change pas tant qu'on reste dedans, donc l'effet ne se rejoue pas.
+     */
+    useEffect(() => {
+        if (!groupeCourant) return;
+
+        setOuverts((precedent) => (precedent.includes(groupeCourant) ? precedent : [...precedent, groupeCourant]));
+    }, [groupeCourant]);
+
     const basculer = (cle: string) =>
         setOuverts((precedent) => (precedent.includes(cle) ? precedent.filter((c) => c !== cle) : [...precedent, cle]));
 
-    const lien = (item: Entree) => {
+    /**
+     * Une entree du menu.
+     *
+     * [sousMenu] la rapetisse d'un cran : sous un titre de famille, elle est
+     * deja designee par le rail et par le titre, et un disque de la meme taille
+     * que celui des entrees de premier niveau mettait les deux rangs au meme
+     * plan.
+     */
+    const lien = (item: Entree, sousMenu = false) => {
         const actif = location.pathname === item.path;
 
         return (
@@ -203,17 +246,47 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, user, onLogout }) 
                 key={item.path}
                 to={item.path}
                 onClick={() => setIsOpen(false)}
-                className={`flex items-center gap-3 pl-3 pr-2 py-2 rounded-lg text-[13.5px] transition-colors ${
+                /*
+                 * Lisible au repos, distinguee par le relief.
+                 *
+                 * Les entrees inactives etaient en gris moyen : a treize pixels
+                 * et demi, cela se lit comme du flou, et il fallait chercher
+                 * chaque ligne au lieu de la parcourir. Les consoles qui font
+                 * cela bien gardent **toutes** les entrees en pleine encre et
+                 * ne distinguent l'active que par une pastille blanche posee en
+                 * relief sur le fond.
+                 */
+                className={`flex items-center gap-3 px-2.5 ${sousMenu ? 'py-1.5 text-[14px]' : 'py-2 text-[15px]'} rounded-2xl transition-all ${
                     actif
-                        ? 'bg-primary/10 text-primary font-semibold'
-                        : 'text-slate-600 dark:text-slate-400 font-medium hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'
+                        ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold'
+                        : 'text-slate-800 dark:text-slate-300 font-medium hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white'
                 }`}
             >
+                {/*
+                  * L'icone dans un disque, devant chaque entree.
+                  *
+                  * Posee nue sur le fond gris du menu, elle se confondait avec
+                  * lui : a vingt et un pixels et sans contour, un pictogramme
+                  * gris sur gris ne se distingue qu'en le cherchant. Le disque
+                  * lui donne un fond a elle, et la colonne de disques devient
+                  * un repere qu'on balaie du regard sans lire les libelles.
+                  *
+                  * Plein et colore sur l'entree ouverte, clair sinon : c'est le
+                  * seul endroit du menu ou la couleur travaille.
+                  */}
                 <span
-                    className="material-symbols-outlined text-[20px] shrink-0"
-                    style={{ fontVariationSettings: actif ? "'FILL' 1" : "'FILL' 0" }}
+                    className={`flex ${sousMenu ? 'size-7' : 'size-8'} shrink-0 items-center justify-center rounded-full transition-colors ${
+                        actif
+                            ? 'bg-primary text-white'
+                            : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                    }`}
                 >
-                    {item.icon}
+                    <span
+                        className={`material-symbols-outlined ${sousMenu ? 'text-[15px]' : 'text-[18px]'}`}
+                        style={{ fontVariationSettings: actif ? "'FILL' 1" : "'FILL' 0" }}
+                    >
+                        {item.icon}
+                    </span>
                 </span>
                 <span className="truncate">{item.label}</span>
 
@@ -227,6 +300,19 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, user, onLogout }) 
             </Link>
         );
     };
+
+    /*
+     * Reposée avant la première image, et non après.
+     *
+     * `useEffect` s'exécute une fois l'écran peint : on verrait le menu en haut
+     * puis sauter à sa place. `useLayoutEffect` le repose avant que rien ne
+     * s'affiche.
+     */
+    const colonne = useRef<HTMLElement | null>(null);
+
+    useLayoutEffect(() => {
+        if (colonne.current) colonne.current.scrollTop = positionDuMenu;
+    }, []);
 
     const initiales = user ? `${user.nom?.[0] ?? ''}${user.prenom?.[0] ?? ''}`.toUpperCase() : 'O';
 
@@ -242,7 +328,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, user, onLogout }) 
 
             <aside
                 className={`
-                    w-[268px] bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800
+                    w-[272px] bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800
                     flex flex-col fixed h-full z-[60] transition-transform duration-300
                     ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
                 `}
@@ -266,31 +352,54 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, user, onLogout }) 
                     </button>
                 </div>
 
-                <nav className="flex-1 px-3 pb-4 space-y-1 overflow-y-auto custom-scrollbar">
+                <nav
+                    ref={colonne}
+                    onScroll={(evenement) => {
+                        positionDuMenu = evenement.currentTarget.scrollTop;
+                    }}
+                    className="flex-1 px-3 pb-4 space-y-1 overflow-y-auto custom-scrollbar"
+                >
                     {lien({ icon: 'grid_view', label: 'Tableau de bord', path: '/dashboard' })}
 
                     <div className="h-2" />
 
                     {GROUPES.map((groupe) => {
-                        // Le groupe de la page ouverte se déplie, même replié à
-                        // la main : on ne cache pas à quelqu'un où il se trouve.
-                        const deplie = ouverts.includes(groupe.cle) || groupeCourant === groupe.cle;
+                        const deplie = ouverts.includes(groupe.cle);
 
                         return (
                             <div key={groupe.cle}>
                                 <button
                                     onClick={() => basculer(groupe.cle)}
-                                    className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wide text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                                    /*
+                                     * Le titre de famille se voit.
+                                     *
+                                     * En gris moyen et plus petit que les entrees, il passait
+                                     * pour une legende : on cherchait « Covoiturage » parmi
+                                     * des lignes qui criaient toutes plus fort que lui. Or
+                                     * c'est lui qui structure la colonne — il doit se lire le
+                                     * premier, et c'est par lui qu'on plie et deplie.
+                                     *
+                                     * En casse normale malgre tout : les petites capitales
+                                     * grasses faisaient une etiquette administrative.
+                                     */
+                                    className="w-full flex items-center gap-2 px-2.5 py-2.5 mt-3 rounded-lg text-[15px] font-bold tracking-[-0.01em] text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
                                 >
                                     <span className="truncate">{groupe.titre}</span>
                                     <span
-                                        className={`material-symbols-outlined text-[18px] ml-auto transition-transform ${deplie ? 'rotate-180' : ''}`}
+                                        className={`material-symbols-outlined text-[20px] ml-auto text-slate-500 dark:text-slate-400 transition-transform ${deplie ? 'rotate-180' : ''}`}
                                     >
                                         expand_more
                                     </span>
                                 </button>
 
-                                {deplie && <div className="space-y-0.5 pb-1">{groupe.entrees.map(lien)}</div>}
+                                {/* Le rail : il tient ensemble les entrees d'une meme famille.
+                                    Sans lui, un groupe ouvert se confond avec la suite du menu
+                                    des qu'on l'a fait defiler sous son titre. */}
+                                {deplie && (
+                                    <div className="ml-[22px] border-l border-slate-300/70 dark:border-slate-700 pl-2 space-y-0.5 pb-1">
+                                        {groupe.entrees.map((entree) => lien(entree, true))}
+                                    </div>
+                                )}
                             </div>
                         );
                     })}

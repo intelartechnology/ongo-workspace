@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import Loading from "../components/Loading";
 import MainLayout from "./MainLayout";
 import { useNavigate } from "react-router-dom";
+import { SearchBar, Button, ActionsMenu, type ActionItem } from "../components/ui";
 
 interface PartnersProps {
     onLogout?: () => void;
@@ -58,6 +59,68 @@ export default function Partners({ onLogout = () => {}, theme = "light", toggleT
             toast.error("Erreur lors de la mise à jour");
         }
     };
+
+    /**
+     * L'ajustement du taux.
+     *
+     * Le dialogue rappelle que le taux se prend sur la part Ongo : la lecture
+     * inverse — une ponction sur le chauffeur — est l'erreur naturelle, et
+     * elle porte sur de l'argent.
+     */
+    const ajusterCommission = async (partner: any) => {
+        const actuel = partner.commission_rate ?? 0;
+
+        const saisie = await Swal.fire({
+            title: `Commission de ${partner.name}`,
+            html:
+                `<p style="font-size:13px;color:#64748b;margin-bottom:12px">` +
+                `Pourcentage prélevé <b>sur la part Ongo</b> de chaque course de ses chauffeurs. ` +
+                `La part du chauffeur n'est pas touchée.</p>`,
+            input: "number",
+            inputValue: String(actuel),
+            inputAttributes: { min: "0", max: "100", step: "0.1" },
+            showCancelButton: true,
+            confirmButtonText: "Enregistrer",
+            cancelButtonText: "Annuler",
+            inputValidator: (valeur) => {
+                const n = Number(valeur);
+                if (valeur === "" || Number.isNaN(n)) return "Entrez un pourcentage";
+                if (n < 0 || n > 100) return "Le taux doit être compris entre 0 et 100";
+                return null;
+            },
+        });
+
+        if (!saisie.isConfirmed) return;
+
+        try {
+            const { data } = await Api.postData(`dashboard/partner/${partner.id}/commission`, {
+                commission_rate: Number(saisie.value),
+            });
+            if (data.success) {
+                toast.success("Commission mise à jour");
+                fetchPartners("dashboard/partner");
+            } else {
+                // Le serveur refuse un taux supérieur à la commission
+                // plateforme : son message porte le plafond, on le relaie tel quel.
+                toast.error(data.message || "Taux refusé");
+            }
+        } catch (e: any) {
+            toast.error(e?.response?.data?.message || "Connexion au serveur impossible");
+        }
+    };
+
+    const actionsPartenaire = (partner: any, isActive: boolean): ActionItem[] => [
+        { label: "Ouvrir l'espace", icon: "open_in_new", onClick: () => navigate(`/partner/${partner.uuid ?? partner.id}`) },
+        { label: "Gérer la flotte", icon: "directions_car", onClick: () => navigate(`/partners/${partner.id}/fleet`) },
+        { label: "Ajuster la commission", icon: "percent", separatorBefore: true, onClick: () => ajusterCommission(partner) },
+        {
+            label: isActive ? "Suspendre" : "Réactiver",
+            icon: isActive ? "block" : "check_circle",
+            danger: isActive,
+            separatorBefore: true,
+            onClick: () => confirmToggle(partner.id, isActive),
+        },
+    ];
 
     const confirmToggle = (id: number, isActive: boolean) => {
         Swal.fire({
@@ -144,19 +207,14 @@ export default function Partners({ onLogout = () => {}, theme = "light", toggleT
                     {/* Search & Table */}
                     <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
                         <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex flex-wrap items-center gap-4">
-                            <div className="flex-1 min-w-[260px] relative">
-                                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
-                                <input
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                    onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                                    className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm focus:ring-2 focus:ring-primary outline-none"
-                                    placeholder="Rechercher un partenaire..."
-                                />
-                            </div>
-                            <button onClick={handleSearch} className="flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-primary px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 transition-all">
-                                <span className="material-symbols-outlined text-sm">filter_list</span>Filtrer
-                            </button>
+                            <SearchBar
+                                value={search}
+                                onChange={setSearch}
+                                onSearch={handleSearch}
+                                placeholder="Rechercher un partenaire..."
+                            />
+                            <Button icon="filter_list" onClick={handleSearch}>Filtrer</Button>
+                            <Button icon="query_stats" onClick={() => navigate("/partners/activity")}>Suivi d'activité</Button>
                             <p className="text-xs text-slate-400 ml-auto italic">
                                 {meta ? `${meta.from || 0} - ${meta.to || 0} sur ${meta.total || 0} partenaires` : ""}
                             </p>
@@ -173,6 +231,7 @@ export default function Partners({ onLogout = () => {}, theme = "light", toggleT
                                             <th className="px-6 py-4 text-[11px] font-extrabold text-slate-400 uppercase tracking-widest">Contact</th>
                                             <th className="px-6 py-4 text-[11px] font-extrabold text-slate-400 uppercase tracking-widest text-center">Flotte</th>
                                             <th className="px-6 py-4 text-[11px] font-extrabold text-slate-400 uppercase tracking-widest text-center">Solde Total</th>
+                                            <th className="px-6 py-4 text-[11px] font-extrabold text-slate-400 uppercase tracking-widest text-center">Commission</th>
                                             <th className="px-6 py-4 text-[11px] font-extrabold text-slate-400 uppercase tracking-widest">Statut</th>
                                             <th className="px-6 py-4 text-[11px] font-extrabold text-slate-400 uppercase tracking-widest text-right">Actions</th>
                                         </tr>
@@ -208,6 +267,16 @@ export default function Partners({ onLogout = () => {}, theme = "light", toggleT
                                                                 {(partner.total_balance || 0).toLocaleString()} <small className="text-[10px] text-slate-400">XAF</small>
                                                             </span>
                                                         </td>
+                                                        <td className="px-6 py-5 text-center">
+                                                            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-black tabular-nums ${partner.commission_invalid
+                                                                ? "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400"
+                                                                : (partner.commission_rate ?? 0) > 0
+                                                                    ? "bg-primary/10 text-primary"
+                                                                    : "bg-slate-100 dark:bg-slate-800 text-slate-400"}`}>
+                                                                {partner.commission_invalid && <span className="material-symbols-outlined text-[14px]">warning</span>}
+                                                                {partner.commission_rate ?? 0} %
+                                                            </span>
+                                                        </td>
                                                         <td className="px-6 py-5">
                                                             {isActive ? (
                                                                 <div className="flex items-center gap-2">
@@ -222,20 +291,11 @@ export default function Partners({ onLogout = () => {}, theme = "light", toggleT
                                                             )}
                                                         </td>
                                                         <td className="px-6 py-5 text-right">
-                                                            <div className="flex items-center justify-end gap-2">
-                                                                <button
-                                                                    onClick={() => navigate(`/partners/${partner.id}/fleet`)}
-                                                                    className="bg-primary/10 hover:bg-primary text-primary hover:text-white px-4 py-2 rounded-lg text-xs font-bold transition-all"
-                                                                >
-                                                                    Gérer la Flotte
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => confirmToggle(partner.id, isActive)}
-                                                                    className={`p-2 rounded-lg transition-all ${isActive ? "hover:bg-red-50 text-slate-400 hover:text-red-500" : "hover:bg-emerald-50 text-slate-400 hover:text-emerald-500"}`}
-                                                                    title={isActive ? "Désactiver" : "Activer"}
-                                                                >
-                                                                    <span className="material-symbols-outlined text-lg">{isActive ? "block" : "check_circle"}</span>
-                                                                </button>
+                                                            <div className="flex items-center justify-end gap-1.5">
+                                                                <Button size="sm" icon="open_in_new" onClick={() => navigate(`/partner/${partner.uuid ?? partner.id}`)}>
+                                                                    Espace
+                                                                </Button>
+                                                                <ActionsMenu items={actionsPartenaire(partner, isActive)} />
                                                             </div>
                                                         </td>
                                                     </tr>
@@ -243,7 +303,7 @@ export default function Partners({ onLogout = () => {}, theme = "light", toggleT
                                             })
                                         ) : (
                                             <tr>
-                                                <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
+                                                <td colSpan={7} className="px-6 py-12 text-center text-slate-500">
                                                     <div className="flex flex-col items-center gap-3">
                                                         <span className="material-symbols-outlined text-4xl text-slate-300">search_off</span>
                                                         <p>Aucun partenaire trouvé</p>

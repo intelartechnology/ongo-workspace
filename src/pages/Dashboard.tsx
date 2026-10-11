@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import ApiService from '../services/ApiService';
 import Helpers from '../functions/helpers';
 import MainLayout from './MainLayout';
+import Trajet from './components/Trajet';
 
 interface DashboardProps {
     onLogout: () => void;
@@ -10,10 +11,45 @@ interface DashboardProps {
     toggleTheme: () => void;
 }
 
+/** Ce que le serveur rend pour une page de courses. */
+interface Page {
+    data: any[];
+    current_page: number;
+    last_page: number;
+    from: number | null;
+    to: number | null;
+    total: number;
+    prev_page_url: string | null;
+    next_page_url: string | null;
+}
+
+const PAGE_VIDE: Page = {
+    data: [], current_page: 1, last_page: 1, from: null, to: null,
+    total: 0, prev_page_url: null, next_page_url: null,
+};
+
+/**
+ * Le tableau de bord.
+ *
+ * **Des panneaux, et non une page de boîtes.** Chaque bloc porte un titre, une
+ * action à droite quand il en a une, puis des lignes séparées par un filet :
+ * le libellé à gauche en gris, la valeur à droite en encre pleine. C'est la
+ * forme qui se lit le plus vite quand on cherche un fait précis, et c'est ce
+ * que font les consoles d'hébergement dont s'inspire ce dessin.
+ *
+ * **Deux mensonges retirés au passage**, qui étaient écrits en dur dans la page
+ * précédente :
+ *
+ *   - les variations des cartes de chiffres (« +12 % », « −2 % ») n'étaient
+ *     calculées nulle part. Un chiffre inventé présenté comme mesuré est pire
+ *     que pas de chiffre ;
+ *   - la pagination annonçait « 1 à 2 sur 248 » quoi qu'il arrive, et ses
+ *     boutons ne menaient nulle part. Elle est désormais celle du serveur.
+ */
 const Dashboard: React.FC<DashboardProps> = ({ onLogout, theme, toggleTheme }) => {
     const navigate = useNavigate();
     const [stat, setStat] = useState<any>({ client: 0, chauffeur: 0, commande: 0, vehicule: 0, paiement: 0 });
-    const [utilisateur, setUtilisateur] = useState<any[]>([]);
+    const [page, setPage] = useState<Page>(PAGE_VIDE);
     const [loading, setLoading] = useState(false);
 
     const api = new ApiService();
@@ -22,23 +58,19 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout, theme, toggleTheme }) =
     const fetchStats = async () => {
         try {
             const response = await api.getData('stat');
-            if (response.data.success) {
-                setStat(response.data.data);
-            }
+            if (response.data.success) setStat(response.data.data);
         } catch (error) {
-            console.error("Error fetching stats:", error);
+            console.error('Error fetching stats:', error);
         }
     };
 
-    const fetchCourses = async (url = "course/liste-course", isPag = false) => {
+    const fetchCourses = async (url = 'course/liste-course', isPag = false) => {
         setLoading(true);
         try {
             const response = await api.getDatawithPagination(url, isPag);
-            if (response.data.success) {
-                setUtilisateur(response.data.data.data);
-            }
+            if (response.data.success) setPage({ ...PAGE_VIDE, ...response.data.data });
         } catch (error) {
-            console.error("Error fetching courses:", error);
+            console.error('Error fetching courses:', error);
         } finally {
             setLoading(false);
         }
@@ -54,240 +86,243 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout, theme, toggleTheme }) =
         navigate('/login');
     };
 
+    const lignes = page.data.filter((item: any) => item?.courses != null);
+
+    const chiffres = [
+        { label: 'Clients', valeur: stat.client, icone: 'person' },
+        { label: 'Chauffeurs', valeur: stat.chauffeur, icone: 'sports_motorsports' },
+        { label: 'Commandes', valeur: stat.commande, icone: 'assignment' },
+        { label: 'Véhicules', valeur: stat.vehicule, icone: 'directions_car' },
+        { label: 'Encaissé', valeur: `${stat.paiement} FCFA`, icone: 'account_balance_wallet' },
+    ];
+
+    /** L'état d'une course, dit par une pastille. */
+    const pastille = (texte: string, ton: 'vert' | 'rouge' | 'ambre' | 'gris') => {
+        const tons = {
+            vert: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400',
+            rouge: 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400',
+            ambre: 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400',
+            gris: 'bg-slate-100 text-slate-600 dark:bg-slate-700/40 dark:text-slate-300',
+        };
+
+        return (
+            <span className={`inline-flex items-center rounded-md px-2 py-1 text-[11px] font-bold ${tons[ton]}`}>
+                {texte}
+            </span>
+        );
+    };
+
     return (
         <MainLayout onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme}>
-            {/* Content Area */}
-            <div className="p-4 md:p-6 lg:p-8 space-y-6 md:space-y-8 w-full overflow-x-hidden">
-                {/* Metric Cards */}
-                <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 md:gap-6">
-                    {[
-                        { label: 'Clients', value: stat.client, trend: '12%', up: true, icon: 'person', color: 'text-primary', bg: 'bg-blue-50 dark:bg-blue-900/30' },
-                        { label: 'Chauffeurs', value: stat.chauffeur, trend: '5%', up: true, icon: 'sports_motorsports', color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-900/30' },
-                        { label: 'Commandes', value: stat.commande, trend: '2%', up: false, icon: 'assignment', color: 'text-orange-600', bg: 'bg-orange-50 dark:bg-orange-900/30' },
-                        { label: 'Véhicules', value: stat.vehicule, trend: '8%', up: true, icon: 'directions_car', color: 'text-teal-600', bg: 'bg-teal-50 dark:bg-teal-900/30' },
-                        { label: 'Paiements', value: `${stat.paiement} FCFA`, trend: '15%', up: true, icon: 'account_balance_wallet', color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/30' },
-                    ].map((card) => (
-                        <div key={card.label} className="bg-white dark:bg-slate-900 p-4 md:p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow">
-                            <div className="flex items-start justify-between">
-                                <div className={`${card.bg} p-2 md:p-2.5 rounded-lg ${card.color}`}>
-                                    <span className="material-symbols-outlined text-xl md:text-2xl">{card.icon}</span>
-                                </div>
-                                <div className={`${card.up ? 'text-emerald-500' : 'text-red-500'} flex items-center gap-1 text-[10px] md:text-xs font-bold whitespace-nowrap`}>
-                                    <span className="material-symbols-outlined text-xs md:text-sm">{card.up ? 'trending_up' : 'trending_down'}</span>
-                                    {card.trend}
-                                </div>
+            <div className="w-full overflow-x-hidden px-4 py-6 md:px-8 md:py-8">
+                {/* Le fil d'Ariane : on sait toujours où l'on est, et par où remonter. */}
+                <nav className="mb-5 flex items-center gap-2 text-[13px] text-slate-500 dark:text-slate-400">
+                    <Link to="/courses" className="transition-colors hover:text-primary">Ongo</Link>
+                    <span className="material-symbols-outlined text-[16px] text-slate-300 dark:text-slate-600">chevron_right</span>
+                    <span className="font-medium text-slate-900 dark:text-white">Tableau de bord</span>
+                </nav>
+
+                {/* Le titre occupe la place qu'il mérite : c'est le premier
+                    repère de la page, et un titre de la taille d'un sous-titre
+                    oblige à relire l'écran pour savoir où l'on est. */}
+                <header className="mb-8">
+                    <h1 className="text-[32px] font-bold leading-[1.1] tracking-[-0.025em] text-slate-900 dark:text-white md:text-[38px]">
+                        Tableau de bord
+                    </h1>
+                    <p className="mt-2 text-[15px] text-slate-500 dark:text-slate-400">
+                        Ce qui roule aujourd'hui, et ce que la plateforme compte.
+                    </p>
+                </header>
+
+                {/* Les chiffres : cinq cartes de même poids, sans variation inventée. */}
+                <section className="mb-6 grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-5">
+                    {chiffres.map((carte) => (
+                        <div
+                            key={carte.label}
+                            className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"
+                        >
+                            <div className="flex items-start justify-between gap-2">
+                                <p className="text-[14px] font-medium text-slate-500 dark:text-slate-400">{carte.label}</p>
+                                <span className="material-symbols-outlined text-[20px] text-slate-300 dark:text-slate-600">
+                                    {carte.icone}
+                                </span>
                             </div>
-                            <div className="mt-4">
-                                <p className="text-xs md:text-sm font-medium text-slate-500 dark:text-slate-400 truncate">{card.label}</p>
-                                <h3 className="text-lg md:text-2xl font-bold text-slate-900 dark:text-white mt-1 truncate">{card.value}</h3>
-                            </div>
+                            <p className="mt-3 truncate text-[28px] font-bold leading-none tracking-[-0.03em] text-slate-900 dark:text-white">
+                                {carte.valeur}
+                            </p>
                         </div>
                     ))}
                 </section>
 
-                {/* Main Content: Course List (Card view on mobile, Table on desktop) */}
-                <section className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden mt-4">
-                    <div className="p-4 md:p-6 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div>
-                            <h2 className="text-lg font-bold text-slate-900 dark:text-white">Liste des courses</h2>
-                            <p className="text-xs md:text-sm text-slate-500">Détails des trajets récents</p>
-                        </div>
-                        <div className="flex items-center gap-2 w-full sm:w-auto">
-                            <button className="flex-1 sm:flex-none justify-center flex items-center gap-2 px-3 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-                                <span className="material-symbols-outlined text-lg">filter_list</span>
-                                <span className="hidden xs:inline">Filtrer</span>
-                            </button>
-                            <button className="flex-1 sm:flex-none justify-center flex items-center gap-2 px-3 py-2 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors">
-                                <span className="material-symbols-outlined text-lg">file_download</span>
-                                <span className="hidden xs:inline">Exporter</span>
-                            </button>
-                        </div>
+                {/* Le panneau des courses. */}
+                {/* Le titre de section sort de la carte, comme sur les consoles
+                    qui alignent plusieurs blocs : il annonce ce qui suit au lieu
+                    d'être enfermé dans une barre d'en-tête. */}
+                <div className="mb-4 flex items-end justify-between gap-4">
+                    <div>
+                        <h2 className="text-[20px] font-bold tracking-[-0.02em] text-slate-900 dark:text-white">
+                            Dernières courses
+                        </h2>
+                        <p className="mt-1 text-[14px] text-slate-500 dark:text-slate-400">
+                            Livraisons comprises — elles mobilisent les mêmes chauffeurs.
+                        </p>
                     </div>
+                    <Link
+                        to="/courses"
+                        className="shrink-0 text-[15px] font-semibold text-slate-900 underline-offset-4 hover:underline dark:text-white"
+                    >
+                        Tout voir
+                    </Link>
+                </div>
 
-                    {/* Mobile & Tablet Card View (Zero Horizontal Scroll) */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 lg:hidden bg-slate-50/30 dark:bg-slate-800/20">
-                        {utilisateur.length > 0 ? (
-                            utilisateur.map((item: any, i: number) => {
-                                if (item.courses != null) {
-                                    return (
-                                        <div key={i} className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm hover:border-primary/30 transition-all space-y-4">
-                                            <div className="flex justify-between items-start">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="size-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400">
-                                                        <span className="material-symbols-outlined">person</span>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-sm font-bold text-slate-900 dark:text-white">{item.chauffeurs?.nom} {item.chauffeurs?.prenom}</p>
-                                                        <p className="text-[11px] text-slate-500 font-mono">{item.chauffeurs?.telephone}</p>
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center gap-1.5">
-                                                    {/* Une livraison se lit comme une course — meme depart, meme
-                                                        chauffeur, meme montant. Rien ne la distinguerait sans ce mot. */}
-                                                    {item.est_livraison && (
-                                                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                                                            Livraison
-                                                        </span>
-                                                    )}
-                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${item.courses.statut === 'Annulée' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                                                        }`}>
-                                                        {item.courses.statut}
-                                                    </span>
-                                                </div>
-                                            </div>
+                <section className="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
 
-                                            <div className="flex items-center justify-between text-xs py-2 border-y border-slate-50 dark:border-slate-800/50">
-                                                <div className="flex flex-col">
-                                                    <span className="text-slate-400 uppercase text-[9px] font-bold">Véhicule</span>
-                                                    <span className="font-semibold">{item.chauffeurs?.vehicules?.[0]?.modele}{item.courses.categorie_vehicule?.libelle && <span className="text-[10px] text-primary"> ({item.courses.categorie_vehicule.libelle})</span>}</span>
-                                                </div>
-                                                <div className="flex flex-col text-right">
-                                                    <span className="text-slate-400 uppercase text-[9px] font-bold">Montant</span>
-                                                    <span className="font-bold text-primary">{item.courses.montant} FCFA</span>
-                                                </div>
-                                            </div>
+                    {/* Sur petit écran : une ligne par course, en pile. Un tableau
+                        de huit colonnes ne tient pas, et le faire défiler
+                        horizontalement est le meilleur moyen de n'en lire aucune. */}
+                    <div className="divide-y divide-slate-100 dark:divide-slate-800 lg:hidden">
+                        {lignes.map((item: any, i: number) => (
+                            <div key={i} className="space-y-3 px-5 py-4">
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="min-w-0">
+                                        <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">
+                                            {item.courses.client?.nom} {item.courses.client?.prenom}
+                                        </p>
+                                        <p className="truncate font-mono text-[11px] text-slate-500">
+                                            {item.courses.client?.telephone}
+                                        </p>
+                                    </div>
+                                    <div className="flex shrink-0 flex-col items-end gap-1">
+                                        {item.est_livraison && pastille('Livraison', 'ambre')}
+                                        {pastille(item.courses.statut, item.courses.statut === 'Annulée' ? 'rouge' : 'vert')}
+                                    </div>
+                                </div>
 
-                                            <div className="space-y-2">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="size-2 rounded-full bg-emerald-500 flex-shrink-0"></span>
-                                                    <span className="text-xs text-slate-600 dark:text-slate-400 truncate">{item.courses.lieu_depart}</span>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="size-2 rounded-full bg-red-500 flex-shrink-0"></span>
-                                                    <span className="text-xs text-slate-600 dark:text-slate-400 truncate">{item.courses.lieu_arrive}</span>
-                                                </div>
-                                            </div>
+                                <Trajet depart={item.courses.lieu_depart} arrivee={item.courses.lieu_arrive} largeur="" />
 
-                                            <div className="flex items-center justify-between pt-2">
-                                                <div className="flex items-center gap-1 text-[11px] text-slate-500">
-                                                    <span className="material-symbols-outlined text-sm">calendar_today</span>
-                                                    <span>{helpers.formaatDate(item.courses.date_depart)}, {item.courses.heure_depart}</span>
-                                                </div>
-                                                <button className="flex items-center gap-1 text-xs font-bold text-primary hover:underline">
-                                                    Détails
-                                                    <span className="material-symbols-outlined text-sm">visibility</span>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    );
-                                }
-                                return null;
-                            })
-                        ) : (
-                            <div className="p-10 text-center text-slate-500 col-span-full">
-                                {loading ? "Chargement..." : "Aucune courses"}
+                                <div className="flex items-center justify-between border-t border-slate-100 pt-3 text-[13px] dark:border-slate-800">
+                                    <span className="text-slate-500">
+                                        {item.chauffeurs ? `${item.chauffeurs.nom ?? ''} ${item.chauffeurs.prenom ?? ''}`.trim() : 'Aucun chauffeur'}
+                                    </span>
+                                    <span className="font-bold text-slate-900 dark:text-white">{item.courses.montant} FCFA</span>
+                                </div>
                             </div>
+                        ))}
+
+                        {lignes.length === 0 && (
+                            <p className="px-5 py-10 text-center text-sm text-slate-500">
+                                {loading ? 'Chargement…' : 'Aucune course'}
+                            </p>
                         )}
                     </div>
 
-                    {/* Desktop Table View */}
-                    <div className="hidden lg:block w-full overflow-x-auto custom-scrollbar">
-                        <table className="w-full text-left border-collapse min-w-[1000px]">
+                    {/* Sur grand écran : le tableau, en filets fins. */}
+                    <div className="hidden lg:block">
+                        <table className="w-full">
                             <thead>
-                                <tr className="bg-slate-50 dark:bg-slate-800/50">
-                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Chauffeur</th>
-                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Client</th>
-                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Véhicule</th>
-                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Trajet</th>
-                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Date & Heure</th>
-                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Montant</th>
-                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-center">Statut</th>
-                                    <th className="px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-right">Actions</th>
+                                <tr className="border-b border-slate-200 dark:border-slate-800">
+                                    {['Client', 'Chauffeur', 'Trajet', 'Quand', 'Montant', 'État'].map((titre) => (
+                                        <th
+                                            key={titre}
+                                            className="px-6 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-400"
+                                        >
+                                            {titre}
+                                        </th>
+                                    ))}
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                {utilisateur.length > 0 ? (
-                                    utilisateur.map((item: any, i: number) => {
-                                        if (item.courses != null) {
-                                            return (
-                                                <tr key={i} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors border-b border-slate-100 dark:border-slate-800/50">
-                                                    <td className="px-6 py-4 whitespace-nowrap">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="size-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500">
-                                                                <span className="material-symbols-outlined text-lg">person</span>
-                                                            </div>
-                                                            <div className="flex flex-col">
-                                                                <span className="text-sm font-semibold text-slate-900 dark:text-white">{item.chauffeurs?.nom} {item.chauffeurs?.prenom}</span>
-                                                                <span className="text-xs text-slate-500 font-mono">{item.chauffeurs?.telephone}</span>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="size-8 rounded-full bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-primary">
-                                                                <span className="material-symbols-outlined text-lg">account_circle</span>
-                                                            </div>
-                                                            <div className="flex flex-col">
-                                                                <span className="text-sm font-semibold text-slate-900 dark:text-white">{item.courses.client.nom} {item.courses.client.prenom}</span>
-                                                                <span className="text-xs text-slate-500 font-mono">{item.courses.client.telephone}</span>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap">
-                                                        <div className="flex flex-col">
-                                                            <span className="text-sm font-medium text-slate-900 dark:text-white">{item.chauffeurs?.vehicules?.[0]?.modele}</span>
-                                                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold uppercase w-fit mt-1">{item.courses.categorie_vehicule?.libelle}</span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <div className="flex flex-col gap-1 max-w-[200px]">
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="size-1.5 rounded-full bg-emerald-500"></span>
-                                                                <span className="text-xs text-slate-600 dark:text-slate-400 truncate">{item.courses.lieu_depart}</span>
-                                                            </div>
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="size-1.5 rounded-full bg-red-500"></span>
-                                                                <span className="text-xs text-slate-600 dark:text-slate-400 truncate">{item.courses.lieu_arrive}</span>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap">
-                                                        <div className="flex flex-col">
-                                                            <span className="text-sm font-medium text-slate-900 dark:text-white">{helpers.formaatDate(item.courses.date_depart)}</span>
-                                                            <span className="text-xs text-slate-500">{item.courses.heure_depart}</span>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-primary">
-                                                        {item.courses.montant} FCFA
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                        {item.est_livraison && (
-                                                            <span className="inline-flex items-center px-2 py-0.5 mb-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                                                                Livraison
-                                                            </span>
-                                                        )}
-                                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${item.courses.statut === 'Annulée' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                                                            }`}>
-                                                            {item.courses.statut}
-                                                        </span>
-                                                    </td>
-                                                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                        <button className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-primary transition-colors">
-                                                            <span className="material-symbols-outlined text-[20px]">visibility</span>
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        }
-                                        return null;
-                                    })
-                                ) : (
+                                {lignes.map((item: any, i: number) => (
+                                    <tr key={i} className="transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
+                                        <td className="px-6 py-4">
+                                            <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                                                {item.courses.client?.nom} {item.courses.client?.prenom}
+                                            </p>
+                                            <p className="font-mono text-[11px] text-slate-500">{item.courses.client?.telephone}</p>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            {item.chauffeurs ? (
+                                                <>
+                                                    <p className="text-sm text-slate-900 dark:text-white">
+                                                        {item.chauffeurs.nom} {item.chauffeurs.prenom}
+                                                    </p>
+                                                    <p className="text-[11px] text-slate-500">
+                                                        {item.chauffeurs.vehicules?.[0]?.modele}
+                                                        {item.courses.categorie_vehicule?.libelle && ` · ${item.courses.categorie_vehicule.libelle}`}
+                                                    </p>
+                                                </>
+                                            ) : (
+                                                /* Dit, et non laissé vide : une cellule blanche se lit comme
+                                                   une donnée manquante, alors que c'est un fait — personne
+                                                   n'a pris cette course. */
+                                                <span className="text-[13px] italic text-slate-400">Aucun</span>
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            <Trajet depart={item.courses.lieu_depart} arrivee={item.courses.lieu_arrive} />
+                                        </td>
+                                        <td className="whitespace-nowrap px-6 py-4">
+                                            <p className="text-[13px] text-slate-900 dark:text-white">{helpers.formaatDate(item.courses.date_depart)}</p>
+                                            <p className="text-[11px] text-slate-500">{item.courses.heure_depart}</p>
+                                        </td>
+                                        <td className="whitespace-nowrap px-6 py-4 text-sm font-bold text-slate-900 dark:text-white">
+                                            {item.courses.montant} FCFA
+                                        </td>
+                                        <td className="whitespace-nowrap px-6 py-4">
+                                            <div className="flex flex-col items-start gap-1">
+                                                {item.est_livraison && pastille('Livraison', 'ambre')}
+                                                {pastille(item.courses.statut, item.courses.statut === 'Annulée' ? 'rouge' : 'vert')}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+
+                                {lignes.length === 0 && (
                                     <tr>
-                                        <td colSpan={8} className="px-6 py-10 text-center text-slate-500">
-                                            {loading ? "Chargement..." : "Aucune courses"}
+                                        <td colSpan={6} className="px-6 py-12 text-center text-sm text-slate-500">
+                                            {loading ? 'Chargement…' : 'Aucune course'}
                                         </td>
                                     </tr>
                                 )}
                             </tbody>
                         </table>
                     </div>
-                    <div className="px-4 md:px-6 py-4 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
-                        <p className="text-sm text-slate-500">Affichage de <span className="font-medium text-slate-900 dark:text-white">1</span> à <span className="font-medium text-slate-900 dark:text-white">2</span> sur <span className="font-medium text-slate-900 dark:text-white">248</span> courses</p>
-                        <div className="flex items-center gap-1 md:gap-2">
-                            <button className="p-1 px-3 border border-slate-200 dark:border-slate-700 rounded-lg text-xs md:text-sm hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed">Précédent</button>
-                            <button className="p-1 px-3 bg-primary text-white rounded-lg text-xs md:text-sm font-medium">1</button>
-                            <button className="p-1 px-3 border border-slate-200 dark:border-slate-700 rounded-lg text-xs md:text-sm hover:bg-slate-50 dark:hover:bg-slate-800">2</button>
-                            <button className="p-1 px-3 border border-slate-200 dark:border-slate-700 rounded-lg text-xs md:text-sm hover:bg-slate-50 dark:hover:bg-slate-800">Suivant</button>
+
+                    {/* La pagination du serveur, et non trois nombres écrits en dur. */}
+                    <div className="flex flex-col items-center justify-between gap-3 border-t border-slate-200 px-5 py-4 dark:border-slate-800 sm:flex-row md:px-6">
+                        <p className="text-[13px] text-slate-500">
+                            {page.total > 0 ? (
+                                <>
+                                    <span className="font-semibold text-slate-900 dark:text-white">{page.from}</span>
+                                    {' à '}
+                                    <span className="font-semibold text-slate-900 dark:text-white">{page.to}</span>
+                                    {' sur '}
+                                    <span className="font-semibold text-slate-900 dark:text-white">{page.total}</span>
+                                    {' courses'}
+                                </>
+                            ) : (
+                                'Aucune course'
+                            )}
+                        </p>
+
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => page.prev_page_url && fetchCourses(page.prev_page_url, true)}
+                                disabled={!page.prev_page_url || loading}
+                                className="rounded-full bg-slate-100 px-4 py-2 text-[14px] font-semibold text-slate-900 transition-colors hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700"
+                            >
+                                Précédent
+                            </button>
+                            <span className="text-[13px] text-slate-500">
+                                Page <span className="font-semibold text-slate-900 dark:text-white">{page.current_page}</span> sur {page.last_page}
+                            </span>
+                            <button
+                                onClick={() => page.next_page_url && fetchCourses(page.next_page_url, true)}
+                                disabled={!page.next_page_url || loading}
+                                className="rounded-full bg-slate-100 px-4 py-2 text-[14px] font-semibold text-slate-900 transition-colors hover:bg-slate-200 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700"
+                            >
+                                Suivant
+                            </button>
                         </div>
                     </div>
                 </section>

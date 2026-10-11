@@ -4,6 +4,7 @@ import ApiService from "../services/ApiService";
 import Loading from "../components/Loading";
 import MainLayout from "./MainLayout";
 import Helpers from "../functions/helpers";
+import { SearchBar } from "../components/ui";
 
 interface DriverDetailProps {
     onLogout?: () => void;
@@ -190,17 +191,13 @@ export default function DriverDetail({ onLogout = () => {}, theme = 'light', tog
                             <div className="space-y-6">
                                 {/* Search and Filter Header */}
                                 <div className="flex flex-wrap gap-4 items-center justify-between pb-2">
-                                    <div className="flex-1 min-w-[300px] relative">
-                                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
-                                        <input 
-                                            type="text" 
-                                            placeholder="Rechercher par Trip ID, départ ou arrivée..."
-                                            value={searchQuery}
-                                            onChange={(e) => setSearchQuery(e.target.value)}
-                                            onKeyDown={(e) => e.key === 'Enter' && fetchData()}
-                                            className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
-                                        />
-                                    </div>
+                                    <SearchBar
+                                        value={searchQuery}
+                                        onChange={setSearchQuery}
+                                        onSearch={fetchData}
+                                        placeholder="Rechercher par Trip ID, départ ou arrivée..."
+                                        minWidth={300}
+                                    />
                                     <div className="flex gap-3">
                                         <select 
                                             value={statusFilter}

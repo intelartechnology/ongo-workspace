@@ -49,6 +49,8 @@ import PartnerAdd from './pages/PartnerAdd'
 import PartnerFleet from './pages/PartnerFleet'
 import PartnerLogin from './pages/partner/Login'
 import PartnerDashboard from './pages/partner/Dashboard'
+import PartnerSpace from './pages/partner/PartnerSpace'
+import PartnersActivity from './pages/PartnersActivity'
 import PartnerCourses from './pages/partner/Courses'
 import CourseDetail from './pages/partner/CourseDetail'
 import PartnerVehicles from './pages/partner/Vehicles'
@@ -460,6 +462,14 @@ function App() {
           }
         />
         <Route
+          path="/partners/activity"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <PartnersActivity onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/partners/add"
           element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>
@@ -622,6 +632,29 @@ function App() {
             <PartnerProtectedRoute isAuthenticated={isAuthenticated} user={useSelector((state: RootState) => state.auth.user)}>
               <PartnerCoursesPrintPage user={useSelector((state: RootState) => state.auth.user)} />
             </PartnerProtectedRoute>
+          }
+        />
+
+        {/*
+          * L'espace partenaire cadré par l'URL, sur le modèle de l'espace
+          * marchand. Il est volontairement monté APRÈS les routes
+          * `/partner/dashboard`, `/partner/courses` et `/partner/vehicles` :
+          * React Router fait primer un segment littéral sur un segment
+          * dynamique, donc les anciennes URL continuent de fonctionner et
+          * rien ne casse pour les partenaires déjà en service.
+          *
+          * Le garde n'est que `ProtectedRoute` : l'identifiant étant dans
+          * l'URL, seul le serveur peut dire si l'appelant a le droit d'ouvrir
+          * CET espace. Restreindre ici à `is_partner` interdirait par ailleurs
+          * à un admin d'entrer pour dépanner, ce qui est tout l'intérêt du
+          * format.
+          */}
+        <Route
+          path="/partner/:partnerId"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <PartnerSpace onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
           }
         />
 

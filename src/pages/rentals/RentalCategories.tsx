@@ -3,6 +3,8 @@ import MainLayout from '../MainLayout';
 import ApiService from '../../services/ApiService';
 import { toast } from 'react-toastify';
 import { Link } from 'react-router-dom';
+import { SearchBar, Button } from '../../components/ui';
+import RentalCategoryModal from './RentalCategoryModal';
 
 interface RentalCategoriesProps {
     onLogout: () => void;
@@ -12,6 +14,8 @@ interface RentalCategoriesProps {
 
 const isDisplayableImage = (value: string) => /^(https?:\/\/|data:image\/|\/)/.test(value || '');
 
+const entete = "px-5 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest";
+
 const RentalCategories: React.FC<RentalCategoriesProps> = ({ onLogout, theme, toggleTheme }) => {
     const api = new ApiService();
     const [categories, setCategories] = useState<any[]>([]);
@@ -19,6 +23,9 @@ const RentalCategories: React.FC<RentalCategoriesProps> = ({ onLogout, theme, to
     const [search, setSearch] = useState<string>('');
     const [categoryToDelete, setCategoryToDelete] = useState<any | null>(null);
     const [deleting, setDeleting] = useState<boolean>(false);
+    const [modalOpen, setModalOpen] = useState<boolean>(false);
+    // `null` ouvre le formulaire vierge ; une ligne l'ouvre en modification.
+    const [categoryToEdit, setCategoryToEdit] = useState<any | null>(null);
 
     const fetchCategories = async () => {
         setLoading(true);
@@ -108,50 +115,35 @@ const RentalCategories: React.FC<RentalCategoriesProps> = ({ onLogout, theme, to
                         </p>
                     </div>
 
-                    <Link
-                        to="/rental-categories/add"
-                        className="bg-primary hover:bg-primary/90 text-white px-5 py-3 rounded-xl font-bold text-sm transition-all flex items-center gap-2 shadow-lg shadow-primary/20 justify-center shrink-0"
+                    <Button
+                        variant="primary"
+                        icon="add"
+                        className="shrink-0"
+                        onClick={() => { setCategoryToEdit(null); setModalOpen(true); }}
                     >
-                        <span className="material-symbols-outlined text-[22px]">add</span>
                         Nouvelle catégorie
-                    </Link>
+                    </Button>
                 </div>
 
                 {/* Recherche */}
-                <div className="relative max-w-md">
-                    <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-[20px] pointer-events-none">search</span>
-                    <input
-                        type="text"
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Rechercher une catégorie..."
-                        className="w-full pl-11 pr-11 py-3 rounded-xl bg-slate-100 dark:bg-slate-800 border-2 border-transparent focus:border-primary focus:bg-white dark:focus:bg-slate-800 outline-none transition-all text-sm font-semibold text-slate-700 dark:text-slate-200 placeholder:text-slate-400 placeholder:font-normal"
-                    />
-                    {search && (
-                        <button
-                            type="button"
-                            onClick={() => setSearch('')}
-                            aria-label="Effacer la recherche"
-                            className="absolute right-3 top-1/2 -translate-y-1/2 size-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
-                        >
-                            <span className="material-symbols-outlined text-[18px]">close</span>
-                        </button>
-                    )}
-                </div>
+                <SearchBar
+                    value={search}
+                    onChange={setSearch}
+                    placeholder="Rechercher une catégorie..."
+                    className="max-w-md flex-none"
+                />
             </div>
 
             {/* Contenu */}
             <div className="p-4 md:p-8">
                 {loading ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {Array(8).fill(0).map((_, i) => (
-                            <div key={i} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-                                <div className="aspect-[16/10] bg-slate-100 dark:bg-slate-800 animate-pulse"></div>
-                                <div className="p-5 flex flex-col gap-3">
-                                    <div className="h-3 w-2/3 rounded bg-slate-100 dark:bg-slate-800 animate-pulse"></div>
-                                    <div className="h-3 w-full rounded bg-slate-100 dark:bg-slate-800 animate-pulse"></div>
-                                    <div className="h-9 w-full rounded-xl bg-slate-100 dark:bg-slate-800 animate-pulse mt-2"></div>
-                                </div>
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800">
+                        {Array(6).fill(0).map((_, i) => (
+                            <div key={i} className="flex items-center gap-4 px-5 py-3.5">
+                                <div className="size-11 rounded-lg bg-slate-100 dark:bg-slate-800 animate-pulse shrink-0"></div>
+                                <div className="h-3 w-40 rounded bg-slate-100 dark:bg-slate-800 animate-pulse"></div>
+                                <div className="h-3 flex-1 rounded bg-slate-100 dark:bg-slate-800 animate-pulse"></div>
+                                <div className="h-8 w-28 rounded-lg bg-slate-100 dark:bg-slate-800 animate-pulse"></div>
                             </div>
                         ))}
                     </div>
@@ -167,13 +159,14 @@ const RentalCategories: React.FC<RentalCategoriesProps> = ({ onLogout, theme, to
                                 Créez votre première catégorie pour pouvoir y rattacher des véhicules de location.
                             </p>
                         </div>
-                        <Link
-                            to="/rental-categories/add"
-                            className="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-xl font-bold text-sm transition-all flex items-center gap-2 shadow-lg shadow-primary/20 mt-2"
+                        <Button
+                            variant="primary"
+                            icon="add"
+                            className="mt-2"
+                            onClick={() => { setCategoryToEdit(null); setModalOpen(true); }}
                         >
-                            <span className="material-symbols-outlined text-[22px]">add</span>
                             Créer une catégorie
-                        </Link>
+                        </Button>
                     </div>
                 ) : filteredCategories.length === 0 ? (
                     /* Recherche sans résultat */
@@ -194,79 +187,76 @@ const RentalCategories: React.FC<RentalCategoriesProps> = ({ onLogout, theme, to
                         </button>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {filteredCategories.map((cat: any) => (
-                            <div
-                                key={cat.id}
-                                className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group"
-                            >
-                                {/* Visuel */}
-                                <div className="aspect-[16/10] bg-slate-100 dark:bg-slate-800/60 relative overflow-hidden">
-                                    {isDisplayableImage(cat.img) ? (
-                                        <img
-                                            src={cat.img}
-                                            alt={cat.libelle}
-                                            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                        />
-                                    ) : (
-                                        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5">
-                                            <span className="material-symbols-outlined text-6xl text-primary/30">directions_car</span>
-                                        </div>
-                                    )}
-                                    <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-slate-900/85 to-transparent"></div>
-                                    <div className="absolute inset-x-0 bottom-0 p-4">
-                                        <h3 className="font-black text-white text-lg tracking-tight uppercase leading-tight line-clamp-1 drop-shadow">
-                                            {cat.libelle}
-                                        </h3>
-                                    </div>
-                                    <span className="absolute top-3 left-3 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-[#00327d] dark:text-primary-fixed-dim shadow-sm">
-                                        #{cat.id}
-                                    </span>
-                                </div>
-
-                                {/* Corps */}
-                                <div className="p-5 flex flex-col gap-4 flex-1">
-                                    <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed flex-1">
-                                        {cat.description || "Aucune description fournie."}
-                                    </p>
-
-                                    <Link
-                                        to={`/rental-vehicles?category=${cat.id}`}
-                                        className="flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-primary hover:text-white text-slate-600 dark:text-slate-300 transition-all group/link"
-                                    >
-                                        <span className="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest">
-                                            <span className="material-symbols-outlined text-[18px]">local_taxi</span>
-                                            Voir les véhicules
-                                        </span>
-                                        <span className="material-symbols-outlined text-[18px] group-hover/link:translate-x-0.5 transition-transform">chevron_right</span>
-                                    </Link>
-
-                                    {/* Actions toujours visibles */}
-                                    <div className="flex gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
-                                        <Link
-                                            to={`/rental-categories/edit/${cat.id}`}
-                                            title="Modifier la catégorie"
-                                            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl bg-primary/5 dark:bg-primary/15 text-primary dark:text-primary-fixed-dim hover:bg-primary hover:text-white transition-all text-[11px] font-black uppercase tracking-widest"
-                                        >
-                                            <span className="material-symbols-outlined text-[17px]">edit</span>
-                                            Modifier
-                                        </Link>
-                                        <button
-                                            type="button"
-                                            onClick={() => setCategoryToDelete(cat)}
-                                            title="Supprimer la catégorie"
-                                            className="flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-rose-50 dark:bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all text-[11px] font-black uppercase tracking-widest"
-                                        >
-                                            <span className="material-symbols-outlined text-[17px]">delete</span>
-                                            Supprimer
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse min-w-[720px]">
+                                <thead>
+                                    <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
+                                        <th className={entete}>Catégorie</th>
+                                        <th className={entete}>Description</th>
+                                        <th className={`${entete} text-right`}>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                                    {filteredCategories.map((cat: any) => (
+                                        <tr key={cat.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors">
+                                            <td className="px-5 py-3">
+                                                <div className="flex items-center gap-3">
+                                                    {/* La vignette remplace le visuel pleine largeur des
+                                                        cartes : elle suffit à reconnaître la gamme. */}
+                                                    <div className="size-11 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 shrink-0 flex items-center justify-center">
+                                                        {isDisplayableImage(cat.img) ? (
+                                                            <img src={cat.img} alt="" className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <span className="material-symbols-outlined text-xl text-primary/40">directions_car</span>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-sm font-bold text-slate-900 dark:text-white leading-tight">{cat.libelle}</span>
+                                                        <span className="text-[11px] text-slate-400 font-mono leading-tight">#{cat.id}</span>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-5 py-3 text-sm text-slate-500 dark:text-slate-400 max-w-md">
+                                                <span className="line-clamp-2">{cat.description || "Aucune description fournie."}</span>
+                                            </td>
+                                            <td className="px-5 py-3">
+                                                <div className="flex gap-1.5 justify-end">
+                                                    <Link to={`/rental-vehicles?category=${cat.id}`} title="Voir les véhicules">
+                                                        <Button type="button" size="sm" icon="local_taxi">Véhicules</Button>
+                                                    </Link>
+                                                    <Button
+                                                        size="sm"
+                                                        icon="edit"
+                                                        onClick={() => { setCategoryToEdit(cat); setModalOpen(true); }}
+                                                    >
+                                                        Modifier
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        icon="delete"
+                                                        aria-label={`Supprimer ${cat.libelle}`}
+                                                        className="text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-600"
+                                                        onClick={() => setCategoryToDelete(cat)}
+                                                    />
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 )}
             </div>
+
+            <RentalCategoryModal
+                open={modalOpen}
+                category={categoryToEdit}
+                onClose={() => setModalOpen(false)}
+                onSaved={fetchCategories}
+            />
 
             {/* Confirmation de suppression */}
             {categoryToDelete && (

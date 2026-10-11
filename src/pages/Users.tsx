@@ -6,12 +6,28 @@ import { notifier } from '../services/notifier';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import jsPDF from 'jspdf';
+import { SearchBar, Select, Button, ActionsMenu, type ActionItem } from "../components/ui";
 
 interface UsersProps {
     onLogout: () => void;
     theme: 'light' | 'dark';
     toggleTheme: () => void;
 }
+
+const entete = "px-4 py-2.5 text-[10px] font-bold uppercase tracking-wider text-slate-500";
+
+// Les rôles sont identifiés par un entier côté API ; 1 = client, 2 = chauffeur.
+// Tout autre code est affiché tel quel plutôt que masqué, pour qu'un rôle
+// ajouté côté serveur se remarque ici au lieu de disparaître.
+const roleLabel = (roleId: any): string =>
+    roleId === 1 ? "Client" : roleId === 2 ? "Chauffeur" : roleId == null ? "—" : `Rôle ${roleId}`;
+
+const roleStyle = (roleId: any): string =>
+    roleId === 1
+        ? "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
+        : roleId === 2
+            ? "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400"
+            : "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400";
 
 const Users: React.FC<UsersProps> = ({ onLogout, theme, toggleTheme }) => {
     const api = new ApiService();
@@ -21,6 +37,7 @@ const Users: React.FC<UsersProps> = ({ onLogout, theme, toggleTheme }) => {
     const [currentData, setCurrentData] = useState<any>(null);
     const [pagination, setPagination] = useState<any>([]);
     const [searchTerm, setSearchTerm] = useState<string>('');
+    const [tri, setTri] = useState<'recent' | 'ancien'>('recent');
     // For Image Upload
     const hiddenFileInput = useRef<HTMLInputElement>(null);
 
@@ -116,6 +133,73 @@ const Users: React.FC<UsersProps> = ({ onLogout, theme, toggleTheme }) => {
         }
     };
 
+    // Le tri porte sur la page courante : l'API rend les utilisateurs
+    // paginés et sans paramètre d'ordre. `created_at` manque sur certains
+    // comptes, d'où le repli sur l'identifiant, qui croît dans le même sens.
+    const dateDeCreation = (u: any): number => {
+        const t = u?.created_at ? Date.parse(u.created_at) : NaN;
+        return Number.isNaN(t) ? Number(u?.id) || 0 : t;
+    };
+
+    const usersTries = React.useMemo(() => {
+        const copie = [...users];
+        copie.sort((a, b) => dateDeCreation(b) - dateDeCreation(a));
+        return tri === 'recent' ? copie : copie.reverse();
+    }, [users, tri]);
+
+    // Les cinq boutons de la ligne étaient répartis sur deux colonnes, et
+    // certains n'apparaissaient que pour un rôle : la largeur variait d'une
+    // ligne à l'autre. Le menu les rassemble et garde les lignes alignées.
+    const actionsUtilisateur = (user: any): ActionItem[] => {
+        const nom = `${user.prenom ?? ''} ${user.nom ?? ''}`.trim();
+        const items: ActionItem[] = [
+            {
+                label: "Ma fiche",
+                icon: "badge",
+                onClick: () => setCurrentData(user),
+            },
+            {
+                label: "Notifier",
+                icon: "notifications",
+                onClick: () => notifier({ destinataires: [{ id: user.id, nom }] }),
+            },
+        ];
+
+        if (user.role_id === 1) {
+            items.push({
+                label: "Nommer chauffeur",
+                icon: "sports_motorsports",
+                separatorBefore: true,
+                onClick: () => { window.location.hash = `#/add-user-to-driver/${user.id}`; },
+            });
+        }
+
+        if (user.is_agence == 0) {
+            items.push({
+                label: "Créer une agence",
+                icon: "store",
+                separatorBefore: items.length === 2,
+                onClick: () => setCurrentData(user),
+            });
+        }
+
+        if (user.role_id === 2) {
+            // Ce bouton n'a jamais eu de gestionnaire : il ne faisait rien, en
+            // silence. Désactivé, il dit au moins que l'action reste à câbler
+            // côté API, au lieu de laisser croire à un échec.
+            items.push({
+                label: "Activer / Désactiver",
+                icon: "toggle_on",
+                danger: true,
+                disabled: true,
+                separatorBefore: true,
+                onClick: () => {},
+            });
+        }
+
+        return items;
+    };
+
     const generatePDF = () => {
         const doc = new jsPDF();
         const elementHTML = document.getElementById("pdf-generated");
@@ -130,10 +214,6 @@ const Users: React.FC<UsersProps> = ({ onLogout, theme, toggleTheme }) => {
         }
     };
 
-    const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setSearchTerm(e.target.value);
-        // Implement debounced search here or client-side filtering if API doesn't support search param
-    };
     return (
         <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
             {/* Header section with breadcrumbs and title */}
@@ -164,33 +244,31 @@ const Users: React.FC<UsersProps> = ({ onLogout, theme, toggleTheme }) => {
             {/* Search and Filters */}
             <div className="px-4 md:px-8 py-6">
                 <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-wrap gap-4 items-center">
-                    <div className="relative flex-1 min-w-[280px]">
-                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
-                        <input
-                            className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm focus:ring-2 focus:ring-primary/20"
-                            placeholder="Rechercher par nom, email ou ID..."
-                            type="text"
-                            value={searchTerm}
-                            onChange={handleSearch}
-                        />
-                    </div>
-                    <div className="flex flex-wrap gap-2 flex-1 sm:flex-none">
-                        <select className="flex-1 sm:flex-none bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm px-4 py-2 pr-10 focus:ring-2 focus:ring-primary/20 text-slate-600 dark:text-slate-300">
-                            <option>Rôle</option>
+                    <SearchBar
+                        value={searchTerm}
+                        onChange={setSearchTerm}
+                        placeholder="Rechercher par nom, email ou ID..."
+                        minWidth={280}
+                    />
+                    <div className="flex flex-wrap gap-2">
+                        <Select value={tri} onChange={(e) => setTri(e.target.value as 'recent' | 'ancien')}>
+                            <option value="recent">Plus récents d'abord</option>
+                            <option value="ancien">Plus anciens d'abord</option>
+                        </Select>
+                        <Select defaultValue="">
+                            <option value="">Rôle</option>
                             <option>Admin</option>
                             <option>Agent</option>
                             <option>Chauffeur</option>
-                        </select>
-                        <select className="flex-1 sm:flex-none bg-slate-50 dark:bg-slate-800 border-none rounded-lg text-sm px-4 py-2 pr-10 focus:ring-2 focus:ring-primary/20 text-slate-600 dark:text-slate-300">
-                            <option>Statut</option>
+                        </Select>
+                        <Select defaultValue="">
+                            <option value="">Statut</option>
                             <option>Actif</option>
                             <option>Inactif</option>
                             <option>Suspendu</option>
-                        </select>
+                        </Select>
                     </div>
-                    <button className="p-2 text-slate-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors">
-                        <span className="material-symbols-outlined">tune</span>
-                    </button>
+                    <Button variant="ghost" size="sm" icon="tune" aria-label="Plus de filtres" />
                 </div>
             </div>
 
@@ -201,93 +279,105 @@ const Users: React.FC<UsersProps> = ({ onLogout, theme, toggleTheme }) => {
                         <table className="w-full text-left border-collapse min-w-[900px]">
                             <thead>
                                 <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
-                                    <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-500 w-20">ID</th>
-                                    <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-500">Photo &amp; Nom</th>
-                                    <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-500">Contact</th>
-                                    <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-500 text-center">Chauffeur</th>
-                                    <th className="px-6 py-4 text-[11px] font-bold uppercase tracking-wider text-slate-500 text-right">ACTIONS</th>
+                                    <th className={entete}>Utilisateur</th>
+                                    <th className={entete}>Contact</th>
+                                    <th className={`${entete} text-right`}>Solde</th>
+                                    <th className={entete}>Rôle</th>
+                                    {/* L'en-tête commande le tri : c'est là qu'on le cherche,
+                                        même si le sélecteur de la barre fait la même chose. */}
+                                    <th className={entete}>
+                                        <button
+                                            type="button"
+                                            onClick={() => setTri((t) => (t === 'recent' ? 'ancien' : 'recent'))}
+                                            title={tri === 'recent' ? "Trier du plus ancien au plus récent" : "Trier du plus récent au plus ancien"}
+                                            className="inline-flex items-center gap-1 uppercase tracking-wider hover:text-primary transition-colors"
+                                        >
+                                            Inscription
+                                            <span className="material-symbols-outlined text-[16px]">
+                                                {tri === 'recent' ? 'arrow_downward' : 'arrow_upward'}
+                                            </span>
+                                        </button>
+                                    </th>
+                                    <th className={`${entete} text-right`}>Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                                 {loading ? (
                                     <tr>
-                                        <td colSpan={7} className="px-6 py-10 text-center text-slate-500">Chargement en cours...</td>
+                                        <td colSpan={6} className="px-6 py-10 text-center text-sm text-slate-500">Chargement en cours...</td>
                                     </tr>
-                                ) : users.length === 0 ? (
+                                ) : usersTries.length === 0 ? (
                                     <tr>
-                                        <td colSpan={7} className="px-6 py-10 text-center text-slate-500">Aucun utilisateur trouvé</td>
+                                        <td colSpan={6} className="px-6 py-10 text-center text-sm text-slate-500">Aucun utilisateur trouvé</td>
                                     </tr>
                                 ) : (
-                                    users.map((user: any, index: number) => (
+                                    usersTries.map((user: any, index: number) => (
                                         <tr key={user.id || index} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors group">
-                                            <td className="px-6 py-4 text-xs font-medium text-slate-400">#{user.id}</td>
-                                            <td className="px-6 py-4">
+                                            <td className="px-4 py-2.5">
                                                 <div className="flex items-center gap-3">
-                                                    <div
-                                                        className="size-10 rounded-full bg-slate-100 bg-cover bg-center border border-slate-200 cursor-pointer"
-                                                        style={{ backgroundImage: `url('${user.photo || 'https://via.placeholder.com/150'}')` }}
+                                                    {/* La photo reste cliquable pour la remplacer ;
+                                                        l'icône au survol le dit, l'ancienne pastille
+                                                        muette ne le laissait pas deviner. */}
+                                                    <button
+                                                        type="button"
+                                                        title="Changer la photo de profil"
                                                         onClick={() => {
                                                             setCurrentData(user);
                                                             hiddenFileInput.current?.click();
                                                         }}
-                                                    ></div>
-                                                    <div>
-                                                        <p className="text-sm font-semibold text-slate-900 dark:text-white capitalize">
-                                                            {user.nom || 'N/A'} {''}
-                                                            {user.prenom || 'N/A'}
-                                                        </p>
-                                                        <p className="text-[11px] text-slate-500">{user.balance + ' FCFA' || 'N/A'} </p>
+                                                        className="relative size-9 shrink-0 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 group/photo"
+                                                    >
+                                                        {user.photo ? (
+                                                            <img src={user.photo} alt="" className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <span className="material-symbols-outlined text-[20px] text-slate-400 leading-9">person</span>
+                                                        )}
+                                                        <span className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover/photo:opacity-100 transition-opacity flex items-center justify-center">
+                                                            <span className="material-symbols-outlined text-[16px] text-white">photo_camera</span>
+                                                        </span>
+                                                    </button>
+                                                    <div className="flex flex-col min-w-0">
+                                                        <span className="text-sm font-semibold text-slate-900 dark:text-white capitalize truncate leading-tight">
+                                                            {[user.nom, user.prenom].filter(Boolean).join(' ') || 'Sans nom'}
+                                                        </span>
+                                                        <span className="text-[11px] text-slate-400 font-mono leading-tight">#{user.id}</span>
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4">
-                                                <div className="text-[13px]">
-                                                    <p className="text-slate-700 dark:text-slate-300 font-medium">{user.email || 'N/A'}</p>
-                                                    <p className="text-slate-500 text-xs">{user.telephone || 'N/A'}</p>
+                                            <td className="px-4 py-2.5">
+                                                <div className="flex flex-col min-w-0">
+                                                    <span className="text-[13px] text-slate-700 dark:text-slate-300 truncate leading-tight">{user.email || '—'}</span>
+                                                    <span className="text-[11px] text-slate-500 font-mono leading-tight">{user.telephone || '—'}</span>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 text-center">
-                                                <div className="flex justify-center gap-2">
-                                                    {user.role_id === 1 && (
-                                                        <a
-                                                            href={`#/add-user-to-driver/${user.id}`}
-                                                            className="px-3 py-1.5 text-[11px] font-bold text-emerald-600 border border-emerald-600 rounded hover:bg-emerald-50 transition-colors inline-block"
-                                                        >
-                                                            Nommer chauffeur
-                                                        </a>
-                                                    )}
-                                                    {user.role_id === 2 && (
-                                                        <button className="px-3 py-1.5 text-[11px] font-bold text-rose-600 border border-rose-600 rounded hover:bg-rose-50 transition-colors">
-                                                            Activer/Désactiver
-                                                        </button>
+                                            {/* `balance + ' FCFA'` affichait « null FCFA » quand le
+                                                solde manquait : la concaténation est toujours vraie,
+                                                donc le `|| 'N/A'` qui suivait ne servait à rien. */}
+                                            <td className="px-4 py-2.5 text-right text-sm font-bold text-slate-900 dark:text-white tabular-nums whitespace-nowrap">
+                                                {user.balance != null
+                                                    ? `${Number(user.balance).toLocaleString('fr-FR')} FCFA`
+                                                    : <span className="font-normal text-slate-400">—</span>}
+                                            </td>
+                                            <td className="px-4 py-2.5">
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-black tracking-wider uppercase ${roleStyle(user.role_id)}`}>
+                                                        {roleLabel(user.role_id)}
+                                                    </span>
+                                                    {user.is_agence == 1 && (
+                                                        <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-black tracking-wider uppercase bg-primary/10 text-primary" title="Dispose d'une agence">
+                                                            Agence
+                                                        </span>
                                                     )}
                                                 </div>
                                             </td>
-                                         
-
-                                            <td className="px-6 py-4 text-right">
-                                                <div className="flex justify-end gap-2">
-                                                    <button
-                                                        title="Envoyer une notification"
-                                                        className="px-2 py-1.5 text-slate-600 border border-slate-300 rounded hover:bg-slate-50 transition-colors dark:text-slate-300 dark:border-slate-700 dark:hover:bg-slate-800"
-                                                        onClick={() => notifier({ destinataires: [{ id: user.id, nom: `${user.prenom ?? ''} ${user.nom ?? ''}` }] })}
-                                                    >
-                                                        <span className="material-symbols-outlined text-[16px] align-middle">notifications</span>
-                                                    </button>
-                                                    {user.is_agence == 0 && (
-                                                        <button
-                                                            className="px-3 py-1.5 text-[11px] font-bold text-emerald-600 border border-emerald-600 rounded hover:bg-emerald-50 transition-colors"
-                                                            onClick={() => setCurrentData(user)}
-                                                        >
-                                                            Créer une agence
-                                                        </button>
-                                                    )}
-                                                    <button
-                                                        className="px-3 py-1.5 text-[11px] font-bold text-emerald-600 border border-emerald-600 rounded hover:bg-emerald-50 transition-colors"
-                                                        onClick={() => setCurrentData(user)}
-                                                    >
-                                                        Ma fiche
-                                                    </button>
+                                            <td className="px-4 py-2.5 text-xs text-slate-500 whitespace-nowrap">
+                                                {user.created_at
+                                                    ? new Date(user.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
+                                                    : '—'}
+                                            </td>
+                                            <td className="px-4 py-2.5">
+                                                <div className="flex justify-end">
+                                                    <ActionsMenu items={actionsUtilisateur(user)} />
                                                 </div>
                                             </td>
                                         </tr>

@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
+import Trajet from './components/Trajet';
 import Swal from "sweetalert2";
 import MainLayout from "./MainLayout";
 import ApiService from "../services/ApiService";
 import { notifier } from "../services/notifier";
 import Loading from "../components/Loading";
+import { SearchBar } from "../components/ui";
 
 /**
  * L'activité du covoiturage, en trois registres.
@@ -153,7 +155,7 @@ export default function CarpoolHistory({ onLogout, theme, toggleTheme }: Carpool
     const ligneTrajet = (t: any) => (
         <tr key={t.id} className="hover:bg-slate-50 dark:hover:bg-primary/5 transition-colors">
             <td className="px-6 py-4 text-sm font-semibold text-slate-400">#{t.id}</td>
-            <td className="px-6 py-4 text-sm font-bold">{t.lieu_depart} → {t.lieu_arrive}</td>
+            <td className="px-6 py-4"><Trajet depart={t.lieu_depart} arrivee={t.lieu_arrive} /></td>
             <td className="px-6 py-4 text-sm">{date(t.date_depart, t.heure_depart)}</td>
             <td className="px-6 py-4 text-sm">
                 {t.vehicule?.chauffeur ? `${t.vehicule.chauffeur.prenom ?? ""} ${t.vehicule.chauffeur.nom ?? ""}` : "—"}
@@ -187,7 +189,7 @@ export default function CarpoolHistory({ onLogout, theme, toggleTheme }: Carpool
     const ligneDemande = (d: any) => (
         <tr key={d.id} className="hover:bg-slate-50 dark:hover:bg-primary/5 transition-colors">
             <td className="px-6 py-4 text-sm font-semibold text-slate-400">#{d.id}</td>
-            <td className="px-6 py-4 text-sm font-bold">{d.lieu_depart} → {d.lieu_arrive}</td>
+            <td className="px-6 py-4"><Trajet depart={d.lieu_depart} arrivee={d.lieu_arrive} /></td>
             <td className="px-6 py-4 text-sm">{date(d.date_depart, d.heure_depart)}</td>
             <td className="px-6 py-4 text-sm">
                 {d.requester ? `${d.requester.prenom ?? ""} ${d.requester.nom ?? ""}` : "—"}
@@ -224,7 +226,7 @@ export default function CarpoolHistory({ onLogout, theme, toggleTheme }: Carpool
         <tr key={p.id} className="hover:bg-slate-50 dark:hover:bg-primary/5 transition-colors">
             <td className="px-6 py-4 text-sm font-semibold text-slate-400">#{p.id}</td>
             <td className="px-6 py-4 text-sm font-bold">
-                {p.carsharing ? `${p.carsharing.lieu_depart} → ${p.carsharing.lieu_arrive}` : "—"}
+                {p.carsharing ? <Trajet depart={p.carsharing.lieu_depart} arrivee={p.carsharing.lieu_arrive} /> : "—"}
             </td>
             <td className="px-6 py-4 text-sm">{date(p.carsharing?.date_depart, p.carsharing?.heure_depart)}</td>
             <td className="px-6 py-4 text-sm">
@@ -293,7 +295,7 @@ export default function CarpoolHistory({ onLogout, theme, toggleTheme }: Carpool
                             onClick={() => setOnglet(item.cle)}
                             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all border ${
                                 onglet === item.cle
-                                    ? "bg-[#137fec] text-white border-[#137fec]"
+                                    ? "bg-primary text-white border-primary"
                                     : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-50"
                             }`}
                         >
@@ -305,18 +307,12 @@ export default function CarpoolHistory({ onLogout, theme, toggleTheme }: Carpool
 
                 <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-wrap items-center gap-3">
                     {onglet !== "subscriptions" && (
-                        <div className="relative flex-1 min-w-[260px]">
-                            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
-                            <input
-                                className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm outline-none focus:ring-2 focus:ring-primary"
-                                placeholder="Rechercher un lieu de départ ou d'arrivée…"
-                                value={recherche}
-                                onChange={(e) => setRecherche(e.target.value)}
-                                onKeyPress={(e) => {
-                                    if (e.key === "Enter") charger(onglet, filtre, recherche);
-                                }}
-                            />
-                        </div>
+                        <SearchBar
+                            value={recherche}
+                            onChange={setRecherche}
+                            onSearch={() => charger(onglet, filtre, recherche)}
+                            placeholder="Rechercher un lieu de départ ou d'arrivée…"
+                        />
                     )}
 
                     <div className="flex flex-wrap items-center gap-2">
@@ -384,7 +380,7 @@ export default function CarpoolHistory({ onLogout, theme, toggleTheme }: Carpool
                                     onClick={() => lien.url && charger(onglet, filtre, recherche, lien.url)}
                                     className={`min-w-9 px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
                                         lien.active
-                                            ? "bg-[#137fec] text-white border-[#137fec]"
+                                            ? "bg-primary text-white border-primary"
                                             : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 disabled:opacity-40"
                                     }`}
                                     dangerouslySetInnerHTML={{ __html: lien.label }}

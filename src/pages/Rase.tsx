@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, useRef } from "react";
+import Trajet from './components/Trajet';
 import GoogleMapReact from "google-map-react";
 
 import ApiService from "../services/ApiService";
@@ -103,7 +104,11 @@ const ActionDropdown = ({ course, openDetails, openMap, openReattributionModal }
     }, []);
 
     return (
-        <div className="relative" ref={dropdownRef}>
+        // `data-menu-open` sert de prise à la cellule parente : `position:
+        // sticky` lui crée un contexte d'empilement, dans lequel le z-index du
+        // menu reste enfermé. Les cellules des lignes suivantes se peignent
+        // donc par-dessus, quel que soit ce z-index.
+        <div className="relative" ref={dropdownRef} data-menu-open={isOpen ? "" : undefined}>
             <button 
                 onClick={() => setIsOpen(!isOpen)}
                 className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
@@ -113,7 +118,7 @@ const ActionDropdown = ({ course, openDetails, openMap, openReattributionModal }
             </button>
 
             {isOpen && (
-                <div className="absolute right-0 mt-1 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 overflow-hidden z-[999]">
+                <div className="absolute right-0 mt-1 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 overflow-hidden z-10">
                     <div className="py-1">
                         <button
                             className="w-full px-4 py-2.5 text-left text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-3 text-slate-700 dark:text-slate-200 transition-colors"
@@ -546,16 +551,7 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
                                                         </td>
                                                         <td className="px-4 py-4 text-sm">{course.categorie_vehicule?.libelle || "N/A"}</td>
                                                         <td className="px-4 py-4">
-                                                            <div className="flex flex-col gap-1">
-                                                                <div className="flex items-center gap-1.5 text-xs">
-                                                                    <span className="material-symbols-outlined text-[14px] text-green-500">location_on</span>
-                                                                    <span className="truncate max-w-[150px]" title={course.lieu_depart}>{course.lieu_depart}</span>
-                                                                </div>
-                                                                <div className="flex items-center gap-1.5 text-xs">
-                                                                    <span className="material-symbols-outlined text-[14px] text-red-500">location_on</span>
-                                                                    <span className="truncate max-w-[150px]" title={course.lieu_arrive}>{course.lieu_arrive}</span>
-                                                                </div>
-                                                            </div>
+                                                            <Trajet depart={course.lieu_depart} arrivee={course.lieu_arrive} largeur="max-w-[200px]" />
                                                         </td>
                                                         <td className="px-4 py-4 whitespace-nowrap">
                                                             <div className="text-sm">{course.date_depart}</div>
@@ -570,7 +566,7 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
                                                         <td className="px-4 py-4 whitespace-nowrap">
                                                             {getStatusBadge(course.statut)}
                                                         </td>
-                                                        <td className="px-4 py-4 text-sm text-slate-700 dark:text-slate-300 whitespace-nowrap sticky right-0 bg-white dark:bg-slate-900 border-l border-slate-100 dark:border-slate-800">
+                                                        <td className="px-4 py-4 text-sm text-slate-700 dark:text-slate-300 whitespace-nowrap sticky right-0 z-0 has-[[data-menu-open]]:z-30 bg-white dark:bg-slate-900 border-l border-slate-100 dark:border-slate-800">
                                                             <div className="flex items-center justify-center">
                                                                 <ActionDropdown 
                                                                     course={course} 
