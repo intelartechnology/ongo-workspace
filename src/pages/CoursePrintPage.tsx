@@ -73,7 +73,7 @@ export default function CoursePrintPage() {
 
             <div className="sheet-container">
                 <div className="no-print" style={{ position: "fixed", bottom: 20, right: 20, zIndex: 100, display: "flex", gap: 10 }}>
-                    <button onClick={() => window.print()} style={{ padding: "12px 24px", background: "#000", color: "#fff", border: "none", borderRadius: 12, fontWeight: 900, cursor: "pointer", boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)" }}>IMPRIMER</button>
+                    <button onClick={() => window.print()} style={{ padding: "12px 24px", background: "#000", color: "#fff", border: "none", borderRadius: 12, fontWeight: 900, cursor: "pointer" }}>IMPRIMER</button>
                     <button onClick={() => window.close()} style={{ padding: "12px 24px", background: "#fff", color: "#000", border: "2px solid #000", borderRadius: 12, fontWeight: 900, cursor: "pointer" }}>FERMER</button>
                 </div>
 

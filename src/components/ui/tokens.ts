@@ -2,7 +2,7 @@
  * Les classes de base des contrôles du tableau de bord.
  *
  * Chaque écran portait sa propre variante — `py-2` ici, `py-2.5` là,
- * `rounded-lg` d'un côté, `rounded-2xl` de l'autre, une bordure parfois
+ * `rounded-lg` d'un côté, `rounded-xl` de l'autre, une bordure parfois
  * absente — si bien que deux pages voisines n'avaient pas la même hauteur de
  * champ. Les valeurs ci-dessous arbitrent une fois pour toutes ; les écrans
  * les composent au lieu de les réécrire.
@@ -24,35 +24,45 @@ export const champTaille = {
 
 export type Taille = keyof typeof champTaille;
 
-/** L'ossature partagée par tous les boutons, variante mise à part. */
+/**
+ * L'ossature partagée par tous les boutons, variante mise à part.
+ *
+ * La forme des écrans d'Ongo Eat : coins `rounded-lg`, graisse moyenne. Les
+ * boutons en gras et aux coins de pilule faisaient de chaque action un appel,
+ * et deux pages voisines ne parlaient pas la même langue. La couleur, elle,
+ * reste celle de la charte.
+ */
 export const boutonBase =
-    "inline-flex items-center justify-center gap-2 rounded-xl font-bold " +
-    "whitespace-nowrap transition-all outline-none " +
-    "focus-visible:ring-2 focus-visible:ring-primary/40 " +
-    "disabled:opacity-60 disabled:cursor-not-allowed";
+    "inline-flex items-center justify-center gap-2 rounded-lg font-medium " +
+    "whitespace-nowrap transition-colors outline-none " +
+    "focus-visible:ring-2 focus-visible:ring-slate-400/50 " +
+    "disabled:opacity-40 disabled:cursor-not-allowed";
 
 export const boutonTaille = {
-    sm: "px-3 py-2 text-xs",
-    md: "px-5 py-2.5 text-sm",
+    sm: "px-3 py-1.5 text-xs",
+    md: "px-4 py-2 text-sm",
 } as const;
 
 /**
- * `primary` porte l'action principale d'un écran — une seule par vue.
+ * `primary` porte l'action principale d'un écran — une seule par vue : le bleu
+ * ONGO de la charte (`Palette.brand` de l'application mobile), un cran plus
+ * clair en mode sombre pour rester visible sur le fond.
  * `secondary` sert les actions de barre d'outils (filtrer, exporter).
  * `ghost` et `danger` couvrent le reste.
  */
 export const boutonVariante = {
     primary:
-        "bg-primary text-white shadow-lg shadow-primary/20 hover:bg-primary/90",
+        "bg-primary text-white hover:bg-primary/90 " +
+        "dark:bg-primary-container dark:hover:bg-primary-container/90",
     secondary:
-        "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 " +
-        "border border-slate-200 dark:border-slate-700 " +
-        "hover:bg-slate-50 dark:hover:bg-slate-700 hover:text-primary",
+        "bg-white dark:bg-transparent text-slate-700 dark:text-slate-300 " +
+        "border border-slate-300 dark:border-slate-700 " +
+        "hover:bg-slate-50 dark:hover:bg-slate-800",
     ghost:
         "bg-transparent text-slate-600 dark:text-slate-300 " +
         "hover:bg-slate-100 dark:hover:bg-slate-800",
     danger:
-        "bg-error text-white shadow-lg shadow-error/20 hover:bg-error/90",
+        "bg-red-600 text-white hover:bg-red-700",
 } as const;
 
 export type Variante = keyof typeof boutonVariante;

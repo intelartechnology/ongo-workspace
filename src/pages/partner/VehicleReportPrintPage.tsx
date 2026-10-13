@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ApiService from '../../services/ApiService';
+import { Avatar } from "../../components/ui";
 
 const VehicleReportPrintPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -40,7 +41,7 @@ const VehicleReportPrintPage: React.FC = () => {
     return (
         <div className="min-h-screen bg-slate-50 p-4 sm:p-10 font-sans print:p-0 print:bg-white transition-all">
             {/* Action Bar (Hidden on Print) */}
-            <div className="max-w-[21cm] mx-auto mb-8 flex justify-between items-center print:hidden bg-white p-4 rounded-xl shadow-lg border border-slate-200">
+            <div className="max-w-[21cm] mx-auto mb-8 flex justify-between items-center print:hidden bg-white p-4 rounded-xl border border-slate-200">
                 <button 
                     onClick={() => navigate(-1)} 
                     className="flex items-center gap-2 text-slate-600 font-bold hover:text-[#00327d] transition-colors"
@@ -50,7 +51,7 @@ const VehicleReportPrintPage: React.FC = () => {
                 </button>
                 <button 
                     onClick={handlePrint}
-                    className="bg-[#00327d] text-white px-6 py-2.5 rounded-full flex items-center gap-2 font-black shadow-lg hover:bg-[#0047ab] active:scale-95 transition-all"
+                    className="bg-[#00327d] text-white px-6 py-2.5 rounded-full flex items-center gap-2 font-black hover:bg-[#0047ab] active:scale-95 transition-all"
                 >
                     <span className="material-symbols-outlined">print</span>
                     Imprimer le Rapport
@@ -58,7 +59,7 @@ const VehicleReportPrintPage: React.FC = () => {
             </div>
 
             {/* A4 Sheet */}
-            <div className="max-w-[21cm] mx-auto bg-white shadow-2xl p-[1.5cm] min-h-[29.7cm] border border-slate-100 print:shadow-none print:border-none print:p-0 relative overflow-hidden">
+            <div className="max-w-[21cm] mx-auto bg-white p-[1.5cm] min-h-[29.7cm] border border-slate-100 print:border-none print:p-0 relative overflow-hidden">
                 
                 {/* Header Decor */}
                 <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-[#00327d] via-[#00a3ff] to-[#00327d]"></div>
@@ -67,7 +68,7 @@ const VehicleReportPrintPage: React.FC = () => {
                 <div className="flex justify-between items-start mb-12">
                     <div className="space-y-4">
                         <div className="flex items-center gap-3">
-                            <div className="bg-[#00327d] text-white p-2.5 rounded-xl font-black text-2xl shadow-md rotate-3 group-hover:rotate-0 transition-transform">ON</div>
+                            <div className="bg-[#00327d] text-white p-2.5 rounded-xl font-black text-2xl rotate-3 group-hover:rotate-0 transition-transform">ON</div>
                             <div>
                                 <h1 className="text-2xl font-black text-[#00327d] tracking-tighter uppercase italic">ON GO 237</h1>
                                 <p className="text-[10px] font-bold text-slate-400 tracking-widest uppercase">Gestion de Flotte Premium</p>
@@ -79,7 +80,7 @@ const VehicleReportPrintPage: React.FC = () => {
                         </div>
                     </div>
                     <div className="text-right">
-                        <div className="inline-block p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                        <div className="inline-block p-4 bg-slate-50 rounded-xl border border-slate-100">
                            <div className="text-[10px] font-black text-slate-400 uppercase mb-1">ID Rapport</div>
                            <p className="text-sm font-black text-[#00327d]">#{id?.substring(0,8).toUpperCase()}-{Math.random().toString(36).substring(7).toUpperCase()}</p>
                         </div>
@@ -89,22 +90,22 @@ const VehicleReportPrintPage: React.FC = () => {
                 {/* Top Section: Vehicle & Chauffeur Summary */}
                 <div className="grid grid-cols-2 gap-8 mb-12">
                     {/* Vehicle Identity */}
-                    <div className="bg-[#f8fafc] p-6 rounded-3xl border border-slate-100 relative">
+                    <div className="bg-[#f8fafc] p-6 rounded-xl border border-slate-100 relative">
                         <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6 border-b border-slate-200 pb-2">Informations Véhicule</h3>
                         <div className="space-y-4">
-                            <div className="flex justify-between items-center bg-white p-3 rounded-2xl border border-slate-100 shadow-sm">
+                            <div className="flex justify-between items-center bg-white p-3 rounded-xl border border-slate-100">
                                 <span className="text-xs font-bold text-slate-500">Matricule</span>
                                 <span className="text-sm font-black text-[#00327d]">{vehicle?.matricule}</span>
                             </div>
-                            <div className="flex justify-between items-center bg-white p-3 rounded-2xl border border-slate-100 shadow-sm">
+                            <div className="flex justify-between items-center bg-white p-3 rounded-xl border border-slate-100">
                                 <span className="text-xs font-bold text-slate-500">Marque / Modèle</span>
                                 <span className="text-sm font-black text-slate-800">{vehicle?.marque} {vehicle?.modele}</span>
                             </div>
-                            <div className="flex justify-between items-center bg-white p-3 rounded-2xl border border-slate-100 shadow-sm">
+                            <div className="flex justify-between items-center bg-white p-3 rounded-xl border border-slate-100">
                                 <span className="text-xs font-bold text-slate-500">Catégorie</span>
                                 <span className="text-sm font-black text-slate-800">{vehicle?.categorie?.libelle}</span>
                             </div>
-                            <div className="flex justify-between items-center bg-white p-3 rounded-2xl border border-slate-100 shadow-sm">
+                            <div className="flex justify-between items-center bg-white p-3 rounded-xl border border-slate-100">
                                 <span className="text-xs font-bold text-slate-500">Couleur</span>
                                 <span className="text-sm font-black text-slate-800">{vehicle?.color}</span>
                             </div>
@@ -112,17 +113,11 @@ const VehicleReportPrintPage: React.FC = () => {
                     </div>
 
                     {/* Driver Profile */}
-                    <div className="bg-[#f0f4ff] p-6 rounded-3xl border border-[#00327d]/5 relative">
+                    <div className="bg-[#f0f4ff] p-6 rounded-xl border border-[#00327d]/5 relative">
                         <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-6 border-b border-[#00327d]/10 pb-2">Profil Chauffeur</h3>
                          <div className="flex items-center gap-4 mb-6">
-                            <div className="w-16 h-16 rounded-2xl bg-white border-2 border-white shadow-md overflow-hidden">
-                                {vehicle?.chauffeur?.photo ? (
-                                    <img src={vehicle.chauffeur.photo} alt="Chauffeur" className="w-full h-full object-cover" />
-                                ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-slate-300">
-                                        <span className="material-symbols-outlined text-4xl">person</span>
-                                    </div>
-                                )}
+                            <div className="w-16 h-16 rounded-xl bg-white border-2 border-white overflow-hidden">
+                                <Avatar photo={vehicle?.chauffeur?.photo} nom={vehicle?.chauffeur?.nom || vehicle?.chauffeur?.prenom} alt="Chauffeur" className="text-2xl" />
                             </div>
                             <div>
                                 <h4 className="text-lg font-black text-slate-800 tracking-tight leading-tight">{vehicle?.chauffeur?.nom} {vehicle?.chauffeur?.prenom}</h4>
@@ -150,7 +145,7 @@ const VehicleReportPrintPage: React.FC = () => {
                        { label: 'Annulées', val: history.filter((c:any)=>c.courses?.statut === 'ANNULEE').length, icon: 'cancel', scheme: 'rose' },
                        { label: 'Revenu Est.', val: history.filter((c:any)=>c.courses?.statut === 'TERMINEE').reduce((acc:number, curr:any)=> acc + (curr.courses?.montant * 0.8), 0).toLocaleString() + ' F', icon: 'payments', scheme: 'indigo' },
                    ].map((stat, i) => (
-                    <div key={i} className="bg-white border border-slate-100 p-4 rounded-2xl shadow-sm text-center">
+                    <div key={i} className="bg-white border border-slate-100 p-4 rounded-xl text-center">
                         <span className={`material-symbols-outlined text-${stat.scheme}-500 text-xl mb-1`}>{stat.icon}</span>
                         <p className="text-[9px] font-black text-slate-400 uppercase tracking-tighter mb-1">{stat.label}</p>
                         <p className={`text-sm font-black text-slate-800`}>{stat.val}</p>
@@ -166,7 +161,7 @@ const VehicleReportPrintPage: React.FC = () => {
                          </span>
                          Historique Récent des Courses
                     </h3>
-                    <div className="overflow-hidden rounded-2xl border border-slate-100 shadow-sm">
+                    <div className="overflow-hidden rounded-xl border border-slate-100">
                         <table className="w-full text-left border-collapse">
                             <thead className="bg-slate-800 text-white">
                                 <tr>
@@ -185,9 +180,9 @@ const VehicleReportPrintPage: React.FC = () => {
                                         </td>
                                         <td className="px-4 py-3 text-center">
                                             <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase ${
-                                                course.courses?.statut === 'TERMINEE' ? 'bg-emerald-100 text-emerald-700' :
-                                                course.courses?.statut === 'ANNULEE' ? 'bg-rose-100 text-rose-700' : 'bg-blue-100 text-blue-700'
-                                            }`}>
+ course.courses?.statut === 'TERMINEE' ? 'bg-emerald-100 text-emerald-700' :
+ course.courses?.statut === 'ANNULEE' ? 'bg-rose-100 text-rose-700' : 'bg-blue-100 text-blue-700'
+ }`}>
                                                 {course.courses?.statut}
                                             </span>
                                         </td>

@@ -65,7 +65,7 @@ const DriverRequestDetailModal: React.FC<DriverRequestDetailModalProps> = ({ isO
 
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-[70] flex justify-center items-center">
-      <div className="relative p-8 border w-full max-w-2xl md:max-w-3xl shadow-lg rounded-md bg-white dark:bg-slate-800">
+      <div className="relative p-8 border w-full max-w-2xl md:max-w-3xl rounded-md bg-white dark:bg-slate-800">
         <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Détails de la Demande Chauffeur</h3>
         <button
           className="absolute top-4 right-4 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
@@ -103,7 +103,7 @@ const DriverRequestDetailModal: React.FC<DriverRequestDetailModalProps> = ({ isO
 
         <div className="flex justify-end mt-6">
           <button
-            className="px-6 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition-colors"
+            className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white hover:bg-primary/90 dark:bg-primary-container dark:hover:bg-primary-container/90 transition-colors disabled:opacity-40"
             onClick={onClose}
           >
             Fermer

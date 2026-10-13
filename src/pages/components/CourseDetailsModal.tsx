@@ -54,7 +54,7 @@ const CourseDetailsModal: React.FC<CourseDetailsModalProps> = ({ selectedCourse,
 
   return (
     <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-md animate-in fade-in duration-300">
-      <div className="bg-white dark:bg-slate-900 w-full max-w-6xl max-h-[90vh] rounded-2xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 flex flex-col">
+      <div className="bg-white dark:bg-slate-900 w-full max-w-6xl max-h-[90vh] rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 flex flex-col">
         
         {/* HEADER */}
         <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 sticky top-0 z-10">
@@ -105,8 +105,8 @@ const CourseDetailsModal: React.FC<CourseDetailsModalProps> = ({ selectedCourse,
                         <tr 
                           key={attribution.id} 
                           className={`group hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors ${
-                            attribution.statut === 'CONFIRMEE' ? 'confirmed-row' : ''
-                          }`}
+ attribution.statut === 'CONFIRMEE' ? 'confirmed-row' : ''
+ }`}
                         >
                           <td className="px-4 py-4">
                             <div className="flex flex-col">
@@ -144,7 +144,7 @@ const CourseDetailsModal: React.FC<CourseDetailsModalProps> = ({ selectedCourse,
                           </td>
                           <td className="px-4 py-4 text-center">
                             <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                              attribution.statut === "CONFIRMEE" 
+ attribution.statut === "CONFIRMEE" 
                                 ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" 
                                 : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
                             }`}>
@@ -208,7 +208,7 @@ const CourseDetailsModal: React.FC<CourseDetailsModalProps> = ({ selectedCourse,
               <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
                 <p className="text-[10px] font-bold text-slate-500 uppercase mb-2">Planification</p>
                 <div className="flex items-center gap-3">
-                   <div className="p-2 bg-white dark:bg-slate-700 rounded-lg shadow-sm shrink-0">
+                   <div className="p-2 bg-white dark:bg-slate-700 rounded-lg shrink-0">
                       <span className="material-symbols-outlined text-primary">calendar_today</span>
                    </div>
                    <div>
@@ -237,7 +237,7 @@ const CourseDetailsModal: React.FC<CourseDetailsModalProps> = ({ selectedCourse,
           >
             Fermer l'aperçu
           </button>
-          <button className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-500/20 transition-all flex items-center gap-2">
+          <button className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white hover:bg-primary/90 dark:bg-primary-container dark:hover:bg-primary-container/90 transition-colors disabled:opacity-40 flex items-center gap-2">
             <span className="material-symbols-outlined text-sm">chat</span>
             Contacter Chauffeur
           </button>

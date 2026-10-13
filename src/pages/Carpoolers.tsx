@@ -3,6 +3,7 @@ import Swal from "sweetalert2";
 import MainLayout from "./MainLayout";
 import ApiService from "../services/ApiService";
 import Loading from "../components/Loading";
+import { notifier } from "../services/notifier";
 
 /**
  * Les covoitureurs : ceux qui attendent une décision, ceux qui roulent.
@@ -141,7 +142,7 @@ export default function Carpoolers({ onLogout, theme, toggleTheme }: CarpoolersP
 
     return (
         <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
-            <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+            <header>
                 <div className="px-8 py-6 max-w-7xl mx-auto">
                     <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Covoitureurs</h1>
                     <p className="text-sm text-slate-500 mt-1">
@@ -160,8 +161,8 @@ export default function Carpoolers({ onLogout, theme, toggleTheme }: CarpoolersP
                             key={item.cle}
                             onClick={() => setOnglet(item.cle)}
                             className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all border ${
-                                onglet === item.cle
-                                    ? "bg-[#137fec] text-white border-[#137fec]"
+ onglet === item.cle
+ ? "bg-primary text-white border-primary"
                                     : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-50"
                             }`}
                         >
@@ -170,7 +171,7 @@ export default function Carpoolers({ onLogout, theme, toggleTheme }: CarpoolersP
                     ))}
                 </div>
 
-                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+                <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
                     <div className="overflow-x-auto">
                         {chargement ? (
                             <Loading />
@@ -224,6 +225,7 @@ export default function Carpoolers({ onLogout, theme, toggleTheme }: CarpoolersP
                                                                 Autoriser
                                                             </button>
                                                         )}
+                                                        <button type="button" onClick={() => notifier({ destinataires: [{ id: personne.id, nom: [personne.nom, personne.prenom].filter(Boolean).join(" ") }] })} className="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 whitespace-nowrap">Notifier</button>
                                                         <button
                                                             onClick={() => refuser(personne)}
                                                             className="px-3 py-1.5 rounded-lg text-xs font-bold border border-red-500 text-red-500 hover:bg-red-50 transition-all"

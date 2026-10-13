@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 import ApiService from "../../services/ApiService";
+import { StatCard } from "../../components/ui";
 
 /**
  * Ce qu'Ongo doit au marchand.
@@ -226,19 +227,7 @@ export default function Revenue({ merchantId, storeId = null, isOwner = false }:
     };
 
     const carte = (titre: string, valeur: string, legende?: string, alerte?: boolean) => (
-        <div
-            className={`p-5 rounded-xl border ${
-                alerte
-                    ? "border-rose-300 bg-rose-50 dark:border-rose-900 dark:bg-rose-950/30"
-                    : "border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
-            }`}
-        >
-            <p className="text-xs font-semibold uppercase text-slate-500">{titre}</p>
-            <p className={`text-2xl font-bold mt-1 ${alerte ? "text-rose-700 dark:text-rose-300" : "text-slate-900 dark:text-white"}`}>
-                {valeur}
-            </p>
-            {legende && <p className={`text-xs mt-1 ${alerte ? "text-rose-700 dark:text-rose-300" : "text-slate-500"}`}>{legende}</p>}
-        </div>
+        <StatCard label={titre} value={valeur} note={legende} alert={alerte} />
     );
 
     /**
@@ -574,7 +563,7 @@ export default function Revenue({ merchantId, storeId = null, isOwner = false }:
                         {isOwner && portefeuille.balance > 0 && (
                             <button
                                 onClick={retirer}
-                                className="mt-4 px-4 py-2 rounded-lg text-sm font-medium bg-slate-900 text-white dark:bg-white dark:text-slate-900"
+                                className="mt-4 px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white dark:bg-primary-container"
                             >
                                 Retirer vers le mobile money
                             </button>

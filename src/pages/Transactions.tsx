@@ -3,6 +3,9 @@ import Swal from "sweetalert2";
 import MainLayout from "./MainLayout";
 import ApiService from "../services/ApiService";
 import Loading from "../components/Loading";
+import { StatCard } from "../components/ui";
+import { ArrowDownLeft, ArrowUpRight, Landmark, ReceiptText, type LucideIcon } from "lucide-react";
+import { notifier } from "../services/notifier";
 
 /**
  * Le registre financier de la plateforme.
@@ -151,19 +154,13 @@ export default function Transactions({ onLogout, theme, toggleTheme }: Transacti
         return e.owner_id ? `#${e.owner_id}` : "Compte inconnu";
     };
 
-    const tuile = (titre: string, valeur: string, ton: string, icone: string) => (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5">
-            <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">{titre}</span>
-                <span className={`material-symbols-outlined text-[20px] ${ton}`}>{icone}</span>
-            </div>
-            <div className="text-2xl font-bold mt-2 text-slate-900 dark:text-white">{valeur}</div>
-        </div>
+    const tuile = (titre: string, valeur: string, icone: LucideIcon) => (
+        <StatCard label={titre} value={valeur} icon={icone} />
     );
 
     return (
         <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
-            <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+            <header>
                 <div className="px-8 py-6 max-w-7xl mx-auto">
                     <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Transactions</h1>
                     <p className="text-sm text-slate-500 mt-1">
@@ -175,13 +172,13 @@ export default function Transactions({ onLogout, theme, toggleTheme }: Transacti
 
             <div className="p-8 max-w-7xl mx-auto space-y-6">
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                    {tuile("Entrées", totaux ? montant(totaux.entrees) : "—", "text-emerald-500", "south_west")}
-                    {tuile("Sorties", totaux ? montant(totaux.sorties) : "—", "text-red-500", "north_east")}
-                    {tuile("Net", totaux ? montant(totaux.net) : "—", "text-[#137fec]", "account_balance")}
-                    {tuile("Écritures", totaux ? totaux.nombre.toLocaleString("fr-FR") : "—", "text-slate-400", "receipt_long")}
+                    {tuile("Entrées", totaux ? montant(totaux.entrees) : "—", ArrowDownLeft)}
+                    {tuile("Sorties", totaux ? montant(totaux.sorties) : "—", ArrowUpRight)}
+                    {tuile("Net", totaux ? montant(totaux.net) : "—", Landmark)}
+                    {tuile("Écritures", totaux ? totaux.nombre.toLocaleString("fr-FR") : "—", ReceiptText)}
                 </div>
 
-                <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-wrap items-center gap-3">
+                <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-wrap items-center gap-3">
                     <div className="relative flex-1 min-w-[260px]">
                         <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
                         <input
@@ -201,8 +198,8 @@ export default function Transactions({ onLogout, theme, toggleTheme }: Transacti
                                 key={item.valeur || "tout"}
                                 onClick={() => setSens(item.valeur)}
                                 className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
-                                    sens === item.valeur
-                                        ? "bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-slate-900"
+ sens === item.valeur
+ ? "bg-primary text-white border-primary dark:bg-primary-container"
                                         : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50"
                                 }`}
                             >
@@ -237,7 +234,7 @@ export default function Transactions({ onLogout, theme, toggleTheme }: Transacti
                     />
                 </div>
 
-                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+                <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
                     <div className="overflow-x-auto">
                         {chargement ? (
                             <Loading />
@@ -249,7 +246,7 @@ export default function Transactions({ onLogout, theme, toggleTheme }: Transacti
                                             <th
                                                 key={titre}
                                                 className={`px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider ${
-                                                    titre === "Montant" ? "text-right" : ""
+ titre === "Montant" ? "text-right" : ""
                                                 }`}
                                             >
                                                 {titre}
@@ -268,7 +265,19 @@ export default function Transactions({ onLogout, theme, toggleTheme }: Transacti
                                                         {date(e.verified_at ?? e.created_at)}
                                                     </td>
                                                     <td className="px-6 py-4 text-sm">
-                                                        <div className="font-semibold">{proprietaire(e)}</div>
+                                                        <div className="font-semibold flex items-center gap-1.5">
+                                                            {proprietaire(e)}
+                                                            {e.owner_id && (
+                                                                <button
+                                                                    type="button"
+                                                                    title="Notifier le titulaire"
+                                                                    onClick={() => notifier({ destinataires: [{ id: e.owner_id, nom: proprietaire(e) }] })}
+                                                                    className="text-slate-400 hover:text-primary dark:hover:text-primary-fixed-dim"
+                                                                >
+                                                                    <span className="material-symbols-outlined text-[16px] align-middle">notifications</span>
+                                                                </button>
+                                                            )}
+                                                        </div>
                                                         <div className="text-xs text-slate-500">{e.owner_telephone ?? ""}</div>
                                                     </td>
                                                     <td className="px-6 py-4 text-sm max-w-md">
@@ -279,7 +288,7 @@ export default function Transactions({ onLogout, theme, toggleTheme }: Transacti
                                                     <td className="px-6 py-4">
                                                         <span
                                                             className={`px-2 py-1 rounded-lg border text-[11px] font-bold ${
-                                                                e.status === "verified"
+ e.status === "verified"
                                                                     ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                                                                     : "bg-amber-50 text-amber-700 border-amber-200"
                                                             }`}
@@ -289,7 +298,7 @@ export default function Transactions({ onLogout, theme, toggleTheme }: Transacti
                                                     </td>
                                                     <td
                                                         className={`px-6 py-4 text-sm font-bold text-right whitespace-nowrap ${
-                                                            sortie ? "text-red-500" : "text-emerald-600"
+ sortie ? "text-red-500" : "text-emerald-600"
                                                         }`}
                                                     >
                                                         {sortie ? "−" : "+"} {montant(e.amount)}
@@ -317,8 +326,8 @@ export default function Transactions({ onLogout, theme, toggleTheme }: Transacti
                                     disabled={!lien.url}
                                     onClick={() => lien.url && charger(lien.url)}
                                     className={`min-w-9 px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
-                                        lien.active
-                                            ? "bg-[#137fec] text-white border-[#137fec]"
+ lien.active
+ ? "bg-primary text-white border-primary"
                                             : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 disabled:opacity-40"
                                     }`}
                                     dangerouslySetInnerHTML={{ __html: lien.label }}

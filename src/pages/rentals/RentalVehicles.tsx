@@ -40,16 +40,9 @@ const RentalVehicles: React.FC<RentalVehiclesProps> = ({ onLogout, theme, toggle
 
     return (
         <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
-            <div className="bg-white dark:bg-slate-900 px-4 md:px-8 py-6 border-b border-slate-200 dark:border-slate-800 flex flex-col gap-4">
-                <div className="flex items-center gap-2 text-sm text-slate-500 font-manrope">
-                    <Link className="hover:text-primary transition-colors" to="/dashboard">Tableau de bord</Link>
-                    <span className="material-symbols-outlined text-sm">chevron_right</span>
-                    <Link className="hover:text-primary transition-colors" to="/rentals">Location</Link>
-                    <span className="material-symbols-outlined text-sm">chevron_right</span>
-                    <span className="text-slate-900 dark:text-slate-100 font-bold">Flotte Location</span>
-                </div>
+            <div className="px-4 md:px-8 py-6 flex flex-col gap-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <h2 className="text-2xl md:text-3xl font-black tracking-tight text-[#00327d] dark:text-white uppercase leading-none font-headline">Gestion de la Flotte</h2>
+                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Gestion de la Flotte</h1>
                     <div className="flex gap-2 w-full sm:w-auto">
                         <Link 
                             to="/rental-categories"
@@ -60,7 +53,7 @@ const RentalVehicles: React.FC<RentalVehiclesProps> = ({ onLogout, theme, toggle
                         </Link>
                         <Link 
                             to="/rental-vehicles/add"
-                            className="bg-primary hover:bg-primary/90 text-white px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 shadow-lg shadow-primary/20 w-full sm:w-auto justify-center"
+                            className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white hover:bg-primary/90 dark:bg-primary-container dark:hover:bg-primary-container/90 transition-colors disabled:opacity-40 flex items-center gap-2 w-full sm:w-auto justify-center"
                         >
                             <span className="material-symbols-outlined text-[23px]">add_box</span>
                             Ajouter un véhicule
@@ -73,16 +66,16 @@ const RentalVehicles: React.FC<RentalVehiclesProps> = ({ onLogout, theme, toggle
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {loading ? (
                         Array(8).fill(0).map((_, i) => (
-                            <div key={i} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 h-80 animate-pulse"></div>
+                            <div key={i} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 h-80 animate-pulse"></div>
                         ))
                     ) : vehicles.length === 0 ? (
-                        <div className="col-span-full py-20 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 text-center text-slate-400">
+                        <div className="col-span-full py-20 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 text-center text-slate-400">
                              <span className="material-symbols-outlined text-6xl block mb-4 opacity-20">no_crash</span>
                              <p className="font-bold text-lg uppercase tracking-widest">Aucun véhicule disponible</p>
                         </div>
                     ) : (
                         vehicles.map((v: any) => (
-                            <div key={v.id} className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col group">
+                            <div key={v.id} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden hover:-translate-y-1 transition-all duration-300 flex flex-col group">
                                 <div className="aspect-[4/3] bg-slate-50 dark:bg-slate-800/50 relative overflow-hidden">
                                     {v.image ? (
                                         <img src={v.image} alt={v.modele} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
@@ -92,19 +85,19 @@ const RentalVehicles: React.FC<RentalVehiclesProps> = ({ onLogout, theme, toggle
                                         </div>
                                     )}
                                     <div className="absolute top-3 left-3 flex gap-2">
-                                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm ${
-                                            v.status === 'LIBRE' ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'
-                                        }`}>
+                                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
+ v.status === 'LIBRE' ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'
+ }`}>
                                             {v.status}
                                         </span>
-                                        <span className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-[#00327d] dark:text-primary-container shadow-sm border border-slate-200 dark:border-slate-700">
+                                        <span className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-[#00327d] dark:text-primary-container border border-slate-200 dark:border-slate-700">
                                             {v.categorie?.libelle || 'Standard'}
                                         </span>
                                     </div>
                                     <div className="absolute bottom-3 right-3 flex gap-1">
                                          <Link 
                                             to={`/rental-vehicles/edit/${v.id}`}
-                                            className="size-8 rounded-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm shadow-sm flex items-center justify-center text-slate-600 hover:text-primary transition-colors"
+                                            className="size-8 rounded-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm flex items-center justify-center text-slate-600 hover:text-primary transition-colors"
                                         >
                                             <span className="material-symbols-outlined text-[18px]">edit</span>
                                         </Link>
@@ -165,10 +158,10 @@ const RentalVehicles: React.FC<RentalVehiclesProps> = ({ onLogout, theme, toggle
                                 onClick={() => link.url && fetchVehicles(link.url)}
                                 disabled={!link.url || link.active}
                                 className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
-                                    link.active
-                                        ? 'bg-[#00327d] text-white shadow-lg'
-                                        : 'bg-white dark:bg-slate-900 text-slate-500 border border-slate-200 dark:border-slate-800'
-                                } ${!link.url ? 'opacity-30 cursor-not-allowed' : ''}`}
+ link.active
+ ? 'bg-[#00327d] text-white '
+ : 'bg-white dark:bg-slate-900 text-slate-500 border border-slate-200 dark:border-slate-800'
+ } ${!link.url ? 'opacity-30 cursor-not-allowed' : ''}`}
                                 dangerouslySetInnerHTML={{ __html: link.label }}
                             />
                         ))}

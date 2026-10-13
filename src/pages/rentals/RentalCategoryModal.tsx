@@ -137,7 +137,7 @@ const RentalCategoryModal: React.FC<RentalCategoryModalProps> = ({ category, ope
                 role="dialog"
                 aria-modal="true"
                 aria-label={edition ? "Modifier la catégorie" : "Nouvelle catégorie"}
-                className="w-full max-w-lg bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl max-h-[90vh] flex flex-col"
+                className="w-full max-w-lg bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 max-h-[90vh] flex flex-col"
             >
                 <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-4">
                     <h3 className="text-base font-black uppercase tracking-tight text-slate-900 dark:text-white">

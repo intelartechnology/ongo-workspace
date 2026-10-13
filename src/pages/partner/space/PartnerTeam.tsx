@@ -120,7 +120,7 @@ const PartnerTeam: React.FC<Props> = ({ partnerId, role }) => {
 
     return (
         <div className="flex flex-col gap-4">
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-wrap items-center gap-3">
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-wrap items-center gap-3">
                 <div className="mr-auto">
                     <h3 className="text-sm font-black uppercase tracking-tight text-slate-900 dark:text-white">Équipe</h3>
                     <p className="text-xs text-slate-500 mt-0.5">
@@ -133,7 +133,7 @@ const PartnerTeam: React.FC<Props> = ({ partnerId, role }) => {
             </div>
 
             {ajout && (
-                <form onSubmit={inviter} className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-wrap items-end gap-3">
+                <form onSubmit={inviter} className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-wrap items-end gap-3">
                     <label className="flex flex-col gap-1.5 flex-1 min-w-[220px]">
                         <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Numéro de téléphone</span>
                         <Input
@@ -157,7 +157,7 @@ const PartnerTeam: React.FC<Props> = ({ partnerId, role }) => {
                 </form>
             )}
 
-            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse min-w-[560px]">
                         <thead>

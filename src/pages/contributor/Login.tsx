@@ -102,7 +102,7 @@ const ContributorLogin: React.FC = () => {
                         </div>
 
                         <button
-                            className="w-full bg-gradient-to-r from-emerald-700 to-emerald-500 text-white font-bold py-4 rounded-full shadow-lg hover:brightness-110 active:scale-[0.98] transition-all duration-200 disabled:opacity-50"
+                            className="w-full bg-gradient-to-r from-emerald-700 to-emerald-500 text-white font-bold py-4 rounded-full hover:brightness-110 active:scale-[0.98] transition-all duration-200 disabled:opacity-50"
                             type="submit"
                             disabled={loading}
                         >
@@ -140,7 +140,7 @@ const ContributorLogin: React.FC = () => {
                 <div className="absolute inset-0 z-10 bg-gradient-to-br from-emerald-800 via-emerald-800/90 to-emerald-600/80"/>
 
                 <div className="relative z-20 max-w-sm space-y-8">
-                    <div className="inline-flex items-center justify-center w-20 h-20 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/10 mx-auto shadow-2xl">
+                    <div className="inline-flex items-center justify-center w-20 h-20 bg-white/10 backdrop-blur-xl rounded-xl border border-white/10 mx-auto">
                         <span className="material-symbols-outlined text-white text-4xl">directions_car</span>
                     </div>
                     <div className="space-y-4">

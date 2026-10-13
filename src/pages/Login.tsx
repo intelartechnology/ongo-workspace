@@ -143,7 +143,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                                 onChange={formik.handleChange}
                                 onBlur={formik.handleBlur}
                                 value={formik.values.tel}
-                                className={`block w-full rounded-lg border-0 py-2.5 md:py-3 text-gray-900 shadow-sm ring-1 ring-inset ${formik.touched.tel && formik.errors.tel ? 'ring-red-500' : 'ring-gray-300'} placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary dark:bg-gray-800 dark:text-white dark:ring-gray-700 sm:text-sm sm:leading-6 transition-all`}
+                                className={`block w-full rounded-lg border-0 py-2.5 md:py-3 text-gray-900 ring-1 ring-inset ${formik.touched.tel && formik.errors.tel ? 'ring-red-500' : 'ring-gray-300'} placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary dark:bg-gray-800 dark:text-white dark:ring-gray-700 sm:text-sm sm:leading-6 transition-all`}
                                 placeholder="Enter your email or phone"
                             />
                             {formik.touched.tel && formik.errors.tel && (
@@ -161,7 +161,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                                 onChange={formik.handleChange}
                                 onBlur={formik.handleBlur}
                                 value={formik.values.password}
-                                className={`block w-full rounded-lg border-0 py-2.5 md:py-3 text-gray-900 shadow-sm ring-1 ring-inset ${formik.touched.password && formik.errors.password ? 'ring-red-500' : 'ring-gray-300'} placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary dark:bg-gray-800 dark:text-white dark:ring-gray-700 sm:text-sm sm:leading-6 transition-all`}
+                                className={`block w-full rounded-lg border-0 py-2.5 md:py-3 text-gray-900 ring-1 ring-inset ${formik.touched.password && formik.errors.password ? 'ring-red-500' : 'ring-gray-300'} placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary dark:bg-gray-800 dark:text-white dark:ring-gray-700 sm:text-sm sm:leading-6 transition-all`}
                                 placeholder="Enter your password"
                             />
                             {formik.touched.password && formik.errors.password && (
@@ -172,7 +172,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="flex w-full justify-center items-center gap-3 rounded-lg bg-primary px-3 py-3 text-sm font-bold leading-6 text-white shadow-sm hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+                                className="flex w-full justify-center items-center gap-3 rounded-lg bg-primary px-3 py-3 text-sm font-bold leading-6 text-white hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-all disabled:opacity-70 disabled:cursor-not-allowed"
                             >
                                 {loading && (
                                     <div className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
@@ -187,7 +187,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-pattern items-center justify-center p-12">
                 <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary via-transparent to-background-dark/30 opacity-60"></div>
                 <div className="relative z-10 max-w-lg text-center">
-                    <div className="mb-8 inline-flex items-center justify-center p-4 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-2xl">
+                    <div className="mb-8 inline-flex items-center justify-center p-4 bg-white/10 backdrop-blur-md rounded-xl border border-white/20">
                         <div className="bg-white p-6 rounded-xl">
                             <img src="/logo.png" alt="Ongo 237" className="size-16 object-contain" />
                         </div>

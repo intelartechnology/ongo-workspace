@@ -197,7 +197,7 @@ export default function EatServiceAreas({ onLogout, theme, toggleTheme }: EatSer
 
     return (
         <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
-            <header className="px-8 py-6 border-b border-slate-200 dark:border-slate-800 flex items-start justify-between">
+            <header className="px-8 py-6 flex items-start justify-between">
                 <div>
                     <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Zones de service</h1>
                     <p className="text-sm text-slate-500 mt-1">
@@ -207,7 +207,7 @@ export default function EatServiceAreas({ onLogout, theme, toggleTheme }: EatSer
                 </div>
                 <button
                     onClick={() => setFiche({ ...paysVierge })}
-                    className="px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium shrink-0 dark:bg-white dark:text-slate-900"
+                    className="px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium shrink-0 dark:bg-primary-container"
                 >
                     Ajouter un pays
                 </button>
@@ -270,7 +270,7 @@ export default function EatServiceAreas({ onLogout, theme, toggleTheme }: EatSer
                             <button
                                 onClick={enregistrerPays}
                                 disabled={!fiche.name.trim() || fiche.code.length !== 2}
-                                className="px-5 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium disabled:opacity-40 dark:bg-white dark:text-slate-900"
+                                className="px-5 py-2 rounded-lg bg-primary text-white text-sm font-medium disabled:opacity-40 dark:bg-primary-container"
                             >
                                 Enregistrer
                             </button>
@@ -467,7 +467,7 @@ function FormulaireZone({
                 <button
                     onClick={enregistrer}
                     disabled={!zone.name.trim() || zone.latitude === "" || zone.longitude === ""}
-                    className="px-5 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium disabled:opacity-40 dark:bg-white dark:text-slate-900"
+                    className="px-5 py-2 rounded-lg bg-primary text-white text-sm font-medium disabled:opacity-40 dark:bg-primary-container"
                 >
                     Enregistrer
                 </button>

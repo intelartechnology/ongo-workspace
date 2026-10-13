@@ -193,7 +193,7 @@ const Vehicle: React.FC<VehicleProps> = ({ onLogout = () => { }, theme = 'light'
         <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
             <div className="flex flex-col min-h-screen bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100">
                 {/* Header */}
-                <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 py-4">
+                <header className="px-6 py-4">
                     <div className="max-w-[1400px] mx-auto flex flex-wrap items-center gap-3">
                         <h2 className="text-lg font-black text-slate-900 dark:text-white tracking-tight mr-auto">
                             Véhicules
@@ -235,7 +235,7 @@ const Vehicle: React.FC<VehicleProps> = ({ onLogout = () => { }, theme = 'light'
                 <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
 
                     {/* Modernized Table Card */}
-                    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+                    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
                         <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse">
                                 <thead>
@@ -365,7 +365,7 @@ const Vehicle: React.FC<VehicleProps> = ({ onLogout = () => { }, theme = 'light'
                                     link.url ? (
                                         <button
                                             key={index}
-                                            className={`px-3 py-1 border border-slate-200 dark:border-slate-700 rounded text-sm font-medium ${link.active ? 'bg-primary text-white' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
+                                            className={`px-3 py-1 border border-slate-200 dark:border-slate-700 rounded text-sm font-medium ${link.active ? 'bg-primary text-white dark:bg-primary-container' : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
                                             onClick={() => getAllVehicles(link.url, true)}
                                         >
                                             {link.label}

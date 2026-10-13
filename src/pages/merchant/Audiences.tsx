@@ -112,7 +112,7 @@ export default function Audiences({ merchantId, canEdit }: Props) {
                 {canEdit && ouverte === null && (
                     <button
                         onClick={() => setOuverte("nouvelle")}
-                        className="px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium dark:bg-white dark:text-slate-900 shrink-0"
+                        className="px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium dark:bg-primary-container shrink-0"
                     >
                         Nouvelle audience
                     </button>

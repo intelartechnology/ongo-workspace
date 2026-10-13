@@ -3,6 +3,7 @@ import Swal from "sweetalert2";
 import MainLayout from "./MainLayout";
 import ApiService from "../services/ApiService";
 import Loading from "../components/Loading";
+import { notifier } from "../services/notifier";
 
 /**
  * La modération des comptes, en un seul endroit.
@@ -211,7 +212,7 @@ export default function Moderation({ onLogout, theme, toggleTheme }: ModerationP
 
     return (
         <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
-            <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+            <header>
                 <div className="px-8 py-6 max-w-7xl mx-auto">
                     <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Modération</h1>
                     <p className="text-sm text-slate-500 mt-1">
@@ -229,11 +230,11 @@ export default function Moderation({ onLogout, theme, toggleTheme }: ModerationP
                             value={recherche}
                             onChange={(evenement) => setRecherche(evenement.target.value)}
                             placeholder="Téléphone ou nom…"
-                            className="w-full pl-10 pr-4 py-3 rounded-xl text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-[#137fec]"
+                            className="w-full pl-10 pr-4 py-3 rounded-xl text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 focus:outline-none focus:ring-2 focus:ring-primary"
                         />
                     </div>
 
-                    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+                    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
                         <div className="px-5 py-3 border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                             {recherche.trim().length >= 2 ? "Résultats" : "Comptes bloqués"}
                         </div>
@@ -247,7 +248,7 @@ export default function Moderation({ onLogout, theme, toggleTheme }: ModerationP
                                         <button
                                             onClick={() => ouvrir(compte)}
                                             className={`w-full text-left px-5 py-4 transition-colors hover:bg-slate-50 dark:hover:bg-white/5 ${
-                                                choisi?.id === compte.id ? "bg-slate-50 dark:bg-white/5" : ""
+ choisi?.id === compte.id ? "bg-slate-50 dark:bg-white/5" : ""
                                             }`}
                                         >
                                             <div className="flex items-center justify-between gap-3">
@@ -276,12 +277,12 @@ export default function Moderation({ onLogout, theme, toggleTheme }: ModerationP
 
                 <div className="lg:col-span-2">
                     {choisi === null ? (
-                        <div className="h-full min-h-[300px] flex items-center justify-center bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 text-sm text-slate-500">
+                        <div className="h-full min-h-[300px] flex items-center justify-center bg-white dark:bg-slate-900 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 text-sm text-slate-500">
                             Choisissez un compte pour voir son dossier.
                         </div>
                     ) : (
                         <div className="space-y-6">
-                            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">
+                            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6">
                                 <div className="flex flex-wrap items-start justify-between gap-4">
                                     <div>
                                         <h2 className="text-lg font-bold">{nom(choisi)}</h2>
@@ -291,6 +292,7 @@ export default function Moderation({ onLogout, theme, toggleTheme }: ModerationP
                                     </div>
 
                                     <div className="flex items-center gap-2">
+                                        <button type="button" onClick={() => notifier({ destinataires: [{ id: choisi.id, nom: [choisi.nom, choisi.prenom].filter(Boolean).join(" ") }] })} className="px-3 py-2 rounded-lg text-xs font-medium border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800">Notifier</button>
                                         {choisi.blocked_at ? (
                                             <button
                                                 onClick={() => debloquer(choisi)}
@@ -327,7 +329,7 @@ export default function Moderation({ onLogout, theme, toggleTheme }: ModerationP
                                 )}
                             </div>
 
-                            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+                            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
                                 <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                                     Dossier
                                 </div>
@@ -346,7 +348,7 @@ export default function Moderation({ onLogout, theme, toggleTheme }: ModerationP
                                                     {mesure.kind === "avertissement" && (
                                                         <span
                                                             className={`ml-auto text-[11px] font-semibold ${
-                                                                mesure.acknowledged_at ? "text-emerald-600" : "text-amber-600"
+ mesure.acknowledged_at ? "text-emerald-600" : "text-amber-600"
                                                             }`}
                                                         >
                                                             {mesure.acknowledged_at ? `Lu le ${date(mesure.acknowledged_at)}` : "Pas encore lu"}

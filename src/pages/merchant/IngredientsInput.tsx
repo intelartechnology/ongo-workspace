@@ -104,7 +104,7 @@ export default function IngredientsInput({ merchantId, valeur, onChange }: Ingre
             </div>
 
             {ouvert && propositions.length > 0 && (
-                <ul className="absolute z-10 mt-1 w-full max-h-56 overflow-y-auto rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-lg">
+                <ul className="absolute z-10 mt-1 w-full max-h-56 overflow-y-auto rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
                     {propositions.map((mot, rang) => (
                         <li key={mot}>
                             <button
@@ -113,7 +113,7 @@ export default function IngredientsInput({ merchantId, valeur, onChange }: Ingre
                                     ajouter(mot);
                                 }}
                                 className={`w-full text-left px-3 py-2 text-sm ${
-                                    rang === surligne ? "bg-slate-100 dark:bg-slate-700" : ""
+ rang === surligne ? "bg-slate-100 dark:bg-slate-700" : ""
                                 } text-slate-800 dark:text-slate-100`}
                             >
                                 {mot}

@@ -3,7 +3,7 @@ import Swal from "sweetalert2";
 import { toast } from "react-toastify";
 import ApiService from "../../../services/ApiService";
 import Loading from "../../../components/Loading";
-import { SearchBar, Button, Select, ActionsMenu, type ActionItem } from "../../../components/ui";
+import { SearchBar, Button, Select, ActionsMenu, type ActionItem, Avatar } from "../../../components/ui";
 import AddDriverModal from "./AddDriverModal";
 
 interface Props {
@@ -143,7 +143,7 @@ const PartnerDrivers: React.FC<Props> = ({ partnerId, actif, onChange }) => {
 
     return (
         <div className="flex flex-col gap-4">
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-wrap items-center gap-3">
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-wrap items-center gap-3">
                 <SearchBar
                     value={recherche}
                     onChange={setRecherche}
@@ -166,7 +166,7 @@ const PartnerDrivers: React.FC<Props> = ({ partnerId, actif, onChange }) => {
                 </Button>
             </div>
 
-            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse min-w-[860px]">
                         <thead>
@@ -194,9 +194,7 @@ const PartnerDrivers: React.FC<Props> = ({ partnerId, actif, onChange }) => {
                                     <td className="px-4 py-2.5">
                                         <div className="flex items-center gap-3">
                                             <div className="size-9 shrink-0 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                                                {c.photo
-                                                    ? <img src={c.photo} alt="" className="w-full h-full object-cover" />
-                                                    : <span className="material-symbols-outlined text-[20px] text-slate-400">person</span>}
+                                                <Avatar photo={c?.photo} nom={c?.nom || c?.prenom} className="text-base" />
                                             </div>
                                             <div className="flex flex-col min-w-0">
                                                 <span className="text-sm font-semibold text-slate-900 dark:text-white truncate leading-tight">
@@ -218,7 +216,7 @@ const PartnerDrivers: React.FC<Props> = ({ partnerId, actif, onChange }) => {
                                     </td>
                                     <td className="px-4 py-2.5">
                                         <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${c.is_active
-                                            ? "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400"
+ ? "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400"
                                             : "bg-slate-100 dark:bg-slate-800 text-slate-500"}`}>
                                             <span className={`size-1.5 rounded-full ${c.is_active ? "bg-emerald-500" : "bg-slate-400"}`} />
                                             {c.is_active ? "Actif" : "Inactif"}
@@ -250,7 +248,7 @@ const PartnerDrivers: React.FC<Props> = ({ partnerId, actif, onChange }) => {
                                 disabled={!lien.url || lien.active}
                                 onClick={() => lien.url && charger(lien.url)}
                                 className={`px-3 py-1.5 rounded-md text-xs font-medium ${lien.active
-                                    ? "bg-primary text-white font-bold"
+ ? "bg-primary text-white font-bold"
                                     : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400"} ${!lien.url ? "opacity-50 cursor-not-allowed" : ""}`}
                                 dangerouslySetInnerHTML={{ __html: lien.label }}
                             />

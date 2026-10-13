@@ -4,6 +4,7 @@ import MainLayout from "./MainLayout";
 import ApiService from "../services/ApiService";
 import { notifier } from "../services/notifier";
 import Loading from "../components/Loading";
+import { StatCard } from "../components/ui";
 
 /**
  * Ongo Eat vu d'Ongo.
@@ -256,22 +257,12 @@ export default function EatDashboard({ onLogout, theme, toggleTheme }: EatDashbo
 
     /** Un chiffre, avec ce qu'il veut dire dessous. */
     const carte = (titre: string, valeur: string, legende?: string, alerte?: boolean) => (
-        <div className={`p-5 rounded-xl border ${
-            alerte
-                ? "border-red-300 bg-red-50 dark:border-red-900 dark:bg-red-950/30"
-                : "border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
-        }`}>
-            <p className="text-xs font-semibold uppercase text-slate-500">{titre}</p>
-            <p className={`text-2xl font-bold mt-1 ${alerte ? "text-red-600 dark:text-red-400" : "text-slate-900 dark:text-white"}`}>
-                {valeur}
-            </p>
-            {legende && <p className="text-xs text-slate-500 mt-1">{legende}</p>}
-        </div>
+        <StatCard label={titre} value={valeur} note={legende} alert={alerte} />
     );
 
     return (
         <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
-            <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+            <header>
                 <div className="px-8 py-6 max-w-7xl mx-auto">
                     <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Ongo Eat</h1>
                     <p className="text-sm text-slate-500 mt-1">

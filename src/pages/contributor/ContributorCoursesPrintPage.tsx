@@ -56,7 +56,7 @@ const ContributorCoursesPrintPage: React.FC<ContributorCoursesPrintPageProps> = 
                 </button>
                 <button 
                     onClick={() => window.print()}
-                    className="bg-emerald-700 text-white px-8 py-3 rounded-full font-bold shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+                    className="bg-emerald-700 text-white px-8 py-3 rounded-full font-bold hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
                 >
                     <span className="material-symbols-outlined">print</span>
                     Imprimer le Rapport
@@ -64,13 +64,13 @@ const ContributorCoursesPrintPage: React.FC<ContributorCoursesPrintPageProps> = 
             </div>
 
             {/* Report Container */}
-            <div className="max-w-5xl mx-auto bg-white shadow-2xl print:shadow-none border border-slate-100 print:border-none rounded-3xl print:rounded-none overflow-hidden p-8 sm:p-12">
+            <div className="max-w-5xl mx-auto bg-white border border-slate-100 print:border-none rounded-xl print:rounded-none overflow-hidden p-8 sm:p-12">
                 
                 {/* Header */}
                 <div className="flex justify-between items-start border-b-2 border-slate-100 pb-10 mb-10">
                     <div>
                         <div className="flex items-center gap-3 mb-6">
-                            <div className="w-12 h-12 bg-emerald-700 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-900/20">
+                            <div className="w-12 h-12 bg-emerald-700 rounded-xl flex items-center justify-center">
                                 <span className="material-symbols-outlined text-white text-3xl">analytics</span>
                             </div>
                             <h1 className="text-3xl font-black text-emerald-800 tracking-tighter uppercase">Rapport de Flotte / Contributeur</h1>
@@ -89,11 +89,11 @@ const ContributorCoursesPrintPage: React.FC<ContributorCoursesPrintPageProps> = 
 
                 {/* Summary Tiles */}
                 <div className="grid grid-cols-3 gap-6 mb-12">
-                    <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                    <div className="bg-slate-50 p-6 rounded-xl border border-slate-100">
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Courses</p>
                         <p className="text-3xl font-black text-slate-800">{courses.length}</p>
                     </div>
-                    <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                    <div className="bg-slate-50 p-6 rounded-xl border border-slate-100">
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Montant Global</p>
                         <p className="text-3xl font-black text-slate-800">{totalAmount.toLocaleString()} <span className="text-sm">FCFA</span></p>
                     </div>
@@ -101,7 +101,7 @@ const ContributorCoursesPrintPage: React.FC<ContributorCoursesPrintPageProps> = 
                 </div>
 
                 {/* Main Table */}
-                <div className="overflow-hidden rounded-2xl border border-slate-100">
+                <div className="overflow-hidden rounded-xl border border-slate-100">
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-slate-50/80 border-b border-slate-100">

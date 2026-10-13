@@ -117,7 +117,7 @@ export default function OwnerPicker({ choisi, onChoisir, libelle = "Responsable"
                     type="button"
                     onClick={chercher}
                     disabled={recherche}
-                    className="px-4 py-2 rounded-lg text-sm font-medium bg-slate-900 text-white disabled:opacity-40 dark:bg-white dark:text-slate-900 shrink-0"
+                    className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white disabled:opacity-40 dark:bg-primary-container shrink-0"
                 >
                     {recherche ? "…" : "Chercher"}
                 </button>

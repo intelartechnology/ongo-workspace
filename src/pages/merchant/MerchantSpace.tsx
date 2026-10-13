@@ -383,7 +383,7 @@ export default function MerchantSpace({ onLogout }: MerchantSpaceProps) {
                     */}
                     <button
                         onClick={onLogout}
-                        className="mt-6 px-5 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium dark:bg-white dark:text-slate-900"
+                        className="mt-6 px-5 py-2 rounded-lg bg-primary text-white text-sm font-medium dark:bg-primary-container"
                     >
                         Se déconnecter
                     </button>
@@ -408,7 +408,7 @@ export default function MerchantSpace({ onLogout }: MerchantSpaceProps) {
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
-            <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+            <header>
                 <div className="px-6 py-5 max-w-7xl mx-auto">
                     <div className="flex items-start justify-between gap-6">
                         <div>
@@ -468,7 +468,7 @@ export default function MerchantSpace({ onLogout }: MerchantSpaceProps) {
                                         onClick={() => setOnglet(groupe.onglets[0].cle)}
                                         className={`flex items-center gap-2 px-3.5 py-2 rounded-full text-sm font-medium transition ${
                                             ouvert
-                                                ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
+                                                ? "bg-primary text-white dark:bg-primary-container"
                                                 : "bg-slate-100 text-slate-600 hover:text-slate-900 dark:bg-slate-800 dark:text-slate-300 dark:hover:text-white"
                                         }`}
                                     >
@@ -543,7 +543,7 @@ export default function MerchantSpace({ onLogout }: MerchantSpaceProps) {
 
                             <button
                                 onClick={ajouterLivreur}
-                                className="px-4 py-2 rounded-lg text-sm font-medium bg-slate-900 text-white dark:bg-white dark:text-slate-900 shrink-0"
+                                className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white dark:bg-primary-container shrink-0"
                             >
                                 Ajouter un livreur
                             </button>

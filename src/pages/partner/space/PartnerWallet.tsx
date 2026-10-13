@@ -149,7 +149,7 @@ const PartnerWallet: React.FC<Props> = ({ partnerId, actif, role }) => {
 
     return (
         <div className="flex flex-col gap-5">
-            <div className="bg-primary text-white p-6 rounded-2xl shadow-sm flex flex-wrap items-end gap-6">
+            <div className="bg-primary text-white p-6 rounded-xl flex flex-wrap items-end gap-6">
                 <div className="mr-auto">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-white/70">Solde disponible</p>
                     <p className="text-4xl font-black mt-1 tabular-nums">
@@ -183,7 +183,7 @@ const PartnerWallet: React.FC<Props> = ({ partnerId, actif, role }) => {
                 </p>
             </div>
 
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-wrap items-end gap-3">
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-wrap items-end gap-3">
                 <DateField size="sm" label="Du" value={du} onChange={(e) => setDu(e.target.value)} />
                 <DateField size="sm" label="Au" value={au} onChange={(e) => setAu(e.target.value)} />
                 <Button icon="filter_list" onClick={() => charger()}>Filtrer</Button>
@@ -194,7 +194,7 @@ const PartnerWallet: React.FC<Props> = ({ partnerId, actif, role }) => {
                 )}
             </div>
 
-            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse min-w-[720px]">
                         <thead>
@@ -244,7 +244,7 @@ const PartnerWallet: React.FC<Props> = ({ partnerId, actif, role }) => {
                                 disabled={!lien.url || lien.active}
                                 onClick={() => lien.url && charger(lien.url)}
                                 className={`px-3 py-1.5 rounded-md text-xs font-medium ${lien.active
-                                    ? "bg-primary text-white font-bold"
+ ? "bg-primary text-white font-bold"
                                     : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400"} ${!lien.url ? "opacity-50 cursor-not-allowed" : ""}`}
                                 dangerouslySetInnerHTML={{ __html: lien.label }}
                             />

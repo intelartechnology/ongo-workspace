@@ -4,6 +4,7 @@ import ApiService from '../services/ApiService';
 import Helpers from '../functions/helpers';
 import MainLayout from './MainLayout';
 import Trajet from './components/Trajet';
+import Pilotage from './components/Pilotage';
 
 interface DashboardProps {
     onLogout: () => void;
@@ -48,21 +49,11 @@ const PAGE_VIDE: Page = {
  */
 const Dashboard: React.FC<DashboardProps> = ({ onLogout, theme, toggleTheme }) => {
     const navigate = useNavigate();
-    const [stat, setStat] = useState<any>({ client: 0, chauffeur: 0, commande: 0, vehicule: 0, paiement: 0 });
     const [page, setPage] = useState<Page>(PAGE_VIDE);
     const [loading, setLoading] = useState(false);
 
     const api = new ApiService();
     const helpers = new Helpers();
-
-    const fetchStats = async () => {
-        try {
-            const response = await api.getData('stat');
-            if (response.data.success) setStat(response.data.data);
-        } catch (error) {
-            console.error('Error fetching stats:', error);
-        }
-    };
 
     const fetchCourses = async (url = 'course/liste-course', isPag = false) => {
         setLoading(true);
@@ -77,7 +68,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout, theme, toggleTheme }) =
     };
 
     useEffect(() => {
-        fetchStats();
         fetchCourses();
     }, []);
 
@@ -87,14 +77,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout, theme, toggleTheme }) =
     };
 
     const lignes = page.data.filter((item: any) => item?.courses != null);
-
-    const chiffres = [
-        { label: 'Clients', valeur: stat.client, icone: 'person' },
-        { label: 'Chauffeurs', valeur: stat.chauffeur, icone: 'sports_motorsports' },
-        { label: 'Commandes', valeur: stat.commande, icone: 'assignment' },
-        { label: 'Véhicules', valeur: stat.vehicule, icone: 'directions_car' },
-        { label: 'Encaissé', valeur: `${stat.paiement} FCFA`, icone: 'account_balance_wallet' },
-    ];
 
     /** L'état d'une course, dit par une pastille. */
     const pastille = (texte: string, ton: 'vert' | 'rouge' | 'ambre' | 'gris') => {
@@ -115,44 +97,25 @@ const Dashboard: React.FC<DashboardProps> = ({ onLogout, theme, toggleTheme }) =
     return (
         <MainLayout onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme}>
             <div className="w-full overflow-x-hidden px-4 py-6 md:px-8 md:py-8">
-                {/* Le fil d'Ariane : on sait toujours où l'on est, et par où remonter. */}
-                <nav className="mb-5 flex items-center gap-2 text-[13px] text-slate-500 dark:text-slate-400">
-                    <Link to="/courses" className="transition-colors hover:text-primary">Ongo</Link>
-                    <span className="material-symbols-outlined text-[16px] text-slate-300 dark:text-slate-600">chevron_right</span>
-                    <span className="font-medium text-slate-900 dark:text-white">Tableau de bord</span>
-                </nav>
-
-                {/* Le titre occupe la place qu'il mérite : c'est le premier
-                    repère de la page, et un titre de la taille d'un sous-titre
-                    oblige à relire l'écran pour savoir où l'on est. */}
+                {/*
+                  * Le titre au gabarit des autres écrans.
+                  *
+                  * Il faisait 32 à 38 pixels, avec un fil d'Ariane au-dessus ;
+                  * les autres pages s'en tiennent à 24, et la barre du haut dit
+                  * déjà où l'on est. Passer d'un écran à l'autre faisait sauter
+                  * le titre de taille.
+                  */}
                 <header className="mb-8">
-                    <h1 className="text-[32px] font-bold leading-[1.1] tracking-[-0.025em] text-slate-900 dark:text-white md:text-[38px]">
-                        Tableau de bord
-                    </h1>
-                    <p className="mt-2 text-[15px] text-slate-500 dark:text-slate-400">
-                        Ce qui roule aujourd'hui, et ce que la plateforme compte.
-                    </p>
+                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Tableau de bord</h1>
+                    <p className="text-sm text-slate-500 mt-1">Ce qu'Ongo gagne, les demandes qu'elle perd, et à quel moment.</p>
                 </header>
 
-                {/* Les chiffres : cinq cartes de même poids, sans variation inventée. */}
-                <section className="mb-6 grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-5">
-                    {chiffres.map((carte) => (
-                        <div
-                            key={carte.label}
-                            className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"
-                        >
-                            <div className="flex items-start justify-between gap-2">
-                                <p className="text-[14px] font-medium text-slate-500 dark:text-slate-400">{carte.label}</p>
-                                <span className="material-symbols-outlined text-[20px] text-slate-300 dark:text-slate-600">
-                                    {carte.icone}
-                                </span>
-                            </div>
-                            <p className="mt-3 truncate text-[28px] font-bold leading-none tracking-[-0.03em] text-slate-900 dark:text-white">
-                                {carte.valeur}
-                            </p>
-                        </div>
-                    ))}
-                </section>
+                {/* Les chiffres de décision : période, comparaison, entonnoir,
+                    grille horaire. Les cinq cumuls d'avant en avaient deux
+                    faux — « Encaissé » comptait des courses, pas des francs. */}
+                <div className="mb-10">
+                    <Pilotage theme={theme} />
+                </div>
 
                 {/* Le panneau des courses. */}
                 {/* Le titre de section sort de la carte, comme sur les consoles

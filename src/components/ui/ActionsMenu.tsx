@@ -120,7 +120,7 @@ const ActionsMenu: React.FC<ActionsMenuProps> = ({ items, title = "Actions", ali
                         left: pos?.left ?? -9999,
                         visibility: pos ? "visible" : "hidden",
                     }}
-                    className="z-[100] py-1 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700"
+                    className="z-[100] py-1 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700"
                 >
                     {visibles.map((item, i) => (
                         <React.Fragment key={i}>

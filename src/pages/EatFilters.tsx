@@ -237,7 +237,7 @@ export default function EatFilters({ onLogout, theme, toggleTheme }: EatFiltersP
 
     return (
         <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
-            <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+            <header>
                 <div className="px-8 py-6 max-w-7xl mx-auto flex items-start justify-between gap-6">
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Filtres de l'accueil</h1>
@@ -246,7 +246,7 @@ export default function EatFilters({ onLogout, theme, toggleTheme }: EatFiltersP
                         </p>
                     </div>
                     {!form && (
-                        <button onClick={() => setForm({ ...vide })} className="px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium dark:bg-white dark:text-slate-900">
+                        <button onClick={() => setForm({ ...vide })} className="px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium dark:bg-primary-container">
                             Nouveau filtre
                         </button>
                     )}
@@ -338,7 +338,7 @@ export default function EatFilters({ onLogout, theme, toggleTheme }: EatFiltersP
                                     onClick={() => setForm({ ...form, icon: nom })}
                                     className={`w-11 h-11 rounded-xl flex items-center justify-center border ${
                                         form.icon === nom
-                                            ? "bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-slate-900"
+                                            ? "bg-primary text-white border-primary dark:bg-primary-container"
                                             : "border-slate-200 text-slate-700 dark:border-slate-700 dark:text-slate-200"
                                     }`}
                                 >
@@ -365,7 +365,7 @@ export default function EatFilters({ onLogout, theme, toggleTheme }: EatFiltersP
                                 <button
                                     onClick={enregistrer}
                                     disabled={!valide}
-                                    className="px-5 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium disabled:opacity-40 dark:bg-white dark:text-slate-900"
+                                    className="px-5 py-2 rounded-lg bg-primary text-white text-sm font-medium disabled:opacity-40 dark:bg-primary-container"
                                 >
                                     Enregistrer
                                 </button>

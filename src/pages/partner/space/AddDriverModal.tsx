@@ -147,7 +147,7 @@ const AddDriverModal: React.FC<Props> = ({ partnerId, open, onClose, onAdded }) 
                 role="dialog"
                 aria-modal="true"
                 aria-label="Ajouter un chauffeur"
-                className="w-full max-w-lg bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xl max-h-[90vh] flex flex-col"
+                className="w-full max-w-lg bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 max-h-[90vh] flex flex-col"
             >
                 <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
                     <h3 className="text-base font-black uppercase tracking-tight text-slate-900 dark:text-white">Ajouter un chauffeur</h3>
@@ -174,7 +174,7 @@ const AddDriverModal: React.FC<Props> = ({ partnerId, open, onClose, onAdded }) 
 
                     {resultat.etat === "trouve" && (
                         <div className={`flex items-start gap-3 p-4 rounded-xl border ${bloque
-                            ? "bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20"
+ ? "bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20"
                             : "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20"}`}>
                             <span className={`material-symbols-outlined ${bloque ? "text-amber-600" : "text-emerald-600"}`}>
                                 {bloque ? "warning" : "how_to_reg"}

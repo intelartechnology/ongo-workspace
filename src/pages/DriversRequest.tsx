@@ -11,6 +11,8 @@ import Loading from "../components/Loading";
 import { chargerCategories, estLivraison, type CategorieVehicule } from "../services/categories";
 import DriverRequestDetailModal from "../components/DriverRequestDetailModal";
 import { SearchBar, Select, Button } from "../components/ui";
+import { Avatar } from "../components/ui";
+import { notifier } from "../services/notifier";
 
 // Define interfaces for type safety
 interface Vehicule {
@@ -92,6 +94,17 @@ const heureDemande = (valeur?: string): string => {
   const d = new Date(valeur);
   return Number.isNaN(d.getTime()) ? "" : d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
 };
+
+/*
+ * La date de la demande, et non celle du compte.
+ *
+ * La colonne affichait `created_at` de l'utilisateur : un client inscrit en
+ * 2023 qui demande à conduire aujourd'hui apparaissait en tête de liste —
+ * triée par demande, à juste titre — avec « 2023 », et la liste semblait en
+ * désordre. La demande, c'est le véhicule soumis, encore inactif.
+ */
+const dateDeLaDemande = (item: Utilisateur): string =>
+  (item.vehicules.find((v) => v.statut === "INACTIF") ?? item.vehicules[0])?.created_at ?? item.created_at;
 
 export default function DriversRequest({ onLogout, theme, toggleTheme }: DriversRequestProps) {
   const [utilisateur, setUtilisateur] = useState<Utilisateur[]>([]);
@@ -291,20 +304,15 @@ export default function DriversRequest({ onLogout, theme, toggleTheme }: Drivers
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto bg-background-light dark:bg-background-dark">
         {/* Header */}
-        <header className="bg-white/80 dark:bg-[#1a110c]/80 backdrop-blur-md sticky top-0 z-10 px-8 py-4 border-bottom border-slate-200 dark:border-slate-800">
+        <header className="px-8 py-4">
           <div className="flex justify-between items-center max-w-7xl mx-auto">
             <div>
-              <div className="flex items-center gap-2 text-xs font-medium text-slate-400 mb-1">
-                <span>Gestion</span>
-                <span className="material-symbols-outlined text-[14px]">chevron_right</span>
-                <span className="text-primary">Demandes des Chauffeurs</span>
-              </div>
               <h2 className="text-2xl font-black tracking-tight">Demandes des Chauffeurs</h2>
             </div>
             <div className="flex items-center gap-4">
 
               <button
-                className="bg-primary hover:bg-primary/90 text-white px-5 py-2.5 rounded-xl font-bold text-sm flex items-center gap-2 transition-all shadow-lg shadow-primary/20"
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white hover:bg-primary/90 dark:bg-primary-container dark:hover:bg-primary-container/90 transition-colors disabled:opacity-40 flex items-center gap-2"
                 onClick={() => navigate('/add-driver')}
               >
                 <span className="material-symbols-outlined text-sm">add</span>
@@ -315,7 +323,7 @@ export default function DriversRequest({ onLogout, theme, toggleTheme }: Drivers
         </header>
         <div className="p-8 max-w-7xl mx-auto space-y-6">
           {/* Filter Bar */}
-          <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-wrap items-center gap-4">
+          <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-wrap items-center gap-4">
             <SearchBar
               value={inputValue}
               onChange={setInputValue}
@@ -343,7 +351,7 @@ export default function DriversRequest({ onLogout, theme, toggleTheme }: Drivers
             </div>
           </div>
           {/* Data Table */}
-          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
             <div className="overflow-x-auto">
               {load ? (
                 <Loading />
@@ -370,7 +378,7 @@ export default function DriversRequest({ onLogout, theme, toggleTheme }: Drivers
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
                               <div className="size-10 rounded-full bg-slate-200 overflow-hidden shrink-0">
-                                <img className="w-full h-full object-cover" data-alt={`Portrait of ${item.nom} ${item.prenom}`} src="https://via.placeholder.com/40" /> {/* Placeholder image */}
+                                <Avatar photo={item.photo} nom={item.nom || item.prenom} className="text-base" />
                               </div>
                               <span className="text-sm font-bold">{item.nom} {item.prenom}</span>
                             </div>
@@ -394,8 +402,8 @@ export default function DriversRequest({ onLogout, theme, toggleTheme }: Drivers
                           <td className="px-6 py-4 text-sm">{capitalizeAllLetter(item.vehicules[0]?.ville || "")}</td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex flex-col">
-                              <span className="text-sm font-medium text-slate-700 dark:text-slate-300 leading-tight">{dateDemande(item.created_at)}</span>
-                              <span className="text-[11px] text-slate-400 leading-tight">{heureDemande(item.created_at)}</span>
+                              <span className="text-sm font-medium text-slate-700 dark:text-slate-300 leading-tight">{dateDemande(dateDeLaDemande(item))}</span>
+                              <span className="text-[11px] text-slate-400 leading-tight">{heureDemande(dateDeLaDemande(item))}</span>
                             </div>
                           </td>
                           <td className="px-6 py-4">
@@ -421,6 +429,13 @@ export default function DriversRequest({ onLogout, theme, toggleTheme }: Drivers
                                 onClick={() => writeUserData(item.vehicules[0])}
                               >
                                 <span className="material-symbols-outlined text-[20px]">check_circle</span>
+                              </button>
+                              <button
+                                className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 rounded-lg transition-colors"
+                                title="Notifier"
+                                onClick={() => notifier({ destinataires: [{ id: item.id, nom: [item.nom, item.prenom].filter(Boolean).join(" ") }] })}
+                              >
+                                <span className="material-symbols-outlined text-[20px]">notifications</span>
                               </button>
                              {/*  <button className="p-2 hover:bg-rose-100 dark:hover:bg-rose-500/20 text-rose-600 rounded-lg transition-colors" title="Refuser">
                                  <span className="material-symbols-outlined text-[20px]">cancel</span>
@@ -451,8 +466,8 @@ export default function DriversRequest({ onLogout, theme, toggleTheme }: Drivers
                     <button
                       key={index}
                       className={`size-8 flex items-center justify-center rounded-lg border ${
-                        link.active
-                          ? "bg-primary text-white"
+ link.active
+ ? "bg-primary text-white dark:bg-primary-container"
                           : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 hover:border-primary"
                       } ${!link.url ? "opacity-50 cursor-not-allowed" : ""}`}
                       disabled={!link.url}

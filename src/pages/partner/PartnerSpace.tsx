@@ -127,7 +127,7 @@ export default function PartnerSpace({ onLogout, theme, toggleTheme }: PartnerSp
         <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
             <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-background-dark">
 
-                <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 md:px-8 pt-5">
+                <header className="px-4 md:px-8 pt-5">
                     <div className="flex flex-wrap items-start gap-3 mb-4">
                         <div className="mr-auto min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">

@@ -145,7 +145,7 @@ export default function Settings({ onLogout, theme, toggleTheme }: SettingsProps
 
     return (
         <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
-            <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+            <header>
                 <div className="px-8 py-6 max-w-7xl mx-auto">
                     <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Réglages</h1>
                     <p className="text-sm text-slate-500 mt-1">
@@ -322,7 +322,7 @@ export default function Settings({ onLogout, theme, toggleTheme }: SettingsProps
                                             <button
                                                 onClick={() => enregistrer(ligne)}
                                                 disabled={!modifie(ligne) || enregistrement === ligne.cle}
-                                                className="px-4 py-2 rounded-lg text-sm font-medium bg-slate-900 text-white disabled:bg-slate-200 disabled:text-slate-400 dark:bg-white dark:text-slate-900 dark:disabled:bg-slate-800 dark:disabled:text-slate-600"
+                                                className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white disabled:bg-slate-200 disabled:text-slate-400 dark:bg-primary-container dark:disabled:bg-slate-800 dark:disabled:text-slate-600"
                                             >
                                                 {enregistrement === ligne.cle ? "…" : "Enregistrer"}
                                             </button>

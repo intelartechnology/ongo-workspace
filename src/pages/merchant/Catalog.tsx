@@ -443,7 +443,7 @@ export default function Catalog({ merchantId, storeId, storeType }: CatalogProps
                     key={c.id}
                     type="button"
                     onClick={() => onChange(choisies.filter((x) => x.id !== c.id))}
-                    className="px-3 py-1 rounded-full text-xs bg-slate-900 text-white dark:bg-white dark:text-slate-900"
+                    className="px-3 py-1 rounded-full text-xs bg-primary text-white dark:bg-primary-container"
                     title="Retirer"
                 >
                     {c.name} ✕
@@ -640,7 +640,7 @@ export default function Catalog({ merchantId, storeId, storeType }: CatalogProps
             <div className="flex flex-wrap gap-3 mb-8">
                 <button
                     onClick={() => creerRayon()}
-                    className="px-4 py-2 rounded-lg text-sm font-medium bg-slate-900 text-white dark:bg-white dark:text-slate-900"
+                    className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white dark:bg-primary-container"
                 >
                     Nouveau {motRayon}
                 </button>
@@ -797,7 +797,7 @@ export default function Catalog({ merchantId, storeId, storeType }: CatalogProps
                         <button
                             onClick={enregistrerProduit}
                             disabled={televersement}
-                            className="px-5 py-2.5 rounded-lg text-sm font-medium bg-slate-900 text-white disabled:opacity-40 dark:bg-white dark:text-slate-900"
+                            className="px-5 py-2.5 rounded-lg text-sm font-medium bg-primary text-white disabled:opacity-40 dark:bg-primary-container"
                         >
                             {televersement ? "Envoi de la photo…" : "Enregistrer"}
                         </button>
@@ -862,7 +862,7 @@ export default function Catalog({ merchantId, storeId, storeType }: CatalogProps
                                 <button
                                     onClick={creerSonRayon}
                                     disabled={!creation.nom.trim()}
-                                    className="px-5 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium disabled:opacity-40 dark:bg-white dark:text-slate-900"
+                                    className="px-5 py-2 rounded-lg bg-primary text-white text-sm font-medium disabled:opacity-40 dark:bg-primary-container"
                                 >
                                     Créer « {creation.nom.trim() || "…"} »
                                 </button>

@@ -245,7 +245,7 @@ export default function EatCampaigns({ onLogout, theme, toggleTheme }: EatCampai
 
     return (
         <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
-            <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+            <header>
                 <div className="px-8 py-6 max-w-7xl mx-auto flex items-start justify-between gap-6">
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Pages de redirection</h1>
@@ -255,7 +255,7 @@ export default function EatCampaigns({ onLogout, theme, toggleTheme }: EatCampai
                         </p>
                     </div>
                     {!form && (
-                        <button onClick={() => setForm({ ...vide, tiles: [] })} className="px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium dark:bg-white dark:text-slate-900">
+                        <button onClick={() => setForm({ ...vide, tiles: [] })} className="px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium dark:bg-primary-container">
                             Nouvelle page
                         </button>
                     )}
@@ -379,7 +379,7 @@ export default function EatCampaigns({ onLogout, theme, toggleTheme }: EatCampai
                                                 type="button"
                                                 onClick={() => setForm({ ...form, stores_mode: cle })}
                                                 className={`px-3 py-1.5 rounded-full text-sm border ${
-                                                    form.stores_mode === cle ? "bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-slate-900" : "border-slate-300 text-slate-600 dark:border-slate-700 dark:text-slate-300"
+                                                    form.stores_mode === cle ? "bg-primary text-white border-primary dark:bg-primary-container" : "border-slate-300 text-slate-600 dark:border-slate-700 dark:text-slate-300"
                                                 }`}
                                             >
                                                 {libelle}
@@ -447,7 +447,7 @@ export default function EatCampaigns({ onLogout, theme, toggleTheme }: EatCampai
                                                 {rangee.map((t, j) => (
                                                     <div
                                                         key={j}
-                                                        className="rounded-2xl overflow-hidden bg-slate-100"
+                                                        className="rounded-xl overflow-hidden bg-slate-100"
                                                         style={{ width: t.format === "square" ? 96 : 200, height: 96 }}
                                                     >
                                                         {apercu(t.fichier, t.image) && <img src={apercu(t.fichier, t.image)} alt="" className="w-full h-full object-cover" />}
@@ -460,7 +460,7 @@ export default function EatCampaigns({ onLogout, theme, toggleTheme }: EatCampai
                                         )}
                                         {form.stores_mode === "manual" && form.store_ids.map((id) => (
                                             <div key={id} className="pt-2">
-                                                <div className="h-24 rounded-2xl bg-slate-200" />
+                                                <div className="h-24 rounded-xl bg-slate-200" />
                                                 <p className="text-sm font-semibold mt-1 px-1">{options.stores.find((b) => b.id === id)?.name}</p>
                                             </div>
                                         ))}
@@ -476,7 +476,7 @@ export default function EatCampaigns({ onLogout, theme, toggleTheme }: EatCampai
                             <button
                                 onClick={enregistrer}
                                 disabled={!valide || envoi}
-                                className="px-5 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium disabled:opacity-40 dark:bg-white dark:text-slate-900"
+                                className="px-5 py-2 rounded-lg bg-primary text-white text-sm font-medium disabled:opacity-40 dark:bg-primary-container"
                             >
                                 {envoi ? "Envoi…" : "Enregistrer"}
                             </button>

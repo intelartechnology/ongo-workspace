@@ -5,6 +5,7 @@ import ApiService from "../services/ApiService";
 import { Carte } from "./components/BannerPreview";
 import SponsorshipForm from "./components/SponsorshipForm";
 import type { Sponsoring, Cibles } from "./components/SponsorshipForm";
+import { StatCard } from "../components/ui";
 
 /**
  * La régie, de bout en bout : ce qui attend, ce qui tourne, ce que ça rapporte.
@@ -203,16 +204,12 @@ export default function EatSponsorships({ onLogout, theme, toggleTheme }: Props)
     }, [sponsorings, filtre]);
 
     const carte = (titre: string, valeur: string, legende?: string) => (
-        <div className="p-4 rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-            <p className="text-xs font-semibold uppercase text-slate-500">{titre}</p>
-            <p className="text-2xl font-bold mt-1 text-slate-900 dark:text-white">{valeur}</p>
-            {legende && <p className="text-xs text-slate-500 mt-1">{legende}</p>}
-        </div>
+        <StatCard label={titre} value={valeur} note={legende} />
     );
 
     return (
         <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
-            <header className="px-8 py-6 border-b border-slate-200 dark:border-slate-800 flex items-start justify-between gap-6">
+            <header className="px-8 py-6 flex items-start justify-between gap-6">
                 <div>
                     <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Sponsorings</h1>
                     <p className="text-sm text-slate-500 mt-1 max-w-3xl">
@@ -224,7 +221,7 @@ export default function EatSponsorships({ onLogout, theme, toggleTheme }: Props)
 
                 <button
                     onClick={() => setForm("nouveau")}
-                    className="px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium shrink-0 dark:bg-white dark:text-slate-900"
+                    className="px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium shrink-0 dark:bg-primary-container"
                 >
                     Nouveau sponsoring
                 </button>
@@ -261,7 +258,7 @@ export default function EatSponsorships({ onLogout, theme, toggleTheme }: Props)
                                         onClick={() => setFiltre(f.cle)}
                                         className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
                                             filtre === f.cle
-                                                ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
+                                                ? "bg-primary text-white dark:bg-primary-container"
                                                 : "text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-800"
                                         }`}
                                     >

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 import ApiService from "../../services/ApiService";
+import { StatCard } from "../../components/ui";
 
 /**
  * Ce que le marchand rapporte : vues et clics de ses surfaces.
@@ -82,11 +83,7 @@ export default function Stats({ merchantId }: StatsProps) {
     }, [merchantId, jours]);
 
     const carte = (titre: string, valeur: string, legende?: string) => (
-        <div className="p-5 rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-            <p className="text-xs font-semibold uppercase text-slate-500">{titre}</p>
-            <p className="text-2xl font-bold mt-1 text-slate-900 dark:text-white">{valeur}</p>
-            {legende && <p className="text-xs text-slate-500 mt-1">{legende}</p>}
-        </div>
+        <StatCard label={titre} value={valeur} note={legende} />
     );
 
     if (chargement) return <p className="text-slate-500">Chargement…</p>;

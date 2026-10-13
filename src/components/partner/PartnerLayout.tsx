@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import PartnerSidebar from './PartnerSidebar';
+import { Avatar } from "../ui";
 
 interface PartnerLayoutProps {
     children: React.ReactNode;
@@ -28,7 +29,7 @@ const PartnerLayout: React.FC<PartnerLayoutProps> = ({ children, user, onLogout 
             
             <main className="flex-1 lg:ml-64 min-h-screen relative flex flex-col w-full max-w-[100vw]">
                 {/* TopAppBar Component */}
-                <header className="fixed top-0 left-0 lg:left-64 right-0 h-16 bg-white/80 backdrop-blur-md z-30 flex justify-between items-center px-4 md:px-8 shadow-sm">
+                <header className="fixed top-0 left-0 lg:left-64 right-0 h-16 bg-white/80 backdrop-blur-md z-30 flex justify-between items-center px-4 md:px-8">
                     <div className="flex items-center gap-4 lg:hidden">
                         <button 
                             onClick={() => setIsSidebarOpen(true)}
@@ -45,11 +46,9 @@ const PartnerLayout: React.FC<PartnerLayoutProps> = ({ children, user, onLogout 
                                 <p className="text-xs font-bold text-slate-900">{user?.nom} {user?.prenom}</p>
                                 <p className="text-[10px] text-slate-500 uppercase tracking-widest font-semibold">Partner</p>
                             </div>
-                            <img
-                                alt="User Profile"
-                                className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border border-slate-200"
-                                src={user?.photo || "https://lh3.googleusercontent.com/aida-public/AB6AXuD9Q87a4rq7V1eB3PgSbbmKJg71cC8pXY1NR4Iy89R7xL_ZpZDz1q02srnFrYf8053J_6xmgDwvxzmkADkn5nLme4OG-rRG55J4uVDI31TABpLQ7L9w63KddQkmrwVbzJHPx54UmgtSEqzzjC50kpMOhEEFGux3i4MrA8t9KBYIA81ZNL5jVdpC3Jl916Ak7mMHnJluR0Yz-DXIvys0lFGRlD6Rhx1-aaQJjD8_gTrDRIwHWyWvCmGH46iIXpVFQ6iDVzlvb46wjGc"}
-                            />
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full overflow-hidden border border-slate-200">
+                                <Avatar photo={user?.photo} nom={user?.nom || user?.prenom} alt="Mon profil" />
+                            </div>
                         </div>
                     </div>
                 </header>

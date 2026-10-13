@@ -237,14 +237,9 @@ export default function PartnerAdd({ onLogout = () => { }, theme = "light", togg
     return (
         <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
             <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-background-dark font-display">
-                <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 md:px-8 py-4 flex items-center gap-3">
+                <header className="px-6 md:px-8 py-4 flex items-center gap-3">
                     <Button variant="ghost" size="sm" icon="arrow_back" aria-label="Retour" onClick={() => navigate("/partners")} />
                     <div>
-                        <nav className="flex items-center gap-2 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
-                            <button className="hover:text-primary" onClick={() => navigate("/partners")}>Partenaires</button>
-                            <span className="material-symbols-outlined text-[10px]">chevron_right</span>
-                            <span className="text-primary">Nouveau</span>
-                        </nav>
                         <h2 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">Ajouter un partenaire</h2>
                     </div>
                 </header>
@@ -253,7 +248,7 @@ export default function PartnerAdd({ onLogout = () => { }, theme = "light", togg
                     <form onSubmit={creer} className="w-full max-w-2xl flex flex-col gap-5">
 
                         {/* ---------- 1. le numéro ---------- */}
-                        <section className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 flex flex-col gap-4">
+                        <section className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 flex flex-col gap-4">
                             <div className="flex items-start gap-3">
                                 <span className="size-7 rounded-lg bg-primary text-white text-xs font-black flex items-center justify-center shrink-0">1</span>
                                 <div>
@@ -311,7 +306,7 @@ export default function PartnerAdd({ onLogout = () => { }, theme = "light", togg
 
                             {resultat.etat === "trouve" && (
                                 <div className={`flex items-start gap-3 p-4 rounded-xl border ${resultat.dejaPartenaire
-                                    ? "bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20"
+ ? "bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20"
                                     : "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20"}`}>
                                     <span className={`material-symbols-outlined ${resultat.dejaPartenaire ? "text-amber-600" : "text-emerald-600"}`}>
                                         {resultat.dejaPartenaire ? "warning" : "how_to_reg"}
@@ -346,7 +341,7 @@ export default function PartnerAdd({ onLogout = () => { }, theme = "light", togg
                         </section>
 
                         {/* ---------- 2. la flotte et la commission ---------- */}
-                        <section className={`bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 flex flex-col gap-4 transition-opacity ${peutCreer ? "" : "opacity-50 pointer-events-none"}`}>
+                        <section className={`bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 flex flex-col gap-4 transition-opacity ${peutCreer ? "" : "opacity-50 pointer-events-none"}`}>
                             <div className="flex items-start gap-3">
                                 <span className="size-7 rounded-lg bg-primary text-white text-xs font-black flex items-center justify-center shrink-0">2</span>
                                 <div>

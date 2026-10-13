@@ -463,7 +463,7 @@ export default function OrderDesk({ merchantId, storeId }: OrderDeskProps) {
             onClick={onClick}
             className={`flex-1 py-3 rounded-lg text-sm font-semibold ${
                 variante === "primaire"
-                    ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
+                    ? "bg-primary text-white dark:bg-primary-container"
                     : variante === "danger"
                         ? "border border-red-300 text-red-600 dark:border-red-800 dark:text-red-400"
                         : "border border-slate-300 text-slate-700 dark:border-slate-700 dark:text-slate-300"

@@ -162,7 +162,7 @@ export default function Collections({ merchantId, storeId, canEdit }: Collection
                     Une sélection d'articles, nommée. Elle s'affiche en rangée sur l'écran Magasins — avec votre logo et votre nom — et en haut de votre page.
                 </p>
                 {canEdit && !form && (
-                    <button onClick={() => setForm({ ...vide })} className="px-4 py-2 rounded-lg text-sm font-medium bg-slate-900 text-white dark:bg-white dark:text-slate-900 shrink-0">
+                    <button onClick={() => setForm({ ...vide })} className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white dark:bg-primary-container shrink-0">
                         Nouvelle collection
                     </button>
                 )}
@@ -236,7 +236,7 @@ export default function Collections({ merchantId, storeId, canEdit }: Collection
                         <button
                             onClick={enregistrer}
                             disabled={!form.title.trim() || form.products.length === 0 || envoi}
-                            className="px-5 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium disabled:opacity-40 dark:bg-white dark:text-slate-900"
+                            className="px-5 py-2 rounded-lg bg-primary text-white text-sm font-medium disabled:opacity-40 dark:bg-primary-container"
                         >
                             {envoi ? "Envoi…" : "Enregistrer"}
                         </button>

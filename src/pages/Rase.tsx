@@ -118,7 +118,7 @@ const ActionDropdown = ({ course, openDetails, openMap, openReattributionModal }
             </button>
 
             {isOpen && (
-                <div className="absolute right-0 mt-1 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 overflow-hidden z-10">
+                <div className="absolute right-0 mt-1 w-48 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden z-10">
                     <div className="py-1">
                         <button
                             className="w-full px-4 py-2.5 text-left text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-3 text-slate-700 dark:text-slate-200 transition-colors"
@@ -428,7 +428,7 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
                 <ToastContainer />
 
                 {/* Header */}
-                <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-6">
+                <header className="p-6">
                     <div className="max-w-[1400px] mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
                             <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Gestion des Courses</h2>
@@ -439,7 +439,7 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
                                 <span className="material-symbols-outlined text-[20px]">file_download</span>
                                 Exporter
                             </button>
-                            <button className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors shadow-sm">
+                            <button className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white hover:bg-primary/90 dark:bg-primary-container dark:hover:bg-primary-container/90 transition-colors disabled:opacity-40 flex items-center gap-2">
                                 <span className="material-symbols-outlined text-[20px]">picture_as_pdf</span>
                                 Imprimer PDF
                             </button>
@@ -452,7 +452,7 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
                     <div className="max-w-[1400px] mx-auto space-y-6">
 
                         {/* Filters Bar */}
-                        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                        <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
                                 <div className="space-y-1.5">
                                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Date début</label>
@@ -515,7 +515,7 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
                         </div>
 
                         {/* Data Table */}
-                        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
                             <div className="overflow-x-auto custom-scrollbar">
                                 {loading ? (
                                     <Loading />
@@ -617,11 +617,11 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
                                                     }}
                                                     disabled={!item.url}
                                                     className={`
-                                                        ${isIcon ? 'p-2' : 'size-8'} 
-                                                        ${item.active ? 'bg-primary text-white' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700'} 
-                                                        rounded-lg text-sm font-medium transition-colors
-                                                        ${!item.url ? 'opacity-50 cursor-not-allowed' : ''}
-                                                    `}
+ ${isIcon ? 'p-2' : 'size-8'} 
+ ${item.active ? 'bg-primary text-white dark:bg-primary-container' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700'} 
+ rounded-lg text-sm font-medium transition-colors
+ ${!item.url ? 'opacity-50 cursor-not-allowed' : ''}
+ `}
                                                 >
                                                     {isIcon ? (
                                                         <span className="material-symbols-outlined text-[20px]">{label}</span>
@@ -654,7 +654,7 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
                     onClick={closeMap}
                 >
                     <div
-                        className="relative bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-4xl mx-4 overflow-hidden"
+                        className="relative bg-white dark:bg-slate-900 rounded-xl w-full max-w-4xl mx-4 overflow-hidden"
                         onClick={(e) => e.stopPropagation()}
                     >
                         {/* Modal Header */}
@@ -685,7 +685,7 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
             {/* Reattribution Modal */}
             {isReattributionModalOpen && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[70] p-4">
-                    <div className="bg-white dark:bg-slate-900 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+                    <div className="bg-white dark:bg-slate-900 rounded-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto">
                         <div className="flex justify-between items-center p-4 border-b border-slate-200 dark:border-slate-700">
                             <h3 className="text-xl font-bold text-slate-900 dark:text-white">Réattribuer la Course #{courseToReattribute?.id}</h3>
                             <button onClick={closeReattributionModal} className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300">
@@ -710,7 +710,7 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
                                             false
                                           )
                                         }
-                                    className="mt-2 w-full py-2 px-4 bg-primary text-white font-semibold rounded-md hover:bg-primary/90 transition-colors"
+                                    className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white hover:bg-primary/90 dark:bg-primary-container dark:hover:bg-primary-container/90 transition-colors disabled:opacity-40 mt-2 w-full"
                                 >
                                     Rechercher
                                 </button>
@@ -764,7 +764,7 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
                             <button
                                 onClick={handleReattribution}
                                 disabled={!selectedAttribution}
-                                className={`px-4 py-2 ${selectedAttribution ? "bg-primary hover:bg-primary/90" : "bg-gray-400 cursor-not-allowed"} text-white font-semibold rounded-md transition-colors`}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${selectedAttribution ? "bg-primary text-white hover:bg-primary/90 dark:bg-primary-container dark:hover:bg-primary-container/90" : "bg-slate-200 text-slate-400 dark:bg-slate-800 dark:text-slate-500 cursor-not-allowed"}`}
                             >
                                 Confirmer Réattribution
                             </button>

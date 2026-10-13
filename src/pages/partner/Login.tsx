@@ -107,7 +107,7 @@ const PartnerLogin: React.FC = () => {
                         </div>
 
                         <button
-                            className="w-full bg-gradient-to-r from-[#00327d] to-[#0047ab] text-white font-bold py-3.5 md:py-4 rounded-full shadow-lg hover:brightness-110 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 mt-2"
+                            className="w-full bg-gradient-to-r from-[#00327d] to-[#0047ab] text-white font-bold py-3.5 md:py-4 rounded-full hover:brightness-110 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 mt-2"
                             type="submit"
                             disabled={loading}
                         >
@@ -143,7 +143,7 @@ const PartnerLogin: React.FC = () => {
                 
                 {/* Content Anchor */}
                 <div className="relative z-20 max-w-md space-y-8">
-                    <div className="inline-flex items-center justify-center w-20 h-20 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/10 mx-auto shadow-2xl">
+                    <div className="inline-flex items-center justify-center w-20 h-20 bg-white/10 backdrop-blur-xl rounded-xl border border-white/10 mx-auto">
                         <span className="material-symbols-outlined text-white text-4xl">handshake</span>
                     </div>
                     <div className="space-y-4">

@@ -138,12 +138,12 @@ export default function EatMosaic({ onLogout, theme, toggleTheme }: Props) {
     const etendue = (n: number) => n * COTE + ESPACE * (n - 1);
 
     const bouton = "px-3 py-1.5 rounded-full text-sm font-medium transition";
-    const actif = "bg-slate-900 text-white dark:bg-white dark:text-slate-900";
+    const actif = "bg-primary text-white dark:bg-primary-container";
     const inactif = "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300";
 
     return (
         <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
-            <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+            <header>
                 <div className="px-6 py-5">
                     <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Mosaïque d'accueil</h1>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 max-w-2xl">
@@ -203,7 +203,7 @@ export default function EatMosaic({ onLogout, theme, toggleTheme }: Props) {
                 {mosaique && !chargement && (
                     <div className="grid grid-cols-1 xl:grid-cols-[400px_minmax(0,1fr)] gap-8 items-start">
                         {/* L'écran du client, à l'échelle. */}
-                        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+                        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
                             <div className="flex items-baseline justify-between mb-4 px-1">
                                 <strong className="text-slate-900 dark:text-white">Ongo Eat</strong>
                                 <span className="text-xs font-mono text-slate-400">
@@ -221,7 +221,7 @@ export default function EatMosaic({ onLogout, theme, toggleTheme }: Props) {
                                     return (
                                         <div
                                             key={t.key}
-                                            className="absolute rounded-2xl overflow-hidden"
+                                            className="absolute rounded-xl overflow-hidden"
                                             style={{
                                                 left: t.x * (COTE + ESPACE),
                                                 top: t.y * (COTE + ESPACE),
@@ -281,7 +281,7 @@ export default function EatMosaic({ onLogout, theme, toggleTheme }: Props) {
 
                         <div className="space-y-5">
                             {/* Qui occupe quoi, et où le changer. */}
-                            <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5">
+                            <section className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5">
                                 <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">
                                     Les cases occupées
                                 </h2>
@@ -345,7 +345,7 @@ export default function EatMosaic({ onLogout, theme, toggleTheme }: Props) {
                               * chercher dans le formulaire, où elle n'est pas.
                               */}
                             {mosaique.rail.length > 0 && (
-                                <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5">
+                                <section className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5">
                                     <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">
                                         Dans la rangée qui défile
                                     </h2>
@@ -375,7 +375,7 @@ export default function EatMosaic({ onLogout, theme, toggleTheme }: Props) {
                               * oubli de réglage. Le dire évite d'aller la chercher.
                               */}
                             {mosaique.asleep.length > 0 && (
-                                <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5">
+                                <section className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5">
                                     <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">
                                         Réglées, mais pas visibles à cette heure
                                     </h2>
@@ -403,7 +403,7 @@ export default function EatMosaic({ onLogout, theme, toggleTheme }: Props) {
                                 </section>
                             )}
 
-                            <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 p-5">
+                            <section className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 p-5">
                                 <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
                                     Ce qu'il faut savoir
                                 </h2>

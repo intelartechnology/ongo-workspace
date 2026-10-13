@@ -151,7 +151,7 @@ export default function EatCategories({ onLogout, theme, toggleTheme }: EatCateg
 
     return (
         <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
-            <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+            <header>
                 <div className="px-8 py-6 max-w-7xl mx-auto flex items-start justify-between gap-6">
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Catégories</h1>
@@ -160,7 +160,7 @@ export default function EatCategories({ onLogout, theme, toggleTheme }: EatCateg
                         </p>
                     </div>
                     {!form && (
-                        <button onClick={() => setForm({ id: null, name: "", image: "", parent_id: null })} className="px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium dark:bg-white dark:text-slate-900">
+                        <button onClick={() => setForm({ id: null, name: "", image: "", parent_id: null })} className="px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium dark:bg-primary-container">
                             Nouvelle catégorie
                         </button>
                     )}
@@ -191,7 +191,7 @@ export default function EatCategories({ onLogout, theme, toggleTheme }: EatCateg
                         />
                         <div className="flex gap-3">
                             <button onClick={() => setForm(null)} className="px-4 py-2 rounded-lg text-sm text-slate-600 dark:text-slate-300">Annuler</button>
-                            <button onClick={enregistrer} disabled={!form.name.trim() || envoi} className="px-5 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium disabled:opacity-40 dark:bg-white dark:text-slate-900">
+                            <button onClick={enregistrer} disabled={!form.name.trim() || envoi} className="px-5 py-2 rounded-lg bg-primary text-white text-sm font-medium disabled:opacity-40 dark:bg-primary-container">
                                 {envoi ? "Envoi…" : "Enregistrer"}
                             </button>
                         </div>

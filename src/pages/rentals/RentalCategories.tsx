@@ -88,21 +88,14 @@ const RentalCategories: React.FC<RentalCategoriesProps> = ({ onLogout, theme, to
     return (
         <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
             {/* En-tête */}
-            <div className="bg-white dark:bg-slate-900 px-4 md:px-8 py-6 border-b border-slate-200 dark:border-slate-800 flex flex-col gap-5">
-                <div className="flex items-center gap-2 text-sm text-slate-500">
-                    <Link className="hover:text-primary transition-colors" to="/dashboard">Tableau de bord</Link>
-                    <span className="material-symbols-outlined text-sm">chevron_right</span>
-                    <Link className="hover:text-primary transition-colors" to="/rentals">Location</Link>
-                    <span className="material-symbols-outlined text-sm">chevron_right</span>
-                    <span className="text-slate-900 dark:text-slate-100 font-bold">Catégories</span>
-                </div>
+            <div className="px-4 md:px-8 py-6 flex flex-col gap-5">
 
                 <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-5">
                     <div className="flex flex-col gap-2">
                         <div className="flex items-center gap-3">
-                            <h2 className="text-2xl md:text-3xl font-black tracking-tight text-[#00327d] dark:text-white uppercase leading-none font-headline">
+                            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
                                 Catégories de Location
-                            </h2>
+                            </h1>
                             {!loading && (
                                 <span className="bg-primary/10 text-primary dark:text-primary-fixed-dim px-2.5 py-1 rounded-lg text-xs font-black tabular-nums">
                                     {categories.length}
@@ -137,7 +130,7 @@ const RentalCategories: React.FC<RentalCategoriesProps> = ({ onLogout, theme, to
             {/* Contenu */}
             <div className="p-4 md:p-8">
                 {loading ? (
-                    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800">
+                    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800">
                         {Array(6).fill(0).map((_, i) => (
                             <div key={i} className="flex items-center gap-4 px-5 py-3.5">
                                 <div className="size-11 rounded-lg bg-slate-100 dark:bg-slate-800 animate-pulse shrink-0"></div>
@@ -149,8 +142,8 @@ const RentalCategories: React.FC<RentalCategoriesProps> = ({ onLogout, theme, to
                     </div>
                 ) : categories.length === 0 ? (
                     /* Aucune catégorie du tout */
-                    <div className="py-16 px-6 bg-white dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800 flex flex-col items-center text-center gap-4">
-                        <div className="size-20 rounded-3xl bg-primary/5 flex items-center justify-center">
+                    <div className="py-16 px-6 bg-white dark:bg-slate-900 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-800 flex flex-col items-center text-center gap-4">
+                        <div className="size-20 rounded-xl bg-primary/5 flex items-center justify-center">
                             <span className="material-symbols-outlined text-primary text-5xl">category</span>
                         </div>
                         <div className="flex flex-col gap-1.5 max-w-sm">
@@ -170,7 +163,7 @@ const RentalCategories: React.FC<RentalCategoriesProps> = ({ onLogout, theme, to
                     </div>
                 ) : filteredCategories.length === 0 ? (
                     /* Recherche sans résultat */
-                    <div className="py-16 px-6 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 flex flex-col items-center text-center gap-4">
+                    <div className="py-16 px-6 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-col items-center text-center gap-4">
                         <span className="material-symbols-outlined text-5xl text-slate-300 dark:text-slate-700">search_off</span>
                         <div className="flex flex-col gap-1.5">
                             <p className="font-black text-base uppercase tracking-tight text-slate-800 dark:text-slate-100">Aucun résultat</p>
@@ -187,7 +180,7 @@ const RentalCategories: React.FC<RentalCategoriesProps> = ({ onLogout, theme, to
                         </button>
                     </div>
                 ) : (
-                    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
                         <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse min-w-[720px]">
                                 <thead>
@@ -268,10 +261,10 @@ const RentalCategories: React.FC<RentalCategoriesProps> = ({ onLogout, theme, to
                         role="dialog"
                         aria-modal="true"
                         onClick={(e) => e.stopPropagation()}
-                        className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl p-7 flex flex-col gap-5"
+                        className="w-full max-w-md bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-7 flex flex-col gap-5"
                     >
                         <div className="flex items-start gap-4">
-                            <div className="size-12 rounded-2xl bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center shrink-0">
+                            <div className="size-12 rounded-xl bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center shrink-0">
                                 <span className="material-symbols-outlined text-rose-500 text-2xl">delete</span>
                             </div>
                             <div className="flex flex-col gap-1.5">
@@ -297,7 +290,7 @@ const RentalCategories: React.FC<RentalCategoriesProps> = ({ onLogout, theme, to
                                 type="button"
                                 onClick={() => setCategoryToDelete(null)}
                                 disabled={deleting}
-                                className="flex-1 px-5 py-3.5 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-black uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 transition-all text-xs"
+                                className="flex-1 px-5 py-3.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-black uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 transition-all text-xs"
                             >
                                 Annuler
                             </button>
@@ -305,7 +298,7 @@ const RentalCategories: React.FC<RentalCategoriesProps> = ({ onLogout, theme, to
                                 type="button"
                                 onClick={confirmDelete}
                                 disabled={deleting}
-                                className="flex-1 px-5 py-3.5 rounded-2xl bg-rose-500 hover:bg-rose-600 text-white font-black uppercase tracking-widest shadow-lg shadow-rose-500/25 disabled:opacity-50 transition-all text-xs flex items-center justify-center gap-2"
+                                className="px-4 py-2 rounded-lg text-sm font-medium bg-red-600 text-white hover:bg-red-700 transition-colors disabled:opacity-40 flex-1 flex items-center justify-center gap-2"
                             >
                                 {deleting && <span className="material-symbols-outlined animate-spin text-[16px]">progress_activity</span>}
                                 {deleting ? 'Suppression…' : 'Supprimer'}

@@ -6,7 +6,10 @@ import Helpers from "../functions/helpers";
 import Loading from "../components/Loading";
 import MainLayout from "./MainLayout";
 import { useNavigate } from 'react-router-dom';
-import { SearchBar, Button } from "../components/ui";
+import moment from 'moment';
+import { SearchBar, Button, StatCard, Avatar } from "../components/ui";
+import { CircleCheck, UsersRound, Wallet } from "lucide-react";
+import { notifier } from "../services/notifier";
 
 interface DriversProps {
     onLogout?: () => void;
@@ -148,12 +151,12 @@ export default function Drivers({ onLogout = () => {}, theme = 'light', toggleTh
                 <ToastContainer />
                 
                 {/* Header */}
-            <header className="h-20 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-8 flex items-center justify-between sticky top-0 z-10">
+            <header className="py-6 px-8 flex items-center justify-between">
                 <div>
                     <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Gestion des Chauffeurs</h2>
                     <p className="text-sm text-slate-500">Gérez et suivez l'activité de vos chauffeurs en temps réel.</p>
                 </div>
-                <button onClick={() => navigate('/add-driver')} className="bg-primary hover:bg-primary/90 text-white px-6 py-2.5 rounded-lg font-semibold flex items-center gap-2 transition-all shadow-lg shadow-primary/20">
+                <button onClick={() => navigate('/add-driver')} className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white hover:bg-primary/90 dark:bg-primary-container dark:hover:bg-primary-container/90 transition-colors disabled:opacity-40 flex items-center gap-2">
                     <span className="material-symbols-outlined">add</span>
                     Ajouter un chauffeur
                 </button>
@@ -162,7 +165,7 @@ export default function Drivers({ onLogout = () => {}, theme = 'light', toggleTh
             {/* Main Workspace */}
             <div className="p-8 space-y-6">
                 {/* Filters & Search */}
-                <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-wrap gap-4 items-center">
+                <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-wrap gap-4 items-center">
                     <SearchBar
                         value={inputValue}
                         onChange={setInputValue}
@@ -182,7 +185,7 @@ export default function Drivers({ onLogout = () => {}, theme = 'light', toggleTh
                 </div>
 
                 {/* Drivers Table Container */}
-                <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
                     <div className="overflow-x-auto">
                         {load ? (
                             <Loading />
@@ -192,12 +195,12 @@ export default function Drivers({ onLogout = () => {}, theme = 'light', toggleTh
                                     <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
                                         <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">ID</th>
                                         <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Chauffeur</th>
-                                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Véhicule</th>
                                         <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Téléphone</th>
                                         <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Ville</th>
-                                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Détails Véhicule</th>
+                                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Véhicule</th>
                                         <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Statut</th>
                                         <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Solde</th>
+                                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Mise à jour</th>
                                         <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Action</th>
                                     </tr>
                                 </thead>
@@ -213,28 +216,13 @@ export default function Drivers({ onLogout = () => {}, theme = 'light', toggleTh
                                                     <td className="px-6 py-4">
                                                         <div className="flex items-center gap-3">
                                                             <div className="w-10 h-10 rounded-full bg-slate-100 overflow-hidden">
-                                                                {item.photo ? (
-                                                                    <img className="w-full h-full object-cover" src={item.photo} alt={`Photo de profil de ${item.nom}`} />
-                                                                ) : (
-                                                                    <div className="w-full h-full flex items-center justify-center bg-slate-200 text-slate-500">
-                                                                        <span className="material-symbols-outlined">person</span>
-                                                                    </div>
-                                                                )}
+                                                                <Avatar photo={item?.photo} nom={item?.nom || item?.prenom} className="text-base" />
                                                             </div>
                                                             <div>
                                                                 <p className="text-sm font-bold text-slate-800 dark:text-white">
                                                                     {_helpersInstance.capitalizeFirstLetter(item.nom + " " + item.prenom)}
                                                                 </p>
                                                             </div>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <div className="w-12 h-8 rounded bg-slate-50 dark:bg-slate-800 flex items-center justify-center overflow-hidden border border-slate-100 dark:border-slate-700">
-                                                            {vehicule.image ? (
-                                                                <img className="w-full h-full object-cover" src={vehicule.image} alt="Véhicule" />
-                                                            ) : (
-                                                                <span className="material-symbols-outlined text-slate-400">directions_car</span>
-                                                            )}
                                                         </div>
                                                     </td>
                                                     <td className="px-6 py-4 text-sm font-medium text-slate-600 dark:text-slate-300">{item.telephone}</td>
@@ -263,6 +251,14 @@ export default function Drivers({ onLogout = () => {}, theme = 'light', toggleTh
                                                     <td className="px-6 py-4">
                                                         <p className="text-sm font-bold text-slate-800 dark:text-white">{item.balance ? item.balance.toFixed(2) : "0.00"} XAF</p>
                                                     </td>
+                                                    {/* Comme sur les véhicules : la dernière position reçue, qui
+                                                        dit aussi quand il passera hors ligne faute de nouvelles. */}
+                                                    <td
+                                                        className="px-6 py-4 text-xs text-slate-500 whitespace-nowrap"
+                                                        title={vehicule?.updated_at ? `${moment(vehicule.updated_at).format("MMMM DD, YYYY")} à ${moment(vehicule.updated_at).format("HH:mm")}` : undefined}
+                                                    >
+                                                        {vehicule?.updated_at ? moment(vehicule.updated_at).fromNow() : "—"}
+                                                    </td>
                                                     <td className="px-6 py-4 text-right">
                                                         <div className="flex justify-end gap-2">
                                                             {vehicule.statut === "INACTIF" && (
@@ -273,6 +269,7 @@ export default function Drivers({ onLogout = () => {}, theme = 'light', toggleTh
                                                                     Activer
                                                                 </button>
                                                             )}
+                                                            <button type="button" onClick={() => notifier({ destinataires: [{ id: item.id, nom: [item.nom, item.prenom].filter(Boolean).join(" ") }] })} className="px-3 py-1.5 rounded-lg text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">Notifier</button>
                                                             <button 
                                                                 onClick={() => navigate("/driver-detail/" + item.id)} 
                                                                 className="text-primary hover:bg-primary/10 px-3 py-1.5 rounded-lg text-sm font-bold transition-colors"
@@ -343,7 +340,7 @@ export default function Drivers({ onLogout = () => {}, theme = 'light', toggleTh
                                         <button 
                                             key={index}
                                             onClick={() => item.url && getAllutilisateur(item.url, true)}
-                                            className={`w-8 h-8 flex items-center justify-center rounded-lg border ${item.active ? 'bg-primary text-white border-primary' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800'} text-xs font-medium transition-colors`}
+                                            className={`w-8 h-8 flex items-center justify-center rounded-lg border ${item.active ? 'bg-primary text-white dark:bg-primary-container border-primary dark:border-primary-container' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-800'} text-xs font-medium transition-colors`}
                                         >
                                             <span dangerouslySetInnerHTML={{ __html: label }}></span>
                                         </button>
@@ -354,38 +351,17 @@ export default function Drivers({ onLogout = () => {}, theme = 'light', toggleTh
                     )}
                 </div>
 
-                {/* Dashboard Stats Summary */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                        <div className="flex items-center justify-between mb-2">
-                            <span className="text-slate-500 text-xs font-bold uppercase">Total Chauffeurs</span>
-                            <span className="material-symbols-outlined text-primary">groups</span>
-                        </div>
-                        <div className="flex items-baseline gap-2">
-                            <h3 className="text-2xl font-bold">{meta?.total || totalChauffeurs}</h3>
-                            <span className="text-xs text-emerald-500 font-bold">+12%</span>
-                        </div>
-                    </div>
-                    <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                        <div className="flex items-center justify-between mb-2">
-                            <span className="text-slate-500 text-xs font-bold uppercase">Chauffeurs Libres</span>
-                            <span className="material-symbols-outlined text-emerald-500">check_circle</span>
-                        </div>
-                        <div className="flex items-baseline gap-2">
-                            <h3 className="text-2xl font-bold">{chauffeursLibres}</h3>
-                            <span className="text-xs text-slate-400 font-medium">{meta?.total ? Math.round((chauffeursLibres / meta.total) * 100) : 0}% total</span>
-                        </div>
-                    </div>
-                    <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                        <div className="flex items-center justify-between mb-2">
-                            <span className="text-slate-500 text-xs font-bold uppercase">Solde Cumulé</span>
-                            <span className="material-symbols-outlined text-primary">account_balance_wallet</span>
-                        </div>
-                        <div className="flex items-baseline gap-2">
-                            <h3 className="text-2xl font-bold">{soldeCumule.toLocaleString()}</h3>
-                            <span className="text-xs text-slate-400 font-medium font-bold">XAF</span>
-                        </div>
-                    </div>
+                {/* Les chiffres, au même format que le tableau de bord. Le
+                    « +12 % » d'avant était écrit en dur. */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <StatCard label="Chauffeurs" value={meta?.total || totalChauffeurs} icon={UsersRound} />
+                    <StatCard
+                        label="Libres"
+                        value={chauffeursLibres}
+                        icon={CircleCheck}
+                        note={`${meta?.total ? Math.round((chauffeursLibres / meta.total) * 100) : 0} % du total`}
+                    />
+                    <StatCard label="Solde cumulé" value={`${soldeCumule.toLocaleString("fr-FR")} FCFA`} icon={Wallet} />
                 </div>
             </div>
             </div>

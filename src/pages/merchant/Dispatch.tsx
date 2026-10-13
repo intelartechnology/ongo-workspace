@@ -341,7 +341,7 @@ export default function Dispatch({ merchantId, storeId }: DispatchProps) {
                     {commande.status === "ready" && (
                         <button
                             onClick={() => remettre(commande)}
-                            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
+                            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary text-white dark:bg-slate-100"
                         >
                             Remettre
                         </button>

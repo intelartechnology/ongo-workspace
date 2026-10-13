@@ -150,19 +150,12 @@ const AddRentalCategory: React.FC<AddRentalCategoryProps> = ({ onLogout, theme, 
     return (
         <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
             {/* En-tête */}
-            <div className="bg-white dark:bg-slate-900 px-4 md:px-8 py-6 border-b border-slate-200 dark:border-slate-800">
-                <div className="flex items-center gap-2 text-sm text-slate-500 mb-4">
-                    <Link className="hover:text-primary transition-colors" to="/dashboard">Tableau de bord</Link>
-                    <span className="material-symbols-outlined text-sm">chevron_right</span>
-                    <Link className="hover:text-primary transition-colors" to="/rental-categories">Catégories</Link>
-                    <span className="material-symbols-outlined text-sm">chevron_right</span>
-                    <span className="text-slate-900 dark:text-slate-100 font-bold">{id ? 'Modifier' : 'Nouvelle'}</span>
-                </div>
+            <div className="px-4 md:px-8 py-6">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div className="flex flex-col gap-1.5">
-                        <h2 className="text-2xl md:text-3xl font-black tracking-tight text-[#00327d] dark:text-white uppercase leading-none font-headline">
+                        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
                             {id ? 'Modifier la catégorie' : 'Nouvelle catégorie'}
-                        </h2>
+                        </h1>
                         <p className="text-sm text-slate-500 dark:text-slate-400">
                             {id
                                 ? 'Mettez à jour le nom, la description ou le visuel de cette catégorie.'
@@ -182,13 +175,13 @@ const AddRentalCategory: React.FC<AddRentalCategoryProps> = ({ onLogout, theme, 
             <div className="p-4 md:p-8">
                 {fetching ? (
                     <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-5 gap-6">
-                        <div className="lg:col-span-3 h-[520px] rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 animate-pulse"></div>
-                        <div className="lg:col-span-2 h-72 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 animate-pulse"></div>
+                        <div className="lg:col-span-3 h-[520px] rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 animate-pulse"></div>
+                        <div className="lg:col-span-2 h-72 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 animate-pulse"></div>
                     </div>
                 ) : (
                     <form onSubmit={formik.handleSubmit} className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-5 gap-6">
                         {/* Colonne formulaire */}
-                        <div className="lg:col-span-3 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 md:p-8 flex flex-col gap-7">
+                        <div className="lg:col-span-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 md:p-8 flex flex-col gap-7">
                             {/* Étape 1 - Libellé */}
                             <div className="flex flex-col gap-2.5">
                                 <div className="flex items-center gap-2.5">
@@ -234,7 +227,7 @@ const AddRentalCategory: React.FC<AddRentalCategoryProps> = ({ onLogout, theme, 
                                     onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
                                     onDragLeave={() => setDragging(false)}
                                     onDrop={handleDrop}
-                                    className={`relative group cursor-pointer aspect-[16/9] rounded-2xl overflow-hidden border-2 border-dashed ${dragging ? 'border-primary bg-primary/5' : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50'} flex flex-col items-center justify-center hover:border-primary transition-all`}
+                                    className={`relative group cursor-pointer aspect-[16/9] rounded-xl overflow-hidden border-2 border-dashed ${dragging ? 'border-primary bg-primary/5' : 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50'} flex flex-col items-center justify-center hover:border-primary transition-all`}
                                 >
                                     {hasPreview ? (
                                         <>
@@ -322,14 +315,14 @@ const AddRentalCategory: React.FC<AddRentalCategoryProps> = ({ onLogout, theme, 
                                     type="button"
                                     onClick={() => navigate('/rental-categories')}
                                     disabled={loading}
-                                    className="sm:flex-1 px-6 py-3.5 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-black uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 transition-all text-xs"
+                                    className="sm:flex-1 px-6 py-3.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-black uppercase tracking-widest hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 transition-all text-xs"
                                 >
                                     Annuler
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={loading}
-                                    className="sm:flex-[2] px-6 py-3.5 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-widest shadow-lg shadow-primary/25 disabled:opacity-50 transition-all text-xs flex items-center justify-center gap-2"
+                                    className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white hover:bg-primary/90 dark:bg-primary-container dark:hover:bg-primary-container/90 transition-colors disabled:opacity-40 sm:flex-[2] flex items-center justify-center gap-2"
                                 >
                                     {loading
                                         ? <span className="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>
@@ -341,13 +334,13 @@ const AddRentalCategory: React.FC<AddRentalCategoryProps> = ({ onLogout, theme, 
 
                         {/* Colonne aperçu */}
                         <div className="lg:col-span-2 flex flex-col gap-5 lg:sticky lg:top-6 lg:self-start">
-                            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
                                 <div className="px-5 py-3.5 border-b border-slate-100 dark:border-slate-800 flex items-center gap-2">
                                     <span className="material-symbols-outlined text-[18px] text-slate-400">visibility</span>
                                     <span className="text-[11px] font-black uppercase tracking-widest text-slate-500">Aperçu en direct</span>
                                 </div>
                                 <div className="p-5">
-                                    <div className="rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+                                    <div className="rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
                                         <div className="aspect-[16/10] bg-slate-100 dark:bg-slate-800/60 relative">
                                             {hasPreview ? (
                                                 <img src={formik.values.img} alt="Aperçu de la catégorie" className="absolute inset-0 w-full h-full object-cover" />
@@ -372,7 +365,7 @@ const AddRentalCategory: React.FC<AddRentalCategoryProps> = ({ onLogout, theme, 
                                 </div>
                             </div>
 
-                            <div className="bg-primary/5 dark:bg-primary/10 rounded-3xl p-5 flex flex-col gap-3">
+                            <div className="bg-primary/5 dark:bg-primary/10 rounded-xl p-5 flex flex-col gap-3">
                                 <div className="flex items-center gap-2">
                                     <span className="material-symbols-outlined text-[18px] text-primary dark:text-primary-fixed-dim">lightbulb</span>
                                     <span className="text-[11px] font-black uppercase tracking-widest text-primary dark:text-primary-fixed-dim">Conseils</span>

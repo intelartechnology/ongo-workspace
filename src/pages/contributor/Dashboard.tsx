@@ -11,6 +11,7 @@ import {
     Tooltip, 
     ResponsiveContainer
 } from 'recharts';
+import { Avatar } from "../../components/ui";
 
 interface ContributorDashboardProps {
     onLogout: () => void;
@@ -50,7 +51,7 @@ const ContributorDashboard: React.FC<ContributorDashboardProps> = ({ onLogout, u
     const CustomTooltip = ({ active, payload, label }: any) => {
         if (active && payload && payload.length) {
             return (
-                <div className="bg-slate-800 text-white text-xs font-bold px-3 py-2 rounded-lg shadow-xl border border-slate-700">
+                <div className="bg-slate-800 text-white text-xs font-bold px-3 py-2 rounded-lg border border-slate-700">
                     <p className="opacity-80 mb-1 tracking-wider uppercase">{label}</p>
                     <p className="text-emerald-400 text-sm">{payload[0].value?.toLocaleString('fr-FR')} FCFA</p>
                 </div>
@@ -73,7 +74,7 @@ const ContributorDashboard: React.FC<ContributorDashboardProps> = ({ onLogout, u
                 </div>
                 <Link
                     to="/contributor/rides"
-                    className="w-full md:w-auto justify-center bg-gradient-to-br from-emerald-700 to-emerald-500 text-white px-6 py-3 rounded-xl md:rounded-full flex items-center gap-2 font-semibold text-sm shadow-lg hover:opacity-90 transition-opacity active:scale-95"
+                    className="w-full md:w-auto justify-center bg-gradient-to-br from-emerald-700 to-emerald-500 text-white px-6 py-3 rounded-xl md:rounded-full flex items-center gap-2 font-semibold text-sm hover:opacity-90 transition-opacity active:scale-95"
                 >
                     <span className="material-symbols-outlined text-lg">receipt_long</span>
                     Voir les courses
@@ -83,7 +84,7 @@ const ContributorDashboard: React.FC<ContributorDashboardProps> = ({ onLogout, u
             {/* KPI Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-8 md:mb-10">
                 {/* Balance */}
-                <div className="sm:col-span-2 bg-gradient-to-br from-emerald-800 to-emerald-600 p-5 md:p-6 rounded-2xl shadow-lg text-white flex flex-col justify-between">
+                <div className="sm:col-span-2 bg-gradient-to-br from-emerald-800 to-emerald-600 p-5 md:p-6 rounded-xl text-white flex flex-col justify-between">
                     <div className="flex justify-between items-start">
                         <div>
                             <p className="text-emerald-200 font-semibold text-[10px] md:text-xs uppercase tracking-wider mb-1">Solde Actuel</p>
@@ -107,7 +108,7 @@ const ContributorDashboard: React.FC<ContributorDashboardProps> = ({ onLogout, u
                 </div>
 
                 {/* Total Courses */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                <div className="bg-white p-6 rounded-xl border border-slate-100">
                     <div className="bg-emerald-50 w-12 h-12 flex items-center justify-center rounded-xl mb-4">
                         <span className="material-symbols-outlined text-emerald-700 text-2xl">receipt_long</span>
                     </div>
@@ -123,7 +124,7 @@ const ContributorDashboard: React.FC<ContributorDashboardProps> = ({ onLogout, u
                 </div>
 
                 {/* Total Vehicles */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                <div className="bg-white p-6 rounded-xl border border-slate-100">
                     <div className="bg-blue-50 w-12 h-12 flex items-center justify-center rounded-xl mb-4">
                         <span className="material-symbols-outlined text-blue-600 text-2xl">directions_car</span>
                     </div>
@@ -142,7 +143,7 @@ const ContributorDashboard: React.FC<ContributorDashboardProps> = ({ onLogout, u
             {/* Main Content: Weekly chart + Latest ride */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 mb-8 md:mb-10">
                 {/* Weekly Earnings */}
-                <div className="lg:col-span-2 bg-white p-5 md:p-8 rounded-2xl shadow-sm border border-slate-100 min-h-[350px] md:min-h-[400px]">
+                <div className="lg:col-span-2 bg-white p-5 md:p-8 rounded-xl border border-slate-100 min-h-[350px] md:min-h-[400px]">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 md:mb-8">
                         <div>
                             <h4 className="text-lg md:text-xl font-bold text-slate-800 tracking-tight">Revenus Hebdomadaires</h4>
@@ -201,7 +202,7 @@ const ContributorDashboard: React.FC<ContributorDashboardProps> = ({ onLogout, u
                 </div>
 
                 {/* Latest Course */}
-                <div className="lg:col-span-1 bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
+                <div className="lg:col-span-1 bg-white p-8 rounded-xl border border-slate-100">
                     <div className="flex justify-between items-center mb-6">
                         <h4 className="text-xl font-bold text-slate-800 tracking-tight">Dernière Course</h4>
                         <Link className="text-emerald-600 text-xs font-bold hover:underline" to="/contributor/rides">
@@ -215,12 +216,8 @@ const ContributorDashboard: React.FC<ContributorDashboardProps> = ({ onLogout, u
                     ) : latestCourse ? (
                         <div className="bg-slate-50 p-5 rounded-xl space-y-5">
                             <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center border border-slate-100 shadow-sm overflow-hidden text-slate-400">
-                                    {latestCourse.courses?.client?.photo ? (
-                                        <img alt="Client" className="w-full h-full object-cover" src={latestCourse.courses.client.photo}/>
-                                    ) : (
-                                        <span className="material-symbols-outlined text-2xl">person</span>
-                                    )}
+                                <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center border border-slate-100 overflow-hidden text-slate-400">
+                                    <Avatar photo={latestCourse.courses?.client?.photo} nom={latestCourse.courses?.client?.nom || latestCourse.courses?.client?.prenom} alt="Client" className="text-xl" />
                                 </div>
                                 <div>
                                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Client</p>
@@ -262,10 +259,10 @@ const ContributorDashboard: React.FC<ContributorDashboardProps> = ({ onLogout, u
                                 <div className="text-right">
                                     <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Statut</p>
                                     <span className={`px-2 md:px-3 py-1 rounded-full text-[9px] md:text-[10px] font-bold uppercase whitespace-nowrap ${
-                                        latestCourse.courses?.statut === 'TERMINEE'
-                                            ? 'bg-emerald-100 text-emerald-700'
-                                            : 'bg-blue-100 text-blue-700'
-                                    }`}>
+ latestCourse.courses?.statut === 'TERMINEE'
+ ? 'bg-emerald-100 text-emerald-700'
+ : 'bg-blue-100 text-blue-700'
+ }`}>
                                         {latestCourse.courses?.statut}
                                     </span>
                                 </div>
@@ -281,7 +278,7 @@ const ContributorDashboard: React.FC<ContributorDashboardProps> = ({ onLogout, u
             </div>
 
             {/* Vehicle Breakdown */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden relative">
+            <div className="bg-white rounded-xl border border-slate-100 overflow-hidden relative">
                 <div className="px-5 md:px-8 py-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                     <div>
                         <h4 className="text-base md:text-lg font-bold text-slate-800">Performance par Véhicule</h4>
@@ -322,11 +319,7 @@ const ContributorDashboard: React.FC<ContributorDashboardProps> = ({ onLogout, u
                                             {v.driver ? (
                                                 <div className="flex items-center gap-2">
                                                     <div className="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 text-xs font-bold overflow-hidden">
-                                                        {v.driver.photo ? (
-                                                            <img src={v.driver.photo} className="w-full h-full object-cover" alt=""/>
-                                                        ) : (
-                                                            (v.driver.nom?.[0] || '?')
-                                                        )}
+                                                        <Avatar photo={v.driver?.photo} nom={v.driver?.nom || v.driver?.prenom} />
                                                     </div>
                                                     <div>
                                                         <p className="text-sm font-semibold text-slate-700">{v.driver.nom} {v.driver.prenom}</p>

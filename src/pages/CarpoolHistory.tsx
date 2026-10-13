@@ -278,7 +278,7 @@ export default function CarpoolHistory({ onLogout, theme, toggleTheme }: Carpool
 
     return (
         <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
-            <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+            <header>
                 <div className="px-8 py-6 max-w-7xl mx-auto">
                     <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Covoiturage</h1>
                     <p className="text-sm text-slate-500 mt-1">
@@ -294,8 +294,8 @@ export default function CarpoolHistory({ onLogout, theme, toggleTheme }: Carpool
                             key={item.cle}
                             onClick={() => setOnglet(item.cle)}
                             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all border ${
-                                onglet === item.cle
-                                    ? "bg-primary text-white border-primary"
+ onglet === item.cle
+ ? "bg-primary text-white dark:bg-primary-container border-primary dark:border-primary-container"
                                     : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-50"
                             }`}
                         >
@@ -305,7 +305,7 @@ export default function CarpoolHistory({ onLogout, theme, toggleTheme }: Carpool
                     ))}
                 </div>
 
-                <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-wrap items-center gap-3">
+                <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-wrap items-center gap-3">
                     {onglet !== "subscriptions" && (
                         <SearchBar
                             value={recherche}
@@ -324,8 +324,8 @@ export default function CarpoolHistory({ onLogout, theme, toggleTheme }: Carpool
                                     charger(onglet, item.valeur, recherche);
                                 }}
                                 className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
-                                    filtre === item.valeur
-                                        ? "bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-slate-900"
+ filtre === item.valeur
+ ? "bg-primary text-white border-primary dark:bg-primary-container"
                                         : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50"
                                 }`}
                             >
@@ -335,7 +335,7 @@ export default function CarpoolHistory({ onLogout, theme, toggleTheme }: Carpool
                     </div>
                 </div>
 
-                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+                <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
                     <div className="overflow-x-auto">
                         {chargement ? (
                             <Loading />
@@ -379,8 +379,8 @@ export default function CarpoolHistory({ onLogout, theme, toggleTheme }: Carpool
                                     disabled={!lien.url}
                                     onClick={() => lien.url && charger(onglet, filtre, recherche, lien.url)}
                                     className={`min-w-9 px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
-                                        lien.active
-                                            ? "bg-primary text-white border-primary"
+ lien.active
+ ? "bg-primary text-white dark:bg-primary-container border-primary dark:border-primary-container"
                                             : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 disabled:opacity-40"
                                     }`}
                                     dangerouslySetInnerHTML={{ __html: lien.label }}

@@ -3,6 +3,7 @@ import Trajet from '../components/Trajet';
 import { useNavigate } from 'react-router-dom';
 import PartnerLayout from '../../components/partner/PartnerLayout';
 import ApiService from '../../services/ApiService';
+import { Avatar } from "../../components/ui";
 
 interface PartnerCoursesProps {
     onLogout: () => void;
@@ -103,11 +104,11 @@ const PartnerCourses: React.FC<PartnerCoursesProps> = ({ onLogout, user }) => {
                 <div className="flex gap-3">
                     <button 
                         onClick={() => setIsFilterVisible(!isFilterVisible)}
-                        className={`px-6 py-3 rounded-full flex items-center gap-2 font-semibold text-sm shadow-sm transition-all ${
-                            isFilterVisible 
-                            ? 'bg-[#00327d] text-white' 
-                            : 'bg-white text-[#00327d] border border-[#00327d]/20 hover:bg-slate-50'
-                        }`}
+                        className={`px-6 py-3 rounded-full flex items-center gap-2 font-semibold text-sm transition-all ${
+ isFilterVisible 
+ ? 'bg-[#00327d] text-white' 
+ : 'bg-white text-[#00327d] border border-[#00327d]/20 hover:bg-slate-50'
+ }`}
                     >
                         <span className="material-symbols-outlined text-lg">
                             {isFilterVisible ? 'close' : 'filter_list'}
@@ -116,7 +117,7 @@ const PartnerCourses: React.FC<PartnerCoursesProps> = ({ onLogout, user }) => {
                     </button>
                     <button 
                         onClick={() => navigate('/partner/courses-report')}
-                        className="bg-gradient-to-br from-[#00327d] to-[#0047ab] text-white px-6 py-3 rounded-full flex items-center gap-2 font-semibold text-sm shadow-lg hover:opacity-90 transition-opacity active:scale-95"
+                        className="bg-gradient-to-br from-[#00327d] to-[#0047ab] text-white px-6 py-3 rounded-full flex items-center gap-2 font-semibold text-sm hover:opacity-90 transition-opacity active:scale-95"
                     >
                         <span className="material-symbols-outlined text-lg">print</span>
                         Print History
@@ -126,7 +127,7 @@ const PartnerCourses: React.FC<PartnerCoursesProps> = ({ onLogout, user }) => {
 
             {/* Filter Panel */}
             {isFilterVisible && (
-                <div className="mb-6 bg-white p-6 rounded-xl shadow-sm border border-[#00327d]/10 animate-in fade-in slide-in-from-top-4 duration-300">
+                <div className="mb-6 bg-white p-6 rounded-xl border border-[#00327d]/10 animate-in fade-in slide-in-from-top-4 duration-300">
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
                         <div>
                             <label className="block text-xs font-bold text-[#434653] uppercase mb-2 ml-1">Course Status</label>
@@ -134,7 +135,7 @@ const PartnerCourses: React.FC<PartnerCoursesProps> = ({ onLogout, user }) => {
                                 name="statut"
                                 value={filters.statut}
                                 onChange={handleFilterChange}
-                                className="w-full bg-slate-50 border-none rounded-lg px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-[#00327d]/20 transition-shadow"
+                                className="w-full bg-slate-50 border-none rounded-lg px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-[#00327d]/20 "
                             >
                                 <option value="ALL">All Statuses</option>
                                 <option value="TERMINEE">Completed</option>
@@ -150,7 +151,7 @@ const PartnerCourses: React.FC<PartnerCoursesProps> = ({ onLogout, user }) => {
                                 name="startDate"
                                 value={filters.startDate}
                                 onChange={handleFilterChange}
-                                className="w-full bg-slate-50 border-none rounded-lg px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-[#00327d]/20 transition-shadow"
+                                className="w-full bg-slate-50 border-none rounded-lg px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-[#00327d]/20 "
                             />
                         </div>
                         <div>
@@ -160,13 +161,13 @@ const PartnerCourses: React.FC<PartnerCoursesProps> = ({ onLogout, user }) => {
                                 name="endDate"
                                 value={filters.endDate}
                                 onChange={handleFilterChange}
-                                className="w-full bg-slate-50 border-none rounded-lg px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-[#00327d]/20 transition-shadow"
+                                className="w-full bg-slate-50 border-none rounded-lg px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-[#00327d]/20 "
                             />
                         </div>
                         <div className="flex gap-2">
                             <button 
                                 onClick={applyFilters}
-                                className="flex-1 bg-[#00327d] text-white py-2.5 rounded-lg font-bold text-sm hover:bg-[#0047ab] transition-colors shadow-md shadow-blue-900/10"
+                                className="flex-1 bg-[#00327d] text-white py-2.5 rounded-lg font-bold text-sm hover:bg-[#0047ab] transition-colors "
                             >
                                 Apply
                             </button>
@@ -182,7 +183,7 @@ const PartnerCourses: React.FC<PartnerCoursesProps> = ({ onLogout, user }) => {
             )}
 
             {/* Courses Table/List */}
-            <div className="bg-white rounded-xl shadow-sm border border-[#c3c6d5]/15 overflow-hidden">
+            <div className="bg-white rounded-xl border border-[#c3c6d5]/15 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                         <thead>
@@ -216,11 +217,7 @@ const PartnerCourses: React.FC<PartnerCoursesProps> = ({ onLogout, user }) => {
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-[#434653] overflow-hidden">
-                                                    {attr.courses?.client?.photo ? (
-                                                        <img src={attr.courses.client.photo} className="w-full h-full object-cover" alt="" />
-                                                    ) : (
-                                                        <span className="material-symbols-outlined text-sm">person</span>
-                                                    )}
+                                                    <Avatar photo={attr.courses?.client?.photo} nom={attr.courses?.client?.nom || attr.courses?.client?.prenom} className="text-xs" />
                                                 </div>
                                                 <span className="text-sm font-medium text-[#191b22]">{attr.courses?.client?.nom}</span>
                                             </div>
@@ -237,12 +234,12 @@ const PartnerCourses: React.FC<PartnerCoursesProps> = ({ onLogout, user }) => {
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${
-                                                attr.courses?.statut === 'TERMINEE' 
-                                                ? 'bg-emerald-100 text-emerald-700' 
-                                                : attr.courses?.statut === 'ANNULEE' 
-                                                ? 'bg-red-100 text-red-700'
-                                                : 'bg-blue-100 text-blue-700'
-                                            }`}>
+ attr.courses?.statut === 'TERMINEE' 
+ ? 'bg-emerald-100 text-emerald-700' 
+ : attr.courses?.statut === 'ANNULEE' 
+ ? 'bg-red-100 text-red-700'
+ : 'bg-blue-100 text-blue-700'
+ }`}>
                                                 {attr.courses?.statut}
                                             </span>
                                         </td>
@@ -273,10 +270,10 @@ const PartnerCourses: React.FC<PartnerCoursesProps> = ({ onLogout, user }) => {
                                     onClick={() => handlePageChange(link.url)}
                                     disabled={!link.url}
                                     className={`px-3 py-1 text-xs font-bold rounded-lg transition-colors ${
-                                        link.active 
-                                        ? 'bg-[#00327d] text-white' 
-                                        : 'bg-white text-[#434653] hover:bg-slate-100 border border-[#c3c6d5]/20'
-                                    } ${!link.url ? 'opacity-50 cursor-not-allowed' : ''}`}
+ link.active 
+ ? 'bg-[#00327d] text-white' 
+ : 'bg-white text-[#434653] hover:bg-slate-100 border border-[#c3c6d5]/20'
+ } ${!link.url ? 'opacity-50 cursor-not-allowed' : ''}`}
                                     dangerouslySetInnerHTML={{ __html: link.label }}
                                 />
                             ))}

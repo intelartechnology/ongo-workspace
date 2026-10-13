@@ -18,6 +18,20 @@ const Rentals: React.FC<RentalsProps> = ({ onLogout, theme, toggleTheme }) => {
     const [loading, setLoading] = useState<boolean>(true);
     const [pagination, setPagination] = useState<any>([]);
 
+    // La demande et la période s'affichent en clair : « 29 sept. 2026 » plutôt
+    // que « 2026-09-29 », qui se coupait sur deux lignes dans la colonne.
+    const dateClaire = (valeur?: string | null, avecHeure = false) => {
+        if (!valeur) return "—";
+        const d = new Date(valeur);
+        if (Number.isNaN(d.getTime())) return valeur;
+        return new Intl.DateTimeFormat("fr-FR", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+            ...(avecHeure ? { hour: "2-digit", minute: "2-digit" } : {}),
+        }).format(d);
+    };
+
     const fetchLocations = async (url: string = "location/reservation/all") => {
         setLoading(true);
         try {
@@ -53,14 +67,9 @@ const Rentals: React.FC<RentalsProps> = ({ onLogout, theme, toggleTheme }) => {
 
     return (
         <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
-            <div className="bg-white dark:bg-slate-900 px-4 md:px-8 py-6 border-b border-slate-200 dark:border-slate-800 flex flex-col gap-4">
-                <div className="flex items-center gap-2 text-sm text-slate-500 font-manrope">
-                    <Link className="hover:text-primary transition-colors" to="/dashboard">Tableau de bord</Link>
-                    <span className="material-symbols-outlined text-sm">chevron_right</span>
-                    <span className="text-slate-900 dark:text-slate-100 font-bold">Location de Véhicules</span>
-                </div>
+            <div className="px-4 md:px-8 py-6 flex flex-col gap-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <h2 className="text-2xl md:text-3xl font-black tracking-tight text-[#00327d] dark:text-white uppercase leading-none font-headline">Réservations de Location</h2>
+                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Réservations de Location</h1>
                     <div className="flex gap-2">
                         <Link 
                             to="/rental-vehicles"
@@ -74,11 +83,14 @@ const Rentals: React.FC<RentalsProps> = ({ onLogout, theme, toggleTheme }) => {
             </div>
 
             <div className="p-4 md:p-8">
-                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col">
+                <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col">
                     <div className="overflow-x-auto custom-scrollbar">
                         <table className="w-full text-left border-collapse min-w-[1000px]">
                             <thead>
                                 <tr className="bg-slate-50/50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
+                                    {/* La liste est rangée par date de demande, la plus récente
+                                        en tête (`LocationController::index`) : la colonne le montre. */}
+                                    <th className="px-6 py-4 text-[11px] font-black uppercase tracking-widest text-slate-500">Demandée le</th>
                                     <th className="px-6 py-4 text-[11px] font-black uppercase tracking-widest text-slate-500">Client</th>
                                     <th className="px-6 py-4 text-[11px] font-black uppercase tracking-widest text-slate-500">Véhicule</th>
                                     <th className="px-6 py-4 text-[11px] font-black uppercase tracking-widest text-slate-500">Période</th>
@@ -87,16 +99,16 @@ const Rentals: React.FC<RentalsProps> = ({ onLogout, theme, toggleTheme }) => {
                                     <th className="px-6 py-4" />
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-manrope">
+                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                                 {loading ? (
                                     Array(5).fill(0).map((_, i) => (
                                         <tr key={i} className="animate-pulse">
-                                            <td colSpan={6} className="px-6 py-10 h-20 bg-slate-50/10"></td>
+                                            <td colSpan={7} className="px-6 py-10 h-20 bg-slate-50/10"></td>
                                         </tr>
                                     ))
                                 ) : locations.length === 0 ? (
                                     <tr>
-                                        <td colSpan={6} className="px-6 py-20 text-center text-slate-400">
+                                        <td colSpan={7} className="px-6 py-20 text-center text-slate-400">
                                             <span className="material-symbols-outlined text-6xl block mb-4 opacity-20">event_busy</span>
                                             <p className="font-bold text-lg">Aucune réservation trouvée</p>
                                         </td>
@@ -108,10 +120,16 @@ const Rentals: React.FC<RentalsProps> = ({ onLogout, theme, toggleTheme }) => {
                                             onClick={() => navigate(`/rentals/${loc.id}`)}
                                             className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors group cursor-pointer"
                                         >
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <p className="text-sm font-semibold text-slate-900 dark:text-white">{dateClaire(loc.created_at)}</p>
+                                                <p className="text-xs text-slate-500 mt-0.5">
+                                                    {loc.created_at ? new Date(loc.created_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) : ""}
+                                                </p>
+                                            </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-3">
                                                     <div className="size-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
-                                                        {loc.client?.nom?.[0]}{loc.client?.prenom?.[0]}
+                                                        {(loc.client?.nom || loc.client?.prenom || '?').trim().charAt(0).toUpperCase()}
                                                     </div>
                                                     <div>
                                                         <p className="text-sm font-bold text-slate-900 dark:text-white capitalize leading-none">
@@ -135,11 +153,11 @@ const Rentals: React.FC<RentalsProps> = ({ onLogout, theme, toggleTheme }) => {
                                                 <div className="flex flex-col">
                                                     <div className="flex items-center gap-1.5 font-bold text-xs text-slate-700 dark:text-slate-300">
                                                         <span className="material-symbols-outlined text-sm text-emerald-500">event_available</span>
-                                                        {loc.date_solicitation}
+                                                        {dateClaire(loc.date_solicitation)}
                                                     </div>
                                                     <div className="flex items-center gap-1.5 font-bold text-xs text-slate-400 mt-1">
                                                         <span className="material-symbols-outlined text-sm text-rose-400">event_busy</span>
-                                                        {loc.date_retour}
+                                                        {dateClaire(loc.date_retour)}
                                                     </div>
                                                 </div>
                                             </td>
@@ -153,7 +171,7 @@ const Rentals: React.FC<RentalsProps> = ({ onLogout, theme, toggleTheme }) => {
                                             </td>
                                             <td className="px-6 py-4">
                                                 <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${getStatusColor(loc.status)}`}>
-                                                    <span className={`size-1.5 rounded-full bg-current shadow-[0_0_8px_currentColor]`}></span>
+                                                    <span className={`size-1.5 rounded-full bg-current `}></span>
                                                     {loc.status}
                                                 </span>
                                             </td>
@@ -190,10 +208,10 @@ const Rentals: React.FC<RentalsProps> = ({ onLogout, theme, toggleTheme }) => {
                                         onClick={() => link.url && fetchLocations(link.url)}
                                         disabled={!link.url || link.active}
                                         className={`px-3 py-1.5 rounded-lg text-xs font-black tracking-tighter transition-all ${
-                                            link.active
-                                                ? 'bg-[#00327d] text-white shadow-md'
-                                                : 'bg-white dark:bg-slate-800 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
-                                        } ${!link.url ? 'opacity-30 cursor-not-allowed' : ''}`}
+ link.active
+ ? 'bg-[#00327d] text-white '
+ : 'bg-white dark:bg-slate-800 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
+ } ${!link.url ? 'opacity-30 cursor-not-allowed' : ''}`}
                                         dangerouslySetInnerHTML={{ __html: link.label }}
                                     />
                                 ))}

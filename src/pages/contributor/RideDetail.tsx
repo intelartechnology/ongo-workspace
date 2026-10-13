@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ContributorLayout from '../../components/contributor/ContributorLayout';
 import ApiService from '../../services/ApiService';
+import { Avatar } from "../../components/ui";
 
 interface ContributorRideDetailProps {
     onLogout: () => void;
@@ -52,10 +53,10 @@ const ContributorRideDetail: React.FC<ContributorRideDetailProps> = ({ onLogout,
             <ContributorLayout user={user} onLogout={onLogout}>
                 <div className="max-w-4xl mx-auto space-y-6 animate-pulse">
                     <div className="h-8 bg-slate-100 rounded w-1/3"/>
-                    <div className="h-64 bg-slate-100 rounded-2xl"/>
+                    <div className="h-64 bg-slate-100 rounded-xl"/>
                     <div className="grid grid-cols-2 gap-6">
-                        <div className="h-48 bg-slate-100 rounded-2xl"/>
-                        <div className="h-48 bg-slate-100 rounded-2xl"/>
+                        <div className="h-48 bg-slate-100 rounded-xl"/>
+                        <div className="h-48 bg-slate-100 rounded-xl"/>
                     </div>
                 </div>
             </ContributorLayout>
@@ -108,7 +109,7 @@ const ContributorRideDetail: React.FC<ContributorRideDetailProps> = ({ onLogout,
 
             <div className="max-w-5xl space-y-6">
                 {/* Financial Summary — Hero Card */}
-                <div className="bg-gradient-to-r from-emerald-800 to-emerald-600 rounded-2xl p-6 md:p-8 text-white shadow-xl">
+                <div className="bg-gradient-to-r from-emerald-800 to-emerald-600 rounded-xl p-6 md:p-8 text-white">
                     <div className="grid grid-cols-1 sm:grid-cols-5 gap-6 sm:gap-8">
                         <div className="sm:col-span-3">
                             <p className="text-emerald-200 text-xs font-bold uppercase tracking-wider mb-2">Montant Total</p>
@@ -133,7 +134,7 @@ const ContributorRideDetail: React.FC<ContributorRideDetailProps> = ({ onLogout,
                 {/* Route + Client + Vehicle in 3 cols */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Route */}
-                    <div className="lg:col-span-1 bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+                    <div className="lg:col-span-1 bg-white rounded-xl border border-slate-100 p-6">
                         <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-5 flex items-center gap-2">
                             <span className="material-symbols-outlined text-base">route</span>
                             Itinéraire
@@ -170,7 +171,7 @@ const ContributorRideDetail: React.FC<ContributorRideDetailProps> = ({ onLogout,
                     </div>
 
                     {/* Client */}
-                    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+                    <div className="bg-white rounded-xl border border-slate-100 p-6">
                         <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-5 flex items-center gap-2">
                             <span className="material-symbols-outlined text-base">person</span>
                             Client
@@ -179,11 +180,7 @@ const ContributorRideDetail: React.FC<ContributorRideDetailProps> = ({ onLogout,
                             <div className="space-y-4">
                                 <div className="flex items-center gap-4">
                                     <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0 text-slate-400 border border-slate-200">
-                                        {ride.client.photo ? (
-                                            <img src={ride.client.photo} className="w-full h-full object-cover" alt="Client"/>
-                                        ) : (
-                                            <span className="material-symbols-outlined text-3xl">person</span>
-                                        )}
+                                        <Avatar photo={ride.client?.photo} nom={ride.client?.nom || ride.client?.prenom} alt="Client" className="text-2xl" />
                                     </div>
                                     <div>
                                         <p className="text-base font-bold text-slate-800">
@@ -207,7 +204,7 @@ const ContributorRideDetail: React.FC<ContributorRideDetailProps> = ({ onLogout,
                     </div>
 
                     {/* Driver & Vehicle */}
-                    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+                    <div className="bg-white rounded-xl border border-slate-100 p-6">
                         <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-5 flex items-center gap-2">
                             <span className="material-symbols-outlined text-base">local_taxi</span>
                             Chauffeur & Véhicule
@@ -216,11 +213,7 @@ const ContributorRideDetail: React.FC<ContributorRideDetailProps> = ({ onLogout,
                             <div className="space-y-4">
                                 <div className="flex items-center gap-3">
                                     <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-bold overflow-hidden flex-shrink-0">
-                                        {driver.photo ? (
-                                            <img src={driver.photo} className="w-full h-full object-cover" alt="Driver"/>
-                                        ) : (
-                                            (driver.nom?.[0] || '?')
-                                        )}
+                                        <Avatar photo={driver?.photo} nom={driver?.nom || driver?.prenom} alt="Driver" />
                                     </div>
                                     <div>
                                         <p className="text-sm font-bold text-slate-800">{driver.nom} {driver.prenom}</p>
@@ -263,7 +256,7 @@ const ContributorRideDetail: React.FC<ContributorRideDetailProps> = ({ onLogout,
                 </div>
 
                 {/* Ride Meta Info */}
-                <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+                <div className="bg-white rounded-xl border border-slate-100 p-6">
                     <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-5 flex items-center gap-2">
                         <span className="material-symbols-outlined text-base">info</span>
                         Informations supplémentaires

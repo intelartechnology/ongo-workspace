@@ -8,10 +8,20 @@
   #root {
     @apply h-full min-h-full m-0 p-0;
   }
+
+  /* Sous les pages aussi : le rebond du défilement et les écrans courts
+     laissaient voir le blanc du navigateur. */
+  body {
+    @apply bg-background-light;
+  }
+
+  .dark body {
+    @apply bg-background-dark;
+  }
 }
 
 @theme {
-  --color-primary: #00327d;
+  --color-primary: #10377b; /* Bleu ONGO, `Palette.brand` de l'application mobile */
   --color-primary-dashboard: #2563eb;
   --color-primary-container: #0047ab;
   --color-on-primary: #ffffff;
@@ -25,6 +35,12 @@
   --color-error-container: #ffdad6;
   --color-on-error: #ffffff;
   --color-on-error-container: #93000a;
+  /* Le fond des pages. Vingt-six écrans demandaient `bg-background-dark`
+     sans que la couleur existe : en sombre, ils restaient blancs. Le sombre
+     est un cran sous le `slate-900` des cartes et du menu, pour qu'ils s'en
+     détachent. */
+  --color-background-light: #f6f7fb;
+  --color-background-dark: #0b1120;
   --color-background: #faf8ff;
   --color-on-background: #191b22;
   --color-surface: #faf8ff;
@@ -107,4 +123,9 @@
     'wght' 400,
     'GRAD' 0,
     'opsz' 24;
+}
+
+/* Voir `index.html` : le nom de l'icône ne doit pas s'afficher à sa place. */
+.icones-en-attente .material-symbols-outlined {
+  visibility: hidden;
 }

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import ContributorLayout from '../../components/contributor/ContributorLayout';
 import ApiService from '../../services/ApiService';
+import { Avatar } from "../../components/ui";
 
 interface ContributorRidesProps {
     onLogout: () => void;
@@ -84,11 +85,11 @@ const ContributorRides: React.FC<ContributorRidesProps> = ({ onLogout, user }) =
                 <div className="flex flex-col sm:flex-row w-full md:w-auto gap-3">
                     <button 
                         onClick={() => setIsFilterVisible(!isFilterVisible)}
-                        className={`w-full sm:w-auto justify-center px-6 py-3 rounded-xl sm:rounded-full flex items-center gap-2 font-semibold text-sm transition-all shadow-md ${
-                            isFilterVisible 
-                            ? 'bg-emerald-100 text-emerald-700 ring-2 ring-emerald-500/20' 
-                            : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
-                        }`}
+                        className={`w-full sm:w-auto justify-center px-6 py-3 rounded-xl sm:rounded-full flex items-center gap-2 font-semibold text-sm transition-all ${
+ isFilterVisible 
+ ? 'bg-emerald-100 text-emerald-700 ring-2 ring-emerald-500/20' 
+ : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
+ }`}
                     >
                         <span className={`material-symbols-outlined text-lg transition-transform duration-300 ${isFilterVisible ? 'rotate-180' : ''}`}>
                             filter_list
@@ -97,7 +98,7 @@ const ContributorRides: React.FC<ContributorRidesProps> = ({ onLogout, user }) =
                     </button>
                     <Link 
                         to="/contributor/rides-report"
-                        className="w-full sm:w-auto justify-center px-6 py-3 bg-slate-800 text-white hover:bg-slate-900 rounded-xl sm:rounded-full flex items-center gap-2 font-bold text-sm shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all"
+                        className="w-full sm:w-auto justify-center px-6 py-3 bg-slate-800 text-white hover:bg-slate-900 rounded-xl sm:rounded-full flex items-center gap-2 font-bold text-sm hover:scale-105 active:scale-95 transition-all"
                     >
                         <span className="material-symbols-outlined text-lg">print</span>
                         Imprimer
@@ -107,7 +108,7 @@ const ContributorRides: React.FC<ContributorRidesProps> = ({ onLogout, user }) =
 
             {/* Filters Bar */}
             {isFilterVisible && (
-                <div className="mb-6 bg-white p-5 md:p-6 rounded-2xl shadow-sm border border-emerald-100/50 animate-in fade-in slide-in-from-top-4 duration-300">
+                <div className="mb-6 bg-white p-5 md:p-6 rounded-xl border border-emerald-100/50 animate-in fade-in slide-in-from-top-4 duration-300">
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 items-end">
                         <div>
                             <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">Statut de la course</label>
@@ -159,7 +160,7 @@ const ContributorRides: React.FC<ContributorRidesProps> = ({ onLogout, user }) =
             )}
 
             {/* Table */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            <div className="bg-white rounded-xl border border-slate-100 overflow-hidden">
                 <div className="overflow-x-auto no-scrollbar">
                     <table className="w-full text-left">
                         <thead>
@@ -205,11 +206,7 @@ const ContributorRides: React.FC<ContributorRidesProps> = ({ onLogout, user }) =
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center gap-2">
                                                     <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 overflow-hidden flex-shrink-0">
-                                                        {attr.courses?.client?.photo ? (
-                                                            <img src={attr.courses.client.photo} className="w-full h-full object-cover" alt=""/>
-                                                        ) : (
-                                                            <span className="material-symbols-outlined text-sm">person</span>
-                                                        )}
+                                                        <Avatar photo={attr.courses?.client?.photo} nom={attr.courses?.client?.nom || attr.courses?.client?.prenom} className="text-xs" />
                                                     </div>
                                                     <div>
                                                         <p className="text-sm font-semibold text-slate-700">
@@ -281,10 +278,10 @@ const ContributorRides: React.FC<ContributorRidesProps> = ({ onLogout, user }) =
                                     onClick={() => handlePageChange(link.url)}
                                     disabled={!link.url}
                                     className={`px-3 py-1 text-xs font-bold rounded-lg transition-colors ${
-                                        link.active
-                                            ? 'bg-emerald-700 text-white'
-                                            : 'bg-white text-slate-500 hover:bg-slate-100 border border-slate-200'
-                                    } ${!link.url ? 'opacity-40 cursor-not-allowed' : ''}`}
+ link.active
+ ? 'bg-emerald-700 text-white'
+ : 'bg-white text-slate-500 hover:bg-slate-100 border border-slate-200'
+ } ${!link.url ? 'opacity-40 cursor-not-allowed' : ''}`}
                                     dangerouslySetInnerHTML={{ __html: link.label }}
                                 />
                             ))}

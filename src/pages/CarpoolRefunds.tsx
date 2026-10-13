@@ -53,7 +53,7 @@ const DECISIONS: { cle: Decision; libelle: string; explication: string; classe: 
         cle: "conducteur",
         libelle: "Au conducteur",
         explication: "La somme lui revient : il est parti avec un siège vide.",
-        classe: "bg-[#137fec] text-white hover:bg-blue-600",
+        classe: "bg-primary text-white hover:bg-primary/90",
     },
     {
         cle: "plateforme",
@@ -73,7 +73,7 @@ export default function CarpoolRefunds({ onLogout, theme, toggleTheme }: Carpool
         setChargement(true);
 
         try {
-            const { data } = await api.getData("v3/carsharing/refunds/pending");
+            const { data } = await api.getData("v2/carsharing/refunds/pending");
 
             if (data.success) {
                 setDossiers(data.data?.data ?? []);
@@ -106,7 +106,7 @@ export default function CarpoolRefunds({ onLogout, theme, toggleTheme }: Carpool
         if (!confirmation.isConfirmed) return;
 
         try {
-            const { data } = await api.postData("v3/carsharing/refunds/decide", {
+            const { data } = await api.postData("v2/carsharing/refunds/decide", {
                 subscription_id: dossier.id,
                 decision,
             });
@@ -137,7 +137,7 @@ export default function CarpoolRefunds({ onLogout, theme, toggleTheme }: Carpool
 
     return (
         <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
-            <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+            <header>
                 <div className="px-8 py-6 max-w-7xl mx-auto">
                     <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Remboursements</h1>
                     <p className="text-sm text-slate-500 mt-1">
@@ -148,11 +148,11 @@ export default function CarpoolRefunds({ onLogout, theme, toggleTheme }: Carpool
 
             <div className="p-8 max-w-7xl mx-auto space-y-4">
                 {chargement ? (
-                    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
+                    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
                         <Loading />
                     </div>
                 ) : dossiers.length === 0 ? (
-                    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 px-6 py-16 text-center">
+                    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 px-6 py-16 text-center">
                         <span className="material-symbols-outlined text-4xl text-slate-300">task_alt</span>
                         <p className="text-sm text-slate-500 mt-3">Aucune annulation en attente d'arbitrage.</p>
                     </div>
@@ -160,7 +160,7 @@ export default function CarpoolRefunds({ onLogout, theme, toggleTheme }: Carpool
                     dossiers.map((dossier) => (
                         <div
                             key={dossier.id}
-                            className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6"
+                            className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6"
                         >
                             <div className="flex flex-wrap items-start justify-between gap-4">
                                 <div>

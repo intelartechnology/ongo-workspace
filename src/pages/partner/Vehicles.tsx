@@ -87,7 +87,7 @@ const PartnerVehicles: React.FC<PartnerVehiclesProps> = ({ onLogout, user }) => 
                         <span className="text-[10px] text-blue-500 font-bold tracking-tight">Ready to assign</span>
                     </div>
                 </div>
-                <div className="bg-primary text-white p-6 rounded-xl flex flex-col justify-between shadow-xl shadow-primary/10">
+                <div className="bg-primary text-white p-6 rounded-xl flex flex-col justify-between">
                     <span className="text-blue-200 text-[10px] font-black uppercase tracking-widest">Total Balance</span>
                     <div className="flex items-baseline gap-2 mt-2">
                         <span className="text-3xl font-extrabold">{stats.balance.toLocaleString()}</span>
@@ -97,7 +97,7 @@ const PartnerVehicles: React.FC<PartnerVehiclesProps> = ({ onLogout, user }) => 
             </div>
 
             {/* Filters & Table Container */}
-            <div className="bg-white rounded-2xl overflow-hidden shadow-sm ring-1 ring-outline-variant/10">
+            <div className="bg-white rounded-xl overflow-hidden ring-1 ring-outline-variant/10">
                 {/* Modern Data Table */}
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
@@ -145,7 +145,7 @@ const PartnerVehicles: React.FC<PartnerVehiclesProps> = ({ onLogout, user }) => 
                                                 {d ? (
                                                     <div className="flex items-center gap-2">
                                                         <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 text-[10px] font-black">
-                                                            {d.nom?.[0]}{d.prenom?.[0]}
+                                                            {(d.nom || d.prenom || '?').trim().charAt(0).toUpperCase()}
                                                         </div>
                                                         <span className="text-sm font-bold text-on-surface">{d.nom} {d.prenom}</span>
                                                     </div>
@@ -165,8 +165,8 @@ const PartnerVehicles: React.FC<PartnerVehiclesProps> = ({ onLogout, user }) => 
                                             </td>
                                                <td className="px-6 py-5">
                                                 <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                                                    v?.statut === 'OCCUPE' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
-                                                }`}>
+ v?.statut === 'OCCUPE' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'
+ }`}>
                                                     <span className={`w-1.5 h-1.5 rounded-full ${v?.statut === 'OCCUPE' ? 'bg-green-600' : 'bg-blue-600'}`}></span>
                                                     {v?.statut || 'N/A'}
                                                 </span>
@@ -183,7 +183,7 @@ const PartnerVehicles: React.FC<PartnerVehiclesProps> = ({ onLogout, user }) => 
                                                 </button>
 
                                                 {openDropdownId === fleet.id && (
-                                                    <div className="absolute right-6 top-14 w-48 bg-white rounded-xl shadow-xl ring-1 ring-black/5 z-50 py-1 origin-top-right transition-all">
+                                                    <div className="absolute right-6 top-14 w-48 bg-white rounded-xl ring-1 ring-black/5 z-50 py-1 origin-top-right transition-all">
                                                         <button 
                                                             onClick={() => openDetails(fleet)}
                                                             className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-2 font-bold"
@@ -235,10 +235,10 @@ const PartnerVehicles: React.FC<PartnerVehiclesProps> = ({ onLogout, user }) => 
                                     onClick={() => handlePageChange(link.url)}
                                     disabled={!link.url}
                                     className={`w-8 h-8 flex items-center justify-center rounded-lg font-bold text-xs transition-colors ${
-                                        link.active 
-                                        ? 'bg-primary text-white' 
-                                        : 'bg-white text-on-surface-variant border border-outline-variant/20 hover:bg-slate-50'
-                                    } ${!link.url ? 'opacity-30' : ''}`}
+ link.active 
+ ? 'bg-primary text-white' 
+ : 'bg-white text-on-surface-variant border border-outline-variant/20 hover:bg-slate-50'
+ } ${!link.url ? 'opacity-30' : ''}`}
                                     dangerouslySetInnerHTML={{ __html: link.label }}
                                 />
                             ))}

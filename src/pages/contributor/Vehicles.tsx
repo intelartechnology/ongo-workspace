@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import ContributorLayout from '../../components/contributor/ContributorLayout';
 import ApiService from '../../services/ApiService';
+import { Avatar } from "../../components/ui";
 
 interface ContributorVehiclesProps {
     onLogout: () => void;
@@ -82,7 +83,7 @@ const ContributorVehicles: React.FC<ContributorVehiclesProps> = ({ onLogout, use
             </div>
 
             {/* Vehicle Table */}
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-xl border border-slate-100 overflow-hidden">
                 <div className="overflow-x-auto no-scrollbar">
                     <table className="w-full text-left border-collapse">
                         <thead>
@@ -128,11 +129,7 @@ const ContributorVehicles: React.FC<ContributorVehiclesProps> = ({ onLogout, use
                                             {v.driver ? (
                                                 <div className="flex items-center gap-2">
                                                     <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 text-xs font-bold overflow-hidden">
-                                                        {v.driver.photo ? (
-                                                            <img src={v.driver.photo} className="w-full h-full object-cover" alt="Driver"/>
-                                                        ) : (
-                                                            (v.driver.nom?.[0] || '?')
-                                                        )}
+                                                        <Avatar photo={v.driver?.photo} nom={v.driver?.nom || v.driver?.prenom} alt="Driver" />
                                                     </div>
                                                     <div>
                                                         <span className="text-sm font-bold text-slate-700 block leading-tight">{v.driver.nom} {v.driver.prenom}</span>
@@ -148,8 +145,8 @@ const ContributorVehicles: React.FC<ContributorVehiclesProps> = ({ onLogout, use
                                         </td>
                                         <td className="px-6 py-5">
                                             <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                                                v.statut === 'OCCUPE' ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'
-                                            }`}>
+ v.statut === 'OCCUPE' ? 'bg-blue-100 text-blue-700' : 'bg-emerald-100 text-emerald-700'
+ }`}>
                                                 <span className={`w-1.5 h-1.5 rounded-full ${v.statut === 'OCCUPE' ? 'bg-blue-600' : 'bg-emerald-600'}`}></span>
                                                 {v.statut || 'N/A'}
                                             </span>
@@ -157,7 +154,7 @@ const ContributorVehicles: React.FC<ContributorVehiclesProps> = ({ onLogout, use
                                         <td className="px-6 py-5 text-right">
                                             <Link 
                                                 to={`/contributor/vehicles/${v.vehicle_id}`}
-                                                className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 text-slate-600 hover:text-emerald-700 hover:border-emerald-200 hover:bg-emerald-50 rounded-lg text-xs font-bold transition-all shadow-sm"
+                                                className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 text-slate-600 hover:text-emerald-700 hover:border-emerald-200 hover:bg-emerald-50 rounded-lg text-xs font-bold transition-all "
                                             >
                                                 <span className="material-symbols-outlined text-[16px]">visibility</span>
                                                 Détails
@@ -181,7 +178,7 @@ const ContributorVehicles: React.FC<ContributorVehiclesProps> = ({ onLogout, use
 
             {/* Pagination */}
             {pagination && pagination.last_page > 1 && (
-                <div className="mt-6 md:mt-8 px-4 md:px-6 py-4 bg-white rounded-2xl shadow-sm border border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-0">
+                <div className="mt-6 md:mt-8 px-4 md:px-6 py-4 bg-white rounded-xl border border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-0">
                     <span className="text-[10px] md:text-xs font-medium text-slate-400">
                         Affichage {pagination.from}–{pagination.to} sur {pagination.total} véhicules
                     </span>
@@ -192,10 +189,10 @@ const ContributorVehicles: React.FC<ContributorVehiclesProps> = ({ onLogout, use
                                 onClick={() => handlePageChange(link.url)}
                                 disabled={!link.url}
                                 className={`px-3 py-1 text-xs font-bold rounded-lg transition-colors ${
-                                    link.active
-                                        ? 'bg-emerald-700 text-white'
-                                        : 'bg-white text-slate-500 hover:bg-slate-100 border border-slate-200'
-                                } ${!link.url ? 'opacity-40 cursor-not-allowed' : ''}`}
+ link.active
+ ? 'bg-emerald-700 text-white'
+ : 'bg-white text-slate-500 hover:bg-slate-100 border border-slate-200'
+ } ${!link.url ? 'opacity-40 cursor-not-allowed' : ''}`}
                                 dangerouslySetInnerHTML={{ __html: link.label }}
                             />
                         ))}

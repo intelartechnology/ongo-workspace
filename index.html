@@ -8,12 +8,32 @@
   <title>Ongo 237</title>
   <!-- DM Sans : la graisse geometrique des consoles d'hebergement, qui porte
        les gros titres sans les durcir et reste lisible en onze pixels. Inter
-       reste charge : des ecrans anciens s'y referent encore. -->
+       reste charge pour la page d'impression des courses ; Manrope,
+       qu'aucun theme ne declarait, ne servait a rien. -->
   <link
-    href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800;900&display=swap"
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Inter:wght@400;500;600;700;800;900&display=swap"
     rel="stylesheet" />
+  <!-- Les icones : seulement les axes servis. Toute la plage (graisses 100 a
+       700, tailles 20 a 48, grades) pesait 4 Mo ; le menu affichait les noms
+       des ligatures — « local_taxi », « expand_less » — le temps qu'elle
+       arrive. L'application n'utilise que la graisse 400, la taille 24 et le
+       remplissage plein ou vide : 460 Ko. -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet"
-    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0..1,0&display=block" />
+  <!-- Et masquees jusqu'a ce qu'elle soit la : `display=block` ne retient le
+       texte que trois secondes, ce qu'une connexion mobile depasse. En cas
+       d'echec, on les montre quand meme : un nom vaut mieux qu'un trou. -->
+  <script>
+    document.documentElement.classList.add('icones-en-attente');
+    if (document.fonts && document.fonts.load) {
+      document.fonts.load("24px 'Material Symbols Outlined'").finally(function () {
+        document.documentElement.classList.remove('icones-en-attente');
+      });
+    } else {
+      document.documentElement.classList.remove('icones-en-attente');
+    }
+  </script>
 
 </head>
 

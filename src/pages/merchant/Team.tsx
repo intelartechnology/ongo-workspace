@@ -90,7 +90,7 @@ export default function Team({ merchantId }: TeamProps) {
                     Chacun se connecte avec son propre compte Ongo. L'équipe voit les commandes et l'ouverture du jour ; le gérant voit tout, sauf la direction de l'équipe.
                 </p>
                 {moi.role !== "staff" && !ajout && (
-                    <button onClick={() => setAjout({ phone: "", role: "staff", store_id: "" })} className="px-4 py-2 rounded-lg text-sm font-medium bg-slate-900 text-white dark:bg-white dark:text-slate-900 shrink-0">
+                    <button onClick={() => setAjout({ phone: "", role: "staff", store_id: "" })} className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white dark:bg-primary-container shrink-0">
                         Ajouter un membre
                     </button>
                 )}
@@ -122,7 +122,7 @@ export default function Team({ merchantId }: TeamProps) {
                         <button onClick={() => setAjout(null)} className="px-4 py-2 rounded-lg text-sm text-slate-600 dark:text-slate-300">
                             Annuler
                         </button>
-                        <button onClick={ajouter} disabled={ajout.phone.replace(/\D/g, "").length < 9} className="px-5 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium disabled:opacity-40 dark:bg-white dark:text-slate-900">
+                        <button onClick={ajouter} disabled={ajout.phone.replace(/\D/g, "").length < 9} className="px-5 py-2 rounded-lg bg-primary text-white text-sm font-medium disabled:opacity-40 dark:bg-primary-container">
                             Ajouter
                         </button>
                     </div>

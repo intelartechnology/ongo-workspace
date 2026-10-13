@@ -6,6 +6,7 @@ import StoreProfileForm from "./components/StoreProfileForm";
 import ImageField from "./components/ImageField";
 import { envoyerSiBesoin, galerieMarchand } from "../services/images";
 import type { Cuisine, Fiche } from "./components/StoreProfileForm";
+import { ActionsMenu } from "../components/ui";
 
 /**
  * Les boutiques Ongo Eat, vues d'Ongo.
@@ -302,7 +303,7 @@ export default function EatStores({ onLogout, theme, toggleTheme }: EatStoresPro
 
     return (
         <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
-            <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+            <header>
                 <div className="px-8 py-6 max-w-7xl mx-auto flex items-start justify-between gap-6">
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Boutiques</h1>
@@ -311,7 +312,7 @@ export default function EatStores({ onLogout, theme, toggleTheme }: EatStoresPro
                         </p>
                     </div>
                     {!nouvelle && (
-                        <button onClick={() => setNouvelle({ merchant_id: "", name: "", type: "restaurant", city: "Douala", address: "", phone: "", latitude: "", longitude: "", logo: "", banner: "", brand_color: "#111827" })} className="px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium dark:bg-white dark:text-slate-900">
+                        <button onClick={() => setNouvelle({ merchant_id: "", name: "", type: "restaurant", city: "Douala", address: "", phone: "", latitude: "", longitude: "", logo: "", banner: "", brand_color: "#111827" })} className="px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium dark:bg-primary-container">
                             Ouvrir une boutique
                         </button>
                     )}
@@ -399,7 +400,7 @@ export default function EatStores({ onLogout, theme, toggleTheme }: EatStoresPro
                         </div>
                         <div className="flex justify-end gap-3 mt-6">
                             <button onClick={() => setNouvelle(null)} className="px-4 py-2 rounded-lg text-sm text-slate-600 dark:text-slate-300">Annuler</button>
-                            <button onClick={ouvrir} disabled={!nouvelle.merchant_id || !nouvelle.name.trim() || !nouvelle.phone.trim() || nouvelle.latitude.trim() === "" || nouvelle.longitude.trim() === ""} className="px-5 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium disabled:opacity-40 dark:bg-white dark:text-slate-900">
+                            <button onClick={ouvrir} disabled={!nouvelle.merchant_id || !nouvelle.name.trim() || !nouvelle.phone.trim() || nouvelle.latitude.trim() === "" || nouvelle.longitude.trim() === ""} className="px-5 py-2 rounded-lg bg-primary text-white text-sm font-medium disabled:opacity-40 dark:bg-primary-container">
                                 Ouvrir
                             </button>
                         </div>
@@ -463,28 +464,55 @@ export default function EatStores({ onLogout, theme, toggleTheme }: EatStoresPro
                                             <span className={`material-symbols-outlined text-[22px] ${b.is_featured ? "text-amber-500 fill-1" : "text-slate-300"}`}>star</span>
                                         </button>
                                     </td>
-                                    <td className="px-5 py-3 text-right whitespace-nowrap">
-                                        <button onClick={() => sponsoriser(b)} className={`text-sm mr-4 ${b.sponsored_until && new Date(b.sponsored_until) > new Date() ? "text-amber-700 font-medium" : "text-slate-600 dark:text-slate-300"}`}>
-                                            {b.sponsored_until && new Date(b.sponsored_until) > new Date() ? "Sponsorisée" : "Sponsoriser"}
-                                        </button>
-                                        <button
-                                            onClick={() => (b.has_account ? renouvelerLeCompte(b) : ouvrirLeCompte(b))}
-                                            className={`text-sm mr-4 ${
-                                                b.has_account ? "text-slate-600 dark:text-slate-300" : "text-amber-700 font-medium"
-                                            }`}
-                                            title={
-                                                b.has_account
-                                                    ? "Refaire son mot de passe"
-                                                    : "Ouvrir le compte qui détiendra sa caisse"
-                                            }
-                                        >
-                                            {b.has_account ? "Compte" : "Ouvrir le compte"}
-                                        </button>
-                                        <button onClick={() => setOuverte(b)} className="text-sm text-slate-600 dark:text-slate-300 mr-4">Fiche</button>
-                                        <button onClick={() => renommer(b)} className="text-sm text-slate-600 dark:text-slate-300 mr-4">Renommer</button>
-                                        <button onClick={() => changer(b, { status: b.status === "active" ? "suspended" : "active" })} className={`text-sm ${b.status === "active" ? "text-rose-600" : "text-slate-900 dark:text-white"}`}>
-                                            {b.status === "active" ? "Suspendre" : "Réactiver"}
-                                        </button>
+                                    {/*
+                                      * Les actions dans un menu.
+                                      *
+                                      * Cinq boutons texte côte à côte élargissaient chaque ligne
+                                      * au point de pousser le tableau hors de l'écran. Deux d'entre
+                                      * eux disaient aussi un état — sponsorisée, sans compte — :
+                                      * celui-là reste visible, en étiquette, à côté du menu.
+                                      */}
+                                    <td className="px-5 py-3">
+                                        <div className="flex items-center justify-end gap-2 whitespace-nowrap">
+                                            {b.sponsored_until && new Date(b.sponsored_until) > new Date() && (
+                                                <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
+                                                    Sponsorisée
+                                                </span>
+                                            )}
+                                            {!b.has_account && (
+                                                <span
+                                                    title="Aucun compte ne détient encore sa caisse"
+                                                    className="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
+                                                >
+                                                    Sans compte
+                                                </span>
+                                            )}
+                                            <ActionsMenu
+                                                title={`Actions sur ${b.name}`}
+                                                items={[
+                                                    { label: "Voir la fiche", icon: "storefront", onClick: () => setOuverte(b) },
+                                                    { label: "Renommer", icon: "edit", onClick: () => renommer(b) },
+                                                    {
+                                                        label: b.sponsored_until && new Date(b.sponsored_until) > new Date() ? "Gérer le sponsoring" : "Sponsoriser",
+                                                        icon: "campaign",
+                                                        separatorBefore: true,
+                                                        onClick: () => sponsoriser(b),
+                                                    },
+                                                    {
+                                                        label: b.has_account ? "Refaire le mot de passe" : "Ouvrir le compte",
+                                                        icon: b.has_account ? "key" : "person_add",
+                                                        onClick: () => (b.has_account ? renouvelerLeCompte(b) : ouvrirLeCompte(b)),
+                                                    },
+                                                    {
+                                                        label: b.status === "active" ? "Suspendre" : "Réactiver",
+                                                        icon: b.status === "active" ? "block" : "check_circle",
+                                                        danger: b.status === "active",
+                                                        separatorBefore: true,
+                                                        onClick: () => changer(b, { status: b.status === "active" ? "suspended" : "active" }),
+                                                    },
+                                                ]}
+                                            />
+                                        </div>
                                     </td>
                                 </tr>
                             ))}

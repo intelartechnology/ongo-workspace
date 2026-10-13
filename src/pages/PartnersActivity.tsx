@@ -4,7 +4,8 @@ import { toast } from "react-toastify";
 import MainLayout from "./MainLayout";
 import ApiService from "../services/ApiService";
 import Loading from "../components/Loading";
-import { SearchBar, Button, Select, DateField } from "../components/ui";
+import { SearchBar, Button, Select, DateField, StatCard } from "../components/ui";
+import { Banknote, Handshake, Route, Wallet, type LucideIcon } from "lucide-react";
 
 interface PartnersActivityProps {
     onLogout: () => void;
@@ -113,37 +114,15 @@ export default function PartnersActivity({ onLogout, theme, toggleTheme }: Partn
 
     useEffect(() => { charger(); }, [tri, statut]);
 
-    const tuile = (libelle: string, valeur: string, icone: string, detail?: string, accent?: boolean) => (
-        <div className={`p-5 rounded-2xl border shadow-sm ${accent
-            ? "bg-primary text-white border-primary"
-            : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"}`}>
-            <div className="flex items-start justify-between">
-                <p className={`text-[10px] font-bold uppercase tracking-widest ${accent ? "text-white/70" : "text-slate-400"}`}>
-                    {libelle}
-                </p>
-                <span className={`material-symbols-outlined text-[20px] ${accent ? "text-white/40" : "text-slate-300 dark:text-slate-600"}`}>
-                    {icone}
-                </span>
-            </div>
-            <p className={`text-2xl font-black mt-2 tabular-nums ${accent ? "text-white" : "text-slate-900 dark:text-white"}`}>
-                {valeur}
-            </p>
-            {detail && (
-                <p className={`text-[11px] mt-1 ${accent ? "text-white/70" : "text-slate-500"}`}>{detail}</p>
-            )}
-        </div>
+    const tuile = (libelle: string, valeur: string, icone: LucideIcon, detail?: string) => (
+        <StatCard label={libelle} value={valeur} icon={icone} note={detail} />
     );
 
     return (
         <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
             <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-background-dark">
 
-                <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 md:px-8 py-4">
-                    <div className="flex items-center gap-2 text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">
-                        <button className="hover:text-primary" onClick={() => navigate("/partners")}>Partenaires</button>
-                        <span className="material-symbols-outlined text-[10px]">chevron_right</span>
-                        <span className="text-primary">Suivi d'activité</span>
-                    </div>
+                <header className="px-4 md:px-8 py-4">
                     <h1 className="text-xl font-black tracking-tight text-slate-900 dark:text-white">Activité des partenaires</h1>
                     <p className="text-xs text-slate-500 mt-0.5">
                         Ce que chaque partenaire a produit sur la période, et ce qu'Ongo lui doit.
@@ -152,7 +131,7 @@ export default function PartnersActivity({ onLogout, theme, toggleTheme }: Partn
 
                 <div className="flex-1 p-4 md:p-8 flex flex-col gap-5">
 
-                    <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-wrap items-end gap-3">
+                    <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-wrap items-end gap-3">
                         <SearchBar
                             size="sm"
                             value={recherche}
@@ -193,22 +172,21 @@ export default function PartnersActivity({ onLogout, theme, toggleTheme }: Partn
                                     {tuile(
                                         "Commission due",
                                         francs(totaux.commission_due),
-                                        "account_balance_wallet",
+                                        Wallet,
                                         "ce qu'Ongo doit aux partenaires",
-                                        true,
                                     )}
-                                    {tuile("Chiffre d'affaires", francs(totaux.chiffre_affaires), "payments", "encaissé par les chauffeurs")}
-                                    {tuile("Courses", nombre(totaux.courses), "route")}
+                                    {tuile("Chiffre d'affaires", francs(totaux.chiffre_affaires), Banknote, "encaissé par les chauffeurs")}
+                                    {tuile("Courses", nombre(totaux.courses), Route)}
                                     {tuile(
                                         "Partenaires",
                                         nombre(totaux.partenaires),
-                                        "handshake",
+                                        Handshake,
                                         `${nombre(totaux.partenaires_actifs)} actifs · ${nombre(totaux.chauffeurs)} chauffeurs`,
                                     )}
                                 </div>
                             )}
 
-                            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-left border-collapse min-w-[940px]">
                                         <thead>
@@ -253,7 +231,7 @@ export default function PartnersActivity({ onLogout, theme, toggleTheme }: Partn
                                                         </td>
                                                         <td className="px-4 py-2.5 text-center">
                                                             <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-black tabular-nums ${p.commission_invalid
-                                                                ? "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400"
+ ? "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400"
                                                                 : (p.commission_rate ?? 0) > 0
                                                                     ? "bg-primary/10 text-primary"
                                                                     : "bg-slate-100 dark:bg-slate-800 text-slate-400"}`}>
@@ -306,7 +284,7 @@ export default function PartnersActivity({ onLogout, theme, toggleTheme }: Partn
                                                 disabled={!lien.url || lien.active}
                                                 onClick={() => lien.url && charger(lien.url)}
                                                 className={`px-3 py-1.5 rounded-md text-xs font-medium ${lien.active
-                                                    ? "bg-primary text-white font-bold"
+ ? "bg-primary text-white dark:bg-primary-container font-bold"
                                                     : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400"} ${!lien.url ? "opacity-50 cursor-not-allowed" : ""}`}
                                                 dangerouslySetInnerHTML={{ __html: lien.label }}
                                             />

@@ -385,14 +385,14 @@ export default function EatBanners({ onLogout, theme, toggleTheme }: EatBannersP
 
     return (
         <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
-            <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+            <header>
                 <div className="px-8 py-6 max-w-7xl mx-auto flex items-start justify-between gap-6">
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Bannières</h1>
                         <p className="text-sm text-slate-500 mt-1">Texte, dégradé et logo sont dans l'image du graphiste. Ici : l'emplacement, la destination, la période.</p>
                     </div>
                     {!form && (
-                        <button onClick={() => setForm(vide(emplacement))} className="px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium dark:bg-white dark:text-slate-900">
+                        <button onClick={() => setForm(vide(emplacement))} className="px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium dark:bg-primary-container">
                             Nouvelle bannière
                         </button>
                     )}
@@ -410,7 +410,7 @@ export default function EatBanners({ onLogout, theme, toggleTheme }: EatBannersP
                             }}
                             className={`px-4 py-1.5 rounded-full text-sm border ${
                                 emplacement === p
-                                    ? "bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-slate-900"
+                                    ? "bg-primary text-white border-primary dark:bg-primary-container"
                                     : "border-slate-300 text-slate-600 dark:border-slate-700 dark:text-slate-300"
                             }`}
                         >
@@ -564,7 +564,7 @@ export default function EatBanners({ onLogout, theme, toggleTheme }: EatBannersP
                                                     onClick={() => setForm({ ...form, format: cle })}
                                                     className={`px-4 py-2 rounded-lg text-sm border ${
                                                         form.format === cle
-                                                            ? "bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-slate-900"
+                                                            ? "bg-primary text-white border-primary dark:bg-primary-container"
                                                             : "border-slate-300 text-slate-600 dark:border-slate-700 dark:text-slate-300"
                                                     }`}
                                                 >
@@ -628,7 +628,7 @@ export default function EatBanners({ onLogout, theme, toggleTheme }: EatBannersP
                                                         }
                                                         className={`px-3 py-1.5 rounded-full text-sm border ${
                                                             cochee
-                                                                ? "bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-slate-900"
+                                                                ? "bg-primary text-white border-primary dark:bg-primary-container"
                                                                 : "border-slate-300 text-slate-600 dark:border-slate-700 dark:text-slate-300"
                                                         }`}
                                                     >
@@ -713,7 +713,7 @@ export default function EatBanners({ onLogout, theme, toggleTheme }: EatBannersP
 
                             <div>
                                 <p className="text-xs font-semibold uppercase text-slate-500 mb-2">Aperçu</p>
-                                <div className="p-4 rounded-2xl bg-white border border-slate-200 dark:bg-slate-950 dark:border-slate-800 overflow-hidden">
+                                <div className="p-4 rounded-xl bg-white border border-slate-200 dark:bg-slate-950 dark:border-slate-800 overflow-hidden">
                                     <Rangee
                                         elements={[
                                             {
@@ -746,7 +746,7 @@ export default function EatBanners({ onLogout, theme, toggleTheme }: EatBannersP
                             <button
                                 onClick={enregistrer}
                                 disabled={!valide || envoi}
-                                className="px-5 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium disabled:opacity-40 dark:bg-white dark:text-slate-900"
+                                className="px-5 py-2 rounded-lg bg-primary text-white text-sm font-medium disabled:opacity-40 dark:bg-primary-container"
                             >
                                 {envoi ? "Envoi…" : "Enregistrer"}
                             </button>

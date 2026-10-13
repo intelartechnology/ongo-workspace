@@ -184,7 +184,7 @@ export default function SectionShowcase({ sectionId, title, onClose }: Props) {
                 <div className="flex gap-3 shrink-0">
                     <button
                         onClick={() => setForm({ ...vide })}
-                        className="px-4 py-2 rounded-lg text-sm font-medium bg-slate-900 text-white dark:bg-white dark:text-slate-900"
+                        className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white dark:bg-primary-container"
                     >
                         Ajouter une enseigne
                     </button>
@@ -331,7 +331,7 @@ export default function SectionShowcase({ sectionId, title, onClose }: Props) {
                     <div className="flex gap-3">
                         <button
                             onClick={enregistrer}
-                            className="px-4 py-2 rounded-lg text-sm font-medium bg-slate-900 text-white dark:bg-white dark:text-slate-900"
+                            className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white dark:bg-primary-container"
                         >
                             Enregistrer
                         </button>

@@ -5,6 +5,8 @@ import Loading from "../components/Loading";
 import MainLayout from "./MainLayout";
 import Helpers from "../functions/helpers";
 import { SearchBar } from "../components/ui";
+import { Avatar } from "../components/ui";
+import { notifier } from "../services/notifier";
 
 interface DriverDetailProps {
     onLogout?: () => void;
@@ -66,18 +68,15 @@ export default function DriverDetail({ onLogout = () => {}, theme = 'light', tog
         <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
             <div className="p-8 max-w-7xl mx-auto w-full font-display">
                 {/* Profile Overview */}
-                <div className="bg-white dark:bg-slate-900 rounded-xl p-6 shadow-sm border border-primary/5 mb-8 flex flex-wrap gap-6 items-center justify-between">
+                <div className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-primary/5 mb-8 flex flex-wrap gap-6 items-center justify-between">
                     <div className="flex items-center gap-6">
-                        <div className="size-24 rounded-2xl bg-slate-100 dark:bg-slate-800 overflow-hidden border-2 border-primary">
-                            <img 
-                                alt="Driver Profile" 
-                                className="w-full h-full object-cover" 
-                                src={driver.photo || 'https://via.placeholder.com/150'} 
-                            />
+                        <div className="size-24 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden border-2 border-primary">
+                            <Avatar photo={driver.photo} nom={driver.nom || driver.prenom} alt="Photo du chauffeur" className="text-4xl" />
                         </div>
                         <div>
                             <div className="flex items-center gap-3 mb-1">
                                 <h3 className="text-2xl font-bold">{helpers.capitalizeFirstLetter(driver.nom + " " + driver.prenom)}</h3>
+                                <button type="button" onClick={() => notifier({ destinataires: [{ id: driver.id, nom: [driver.nom, driver.prenom].filter(Boolean).join(" ") }] })} className="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 whitespace-nowrap">Notifier</button>
                                 <span className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-bold rounded-full flex items-center gap-1">
                                     <span className="size-1.5 bg-green-600 rounded-full"></span>
                                     Actif
@@ -118,7 +117,7 @@ export default function DriverDetail({ onLogout = () => {}, theme = 'light', tog
                 </div>
 
                 {/* Tabbed Interface */}
-                <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-primary/5 overflow-hidden">
+                <div className="bg-white dark:bg-slate-900 rounded-xl border border-primary/5 overflow-hidden">
                     <div className="border-b border-primary/10 flex px-6">
                         <button 
                             onClick={() => setActiveTab('details')}
@@ -214,7 +213,7 @@ export default function DriverDetail({ onLogout = () => {}, theme = 'light', tog
                                         </select>
                                         <button 
                                             onClick={() => fetchData()}
-                                            className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold hover:bg-primary/90 transition-all flex items-center gap-2"
+                                            className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white hover:bg-primary/90 dark:bg-primary-container dark:hover:bg-primary-container/90 transition-colors disabled:opacity-40 flex items-center gap-2"
                                         >
                                             Filtrer
                                         </button>
@@ -274,10 +273,10 @@ export default function DriverDetail({ onLogout = () => {}, theme = 'light', tog
                                                         disabled={!link.url}
                                                         onClick={() => link.url && fetchData(link.url.split('/api/')[1])}
                                                         className={`px-3 py-1 rounded text-xs font-bold transition-colors ${
-                                                            link.active 
-                                                                ? 'bg-primary text-white' 
-                                                                : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-primary/10 disabled:opacity-50'
-                                                        }`}
+ link.active 
+ ? 'bg-primary text-white dark:bg-primary-container' 
+ : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-primary/10 disabled:opacity-50'
+ }`}
                                                     >
                                                         {isPrev ? 'Précédent' : isNext ? 'Suivant' : link.label}
                                                     </button>
@@ -291,7 +290,7 @@ export default function DriverDetail({ onLogout = () => {}, theme = 'light', tog
 
                         {activeTab === 'balance' && (
                             <div className="space-y-6">
-                                <div className="bg-primary rounded-xl p-6 text-white flex items-center justify-between shadow-lg shadow-primary/20 max-w-md">
+                                <div className="bg-primary rounded-xl p-6 text-white flex items-center justify-between max-w-md">
                                     <div>
                                         <p className="text-white/70 text-sm font-medium mb-1">Balance disponible</p>
                                         <p className="text-3xl font-bold">{stats.current_balance.toLocaleString()} FCFA</p>

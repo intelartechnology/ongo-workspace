@@ -25,7 +25,7 @@ export default function EatGallery({ onLogout, theme, toggleTheme }: EatGalleryP
 
     return (
         <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
-            <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+            <header>
                 <div className="px-8 py-6 max-w-7xl mx-auto">
                     <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Galerie</h1>
                     <p className="text-sm text-slate-500 mt-1">

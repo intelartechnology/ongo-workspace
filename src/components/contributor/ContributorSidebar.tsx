@@ -26,7 +26,7 @@ const ContributorSidebar: React.FC<ContributorSidebarProps> = ({ isOpen, onClose
                 <div className="mb-10 px-2 flex items-center justify-between">
                     <div>
                         <h1 className="text-xl font-bold text-emerald-800 tracking-tight">Ongo 237</h1>
-                        <p className="text-xs font-manrope text-slate-500 font-medium lowercase">Contributor Portal</p>
+                        <p className="text-xs text-slate-500 font-medium lowercase">Contributor Portal</p>
                     </div>
                     <button onClick={onClose} className="lg:hidden p-2 text-slate-500 hover:bg-slate-200 rounded-lg">
                         <span className="material-symbols-outlined">close</span>
@@ -47,7 +47,7 @@ const ContributorSidebar: React.FC<ContributorSidebarProps> = ({ isOpen, onClose
                             }
                         >
                             <span className="material-symbols-outlined">{item.icon}</span>
-                            <span className="font-manrope text-sm tracking-tight">{item.label}</span>
+                            <span className="text-sm tracking-tight">{item.label}</span>
                         </NavLink>
                     ))}
                 </nav>
@@ -57,7 +57,7 @@ const ContributorSidebar: React.FC<ContributorSidebarProps> = ({ isOpen, onClose
                         className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-200/50 transition-colors"
                     >
                         <span className="material-symbols-outlined">logout</span>
-                        <span className="font-manrope text-sm tracking-tight">Logout</span>
+                        <span className="text-sm tracking-tight">Logout</span>
                     </button>
                 </div>
             </aside>

@@ -180,13 +180,13 @@ export default function MediaGallery({ galerie, onPick, canDelete = true, owner,
                         key={cle}
                         onClick={() => setFiltre(cle)}
                         className={`px-3 py-1.5 rounded-full text-sm border ${
-                            filtre === cle ? "bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-slate-900" : "border-slate-300 text-slate-600 dark:border-slate-700 dark:text-slate-300"
+                            filtre === cle ? "bg-primary text-white border-primary dark:bg-primary-container" : "border-slate-300 text-slate-600 dark:border-slate-700 dark:text-slate-300"
                         }`}
                     >
                         {libelle}
                     </button>
                 ))}
-                {!(owner === "merchants" && !merchantId) && <label className="ml-auto px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium dark:bg-white dark:text-slate-900 cursor-pointer">
+                {!(owner === "merchants" && !merchantId) && <label className="ml-auto px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium dark:bg-primary-container cursor-pointer">
                     {envoi > 0 ? `Envoi… (${envoi})` : "Importer des images"}
                     <input ref={fichiers} type="file" accept="image/*" multiple className="hidden" disabled={envoi > 0} onChange={(e) => importer(e.target.files)} />
                 </label>}
@@ -229,7 +229,7 @@ export default function MediaGallery({ galerie, onPick, canDelete = true, owner,
             {/* Le détail d'une image : où elle sert, et le ménage. */}
             {!onPick && ouverte && (
                 <div className="fixed inset-0 z-[70] bg-black/50 flex items-center justify-center p-4" onClick={() => setOuverte(null)}>
-                    <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-3xl w-full grid grid-cols-1 md:grid-cols-2 overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                    <div className="bg-white dark:bg-slate-900 rounded-xl max-w-3xl w-full grid grid-cols-1 md:grid-cols-2 overflow-hidden" onClick={(e) => e.stopPropagation()}>
                         <div className="bg-slate-100 dark:bg-slate-800 flex items-center justify-center min-h-64">
                             <img src={ouverte.url} alt="" className="max-h-[70vh] w-full object-contain" />
                         </div>
@@ -260,7 +260,7 @@ export default function MediaGallery({ galerie, onPick, canDelete = true, owner,
                                     <button
                                         onClick={() => etiqueter(ouverte)}
                                         disabled={etiquetage || motsCles === (ouverte.keywords ?? "")}
-                                        className="px-4 py-2 rounded-lg text-sm font-medium bg-slate-900 text-white disabled:bg-slate-200 disabled:text-slate-400 dark:bg-white dark:text-slate-900"
+                                        className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white disabled:bg-slate-200 disabled:text-slate-400 dark:bg-primary-container"
                                     >
                                         {etiquetage ? "…" : "Enregistrer"}
                                     </button>

@@ -313,14 +313,14 @@ export default function EatSections({ onLogout, theme, toggleTheme }: EatSection
 
     return (
         <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
-            <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+            <header>
                 <div className="px-8 py-6 max-w-7xl mx-auto flex items-start justify-between gap-6">
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Rubriques de l'accueil</h1>
                         <p className="text-sm text-slate-500 mt-1">Entre « Meilleurs deals » et la liste des restaurants. Le contenu se calcule ; une rubrique vide ne s'affiche pas.</p>
                     </div>
                     {!form && (
-                        <button onClick={() => { setDecoupe(null); setForm({ ...vide, params: {} }); }} className="px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium dark:bg-white dark:text-slate-900">
+                        <button onClick={() => { setDecoupe(null); setForm({ ...vide, params: {} }); }} className="px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium dark:bg-primary-container">
                             Nouvelle rubrique
                         </button>
                     )}
@@ -714,7 +714,7 @@ export default function EatSections({ onLogout, theme, toggleTheme }: EatSection
                             {/* L'aperçu : c'est là qu'on voit si le texte se lit sur le fond. */}
                             {form.background_color && (
                                 <div
-                                    className="mt-4 rounded-2xl p-4"
+                                    className="mt-4 rounded-xl p-4"
                                     style={{
                                         // Le même dégradé que l'application : en diagonale, du
                                         // coin de l'illustration vers le coin opposé.
@@ -736,7 +736,7 @@ export default function EatSections({ onLogout, theme, toggleTheme }: EatSection
                         </div>
                         <div className="flex justify-end gap-3 mt-6">
                             <button onClick={() => { setDecoupe(null); setForm(null); }} className="px-4 py-2 rounded-lg text-sm text-slate-600 dark:text-slate-300">Annuler</button>
-                            <button onClick={enregistrer} disabled={!valide} className="px-5 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium disabled:opacity-40 dark:bg-white dark:text-slate-900">
+                            <button onClick={enregistrer} disabled={!valide} className="px-5 py-2 rounded-lg bg-primary text-white text-sm font-medium disabled:opacity-40 dark:bg-primary-container">
                                 Enregistrer
                             </button>
                         </div>

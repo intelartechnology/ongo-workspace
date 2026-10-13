@@ -1,9 +1,13 @@
-import  { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useCallback, useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { toast } from "react-toastify";
+import Swal from "sweetalert2";
+import { ArrowLeft, Car, CircleCheck, Hand, Banknote } from "lucide-react";
 import ApiService from "../services/ApiService";
 import MainLayout from "./MainLayout";
 import Loading from "../components/Loading";
-import { toast } from "react-toastify";
+import { StatCard, cx } from "../components/ui";
+import { notifier } from "../services/notifier";
 
 interface ContributorDetailsProps {
     onLogout?: () => void;
@@ -11,348 +15,501 @@ interface ContributorDetailsProps {
     toggleTheme?: () => void;
 }
 
+interface Activite {
+    completed: number;
+    volume: number;
+    offers: number;
+    accepted: number;
+    missed: number;
+    refused: number;
+    acceptance_rate: number | null;
+    last_activity_at: string | null;
+}
+
+interface Vehicule {
+    id: number;
+    matricule: string | null;
+    modele: string | null;
+    ville: string | null;
+    statut: string | null;
+    is_online: boolean;
+    category: string | null;
+    driver: { id: number; nom: string | null; prenom: string | null; telephone: string | null } | null;
+    activity: Activite;
+}
+
+interface Fiche {
+    contributor: { id: number; nom: string | null; prenom: string | null; telephone: string | null; email: string | null };
+    period: { from: string; to: string };
+    totals: { vehicles: number; online_now: number; completed: number; volume: number; offers: number; accepted: number; missed: number; refused: number };
+    vehicles: Vehicule[];
+    recent_courses: {
+        id: number;
+        created_at: string;
+        statut: string;
+        montant: number | null;
+        lieu_depart: string | null;
+        lieu_arrive: string | null;
+        chauffeur_nom: string | null;
+        chauffeur_prenom: string | null;
+    }[];
+}
+
+interface VehiculeLibre {
+    id: number;
+    matricule: string | null;
+    modele: string | null;
+    ville: string | null;
+    chauffeur_nom: string | null;
+    chauffeur_prenom: string | null;
+}
+
+const PERIODES = [
+    { jours: 7, libelle: "7 jours" },
+    { jours: 30, libelle: "30 jours" },
+    { jours: 90, libelle: "90 jours" },
+    { jours: 365, libelle: "12 mois" },
+];
+
+const isoLocal = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+const date = (iso: string | null, avecHeure = false) =>
+    iso
+        ? new Intl.DateTimeFormat("fr-FR", {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+              ...(avecHeure ? { hour: "2-digit", minute: "2-digit" } : {}),
+          }).format(new Date(iso.replace(" ", "T")))
+        : "—";
+
+const nomComplet = (nom: string | null, prenom: string | null) => [nom, prenom].filter(Boolean).join(" ") || "—";
+
+const TONS: Record<string, string> = {
+    TERMINEE: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300",
+    ANNULEE: "bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300",
+    "ANNULEE AUTO": "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300",
+    "NO DRIVER FOUND": "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300",
+};
+
+/**
+ * La fiche d'un contributeur : ses véhicules, et ce qu'en font leurs chauffeurs.
+ *
+ * Elle appelait `utilisateur/details-contributor`, qui n'a jamais existé, et
+ * restait sur « Contributeur introuvable ». Elle lit désormais
+ * `v3/admin/contributors/{id}`.
+ *
+ * L'activité se lit par le chauffeur **actuel** de chaque véhicule : les
+ * courses ne gardent pas le véhicule utilisé. L'encadré du bas le rappelle.
+ */
 export default function ContributorDetails({ onLogout = () => {}, theme = "light", toggleTheme = () => {} }: ContributorDetailsProps) {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const Api = new ApiService();
-    
-    const [contributor, setContributor] = useState<any>(null);
-    const [loading, setLoading] = useState(true);
-    const [showAssociateModal, setShowAssociateModal] = useState(false);
-    
-    // Modal State
-    const [searchQuery, setSearchQuery] = useState("");
-    const [searchResults, setSearchResults] = useState<any[]>([]);
-    const [searchLoading, setSearchLoading] = useState(false);
-    const [selectedVehicle, setSelectedVehicle] = useState<any>(null);
-    const [associating, setAssociating] = useState(false);
+
+    const [jours, setJours] = useState(30);
+    const [fiche, setFiche] = useState<Fiche | null>(null);
+    const [introuvable, setIntrouvable] = useState(false);
+    const [chargement, setChargement] = useState(true);
+
+    const [rattacher, setRattacher] = useState(false);
+    const [recherche, setRecherche] = useState("");
+    const [libres, setLibres] = useState<VehiculeLibre[]>([]);
+    const [envoi, setEnvoi] = useState(false);
+
+    const charger = useCallback(async () => {
+        const fin = new Date();
+        const debut = new Date();
+        debut.setDate(fin.getDate() - (jours - 1));
+
+        setChargement(true);
+        try {
+            const { data } = await new ApiService().getData(`v3/admin/contributors/${id}`, { from: isoLocal(debut), to: isoLocal(fin) });
+            if (data.success) setFiche(data.data);
+            else setIntrouvable(true);
+        } catch {
+            toast.error("Impossible de récupérer la fiche");
+        } finally {
+            setChargement(false);
+        }
+    }, [id, jours]);
 
     useEffect(() => {
-        fetchContributorDetails();
-    }, [id]);
+        charger();
+    }, [charger]);
 
-    const fetchContributorDetails = async () => {
-        setLoading(true);
+    const chercherVehicules = async () => {
+        if (recherche.trim().length < 2) return;
         try {
-            const { data } = await Api.getData(`utilisateur/details-contributor/${id}`);
-            if (data.success) {
-                setContributor(data.data);
-            } else {
-                toast.error(data.message || "Erreur lors du chargement du contributeur");
-            }
-        } catch (error) {
-            toast.error("Impossible de récupérer les détails");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleSearchVehicle = async () => {
-        if (!searchQuery.trim()) return;
-        setSearchLoading(true);
-        try {
-            const { data } = await Api.getDatawithPagination(`utilisateur/search-vehicle-contributor?q=${encodeURIComponent(searchQuery)}`, false);
-            if (data.success) {
-                setSearchResults(data.data.data || data.data);
-            }
-        } catch (error) {
+            const { data } = await new ApiService().getData(`v3/admin/contributors/search/vehicles?q=${encodeURIComponent(recherche.trim())}`);
+            if (data.success) setLibres(data.data);
+        } catch {
             toast.error("Erreur lors de la recherche des véhicules");
-        } finally {
-            setSearchLoading(false);
         }
     };
 
-    const handleAssociate = async () => {
-        if (!selectedVehicle) return;
-        setAssociating(true);
+    const rattacherVehicule = async (vehicule: VehiculeLibre) => {
+        setEnvoi(true);
         try {
-            const formData = new FormData();
-            formData.append("user_id", id!);
-            formData.append("vehicle_id", selectedVehicle.id);
-            
-            const { data } = await Api.postData("utilisateur/add-contributor", formData);
+            const { data } = await new ApiService().postData("v3/admin/contributors", { user_id: Number(id), vehicle_id: vehicule.id });
             if (data.success) {
-                toast.success("Véhicule associé avec succès");
-                setShowAssociateModal(false);
-                setSelectedVehicle(null);
-                setSearchQuery("");
-                setSearchResults([]);
-                fetchContributorDetails(); // Refresh details
+                toast.success(`${vehicule.matricule ?? "Véhicule"} rattaché`);
+                setRattacher(false);
+                setRecherche("");
+                setLibres([]);
+                charger();
             } else {
-                toast.error(data.message || "Erreur lors de l'association");
+                toast.error(data.message || "Rattachement refusé");
             }
-        } catch (error) {
-            toast.error("Impossible d'associer le véhicule");
+        } catch (e: unknown) {
+            const message = (e as { response?: { data?: { message?: string } } })?.response?.data?.message;
+            toast.error(message || "Impossible de rattacher le véhicule");
         } finally {
-            setAssociating(false);
+            setEnvoi(false);
         }
     };
 
-    if (loading) {
+    /*
+     * Dissocier : un chauffeur (son véhicule), ou tous d'un coup.
+     *
+     * Le lien en base est contributeur ↔ véhicule ; le chauffeur suit le
+     * véhicule. Rien n'est supprimé d'autre : le véhicule, son chauffeur et le
+     * compte du contributeur restent dans la flotte.
+     */
+    const dissocier = async (vehicule: Vehicule) => {
+        const chauffeur = vehicule.driver ? nomComplet(vehicule.driver.nom, vehicule.driver.prenom) : null;
+        const choix = await Swal.fire({
+            title: chauffeur ? `Dissocier ${chauffeur} ?` : `Dissocier ${vehicule.matricule ?? "ce véhicule"} ?`,
+            text: `Le véhicule ${vehicule.matricule ?? ""} et son chauffeur ne seront plus rattachés à ce contributeur. Ils restent dans la flotte.`,
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Dissocier",
+            cancelButtonText: "Annuler",
+        });
+        if (!choix.isConfirmed) return;
+
+        try {
+            const { data } = await new ApiService().deleteData(`v3/admin/contributors/${id}/vehicles/${vehicule.id}`);
+            if (data.success) {
+                toast.success(chauffeur ? `${chauffeur} dissocié` : "Véhicule dissocié");
+                // Le dernier parti, la fiche n'a plus d'objet : retour à la liste.
+                if (fiche && fiche.vehicles.length <= 1) navigate("/contributors");
+                else charger();
+            } else {
+                toast.error(data.message || "Impossible de dissocier");
+            }
+        } catch {
+            toast.error("Impossible de dissocier le chauffeur");
+        }
+    };
+
+    const dissocierTout = async () => {
+        if (!fiche) return;
+        const n = fiche.vehicles.length;
+        const choix = await Swal.fire({
+            title: `Dissocier les ${n} chauffeur${n > 1 ? "s" : ""} ?`,
+            text: `${nomComplet(fiche.contributor.nom, fiche.contributor.prenom)} ne sera plus rattaché à aucun véhicule et sortira de la liste des contributeurs. Les véhicules et leurs chauffeurs restent dans la flotte.`,
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: "Tout dissocier",
+            cancelButtonText: "Annuler",
+            confirmButtonColor: "#dc2626",
+        });
+        if (!choix.isConfirmed) return;
+
+        try {
+            const { data } = await new ApiService().deleteData(`v3/admin/contributors/${id}/vehicles`);
+            if (data.success) {
+                toast.success(data.message || "Chauffeurs dissociés");
+                navigate("/contributors");
+            } else {
+                toast.error(data.message || "Impossible de dissocier");
+            }
+        } catch {
+            toast.error("Impossible de dissocier les chauffeurs");
+        }
+    };
+
+    if (introuvable) {
         return (
             <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
-                <div className="flex h-[80vh] items-center justify-center">
+                <div className="p-8 text-center text-slate-500">Ce compte n'est rattaché à aucun véhicule.</div>
+            </MainLayout>
+        );
+    }
+
+    if (!fiche) {
+        return (
+            <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
+                <div className="flex h-[60vh] items-center justify-center">
                     <Loading />
                 </div>
             </MainLayout>
         );
     }
 
-    if (!contributor) {
-        return (
-            <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
-                <div className="p-8 text-center text-slate-500">
-                    Contributeur introuvable
-                </div>
-            </MainLayout>
-        );
-    }
+    const { contributor: c, totals: t } = fiche;
+    const tauxAcceptation = t.offers ? Math.round((t.accepted / t.offers) * 1000) / 10 : null;
 
     return (
         <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
-            <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 pb-12">
-                {/* Header Profile Section */}
-                <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-8 py-8 flex flex-col md:flex-row gap-6 md:items-center justify-between shadow-sm sticky top-0 z-10">
-                    <div className="flex items-center gap-6">
-                        <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-full border border-slate-200 dark:border-slate-700 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                            <span className="material-symbols-outlined text-slate-500">arrow_back</span>
+            <header>
+                <div className="px-8 py-6 max-w-7xl mx-auto flex items-start justify-between gap-6 flex-wrap">
+                    <div className="flex items-start gap-4">
+                        <button
+                            onClick={() => navigate("/contributors")}
+                            title="Retour aux contributeurs"
+                            className="mt-1 size-9 grid place-items-center rounded-lg border border-slate-300 dark:border-slate-700 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800"
+                        >
+                            <ArrowLeft className="size-4" />
                         </button>
-                        <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-primary to-primary/60 flex items-center justify-center shadow-lg shadow-primary/20 text-white font-black text-2xl uppercase">
-                            {contributor.nom?.charAt(0)}
-                        </div>
                         <div>
-                            <nav className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5">
-                                <span>Contributeur</span>
-                                <span className="material-symbols-outlined text-[10px]">chevron_right</span>
-                                <span className="text-primary">Profil Détail</span>
-                            </nav>
-                            <h2 className="text-3xl font-black text-slate-800 dark:text-white tracking-tight">{contributor.nom} {contributor.prenom}</h2>
-                            <div className="flex items-center gap-4 mt-2 text-sm text-slate-500 dark:text-slate-400 font-medium">
-                                <span className="flex items-center gap-1.5"><span className="material-symbols-outlined text-[16px]">call</span> {contributor.telephone || "Non renseigné"}</span>
-                                <span className="flex items-center gap-1.5"><span className="material-symbols-outlined text-[16px]">mail</span> {contributor.email || "Non renseigné"}</span>
-                            </div>
+                            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{nomComplet(c.nom, c.prenom)}</h1>
+                            <p className="text-sm text-slate-500 mt-1">
+                                {[c.telephone, c.email].filter(Boolean).join(" · ") || `Compte #${c.id}`}
+                            </p>
                         </div>
                     </div>
-                    <button onClick={() => setShowAssociateModal(true)}
-                        className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-full font-bold text-sm shadow-xl shadow-primary/25 transition-all outline-none">
-                        <span className="material-symbols-outlined">add_circle</span>
-                        Associer un Véhicule
+                    <div className="flex items-center gap-2 shrink-0">
+                    <button type="button" onClick={() => notifier({ destinataires: [{ id: c.id, nom: [c.nom, c.prenom].filter(Boolean).join(" ") }] })} className="px-4 py-2 rounded-lg text-sm font-medium border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800">Notifier</button>
+                    <button
+                        onClick={() => setRattacher(true)}
+                        className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white hover:bg-primary/90 dark:bg-primary-container dark:hover:bg-primary-container/90 transition-colors shrink-0"
+                    >
+                        Rattacher un véhicule
                     </button>
-                </header>
-
-                {/* Dashboard Content */}
-                <div className="p-8 max-w-7xl mx-auto w-full space-y-8">
-                    
-                    {/* Stats summary */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-5">
-                            <div className="w-12 h-12 rounded-xl bg-orange-100 dark:bg-orange-500/10 flex items-center justify-center">
-                                <span className="material-symbols-outlined text-orange-500 text-2xl">directions_car</span>
-                            </div>
-                            <div>
-                                <p className="text-xs font-extrabold text-slate-400 uppercase tracking-wider mb-1">Total Véhicules</p>
-                                <p className="text-3xl font-black text-slate-800 dark:text-white">{contributor.vehicles?.length || 0}</p>
-                            </div>
-                        </div>
-                        {/* More stats could go here */}
                     </div>
+                </div>
+            </header>
 
-                    {/* Vehicles Table */}
-                    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-                        <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                            <h3 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                                <span className="material-symbols-outlined text-primary">airport_shuttle</span>
-                                Flotte du Contributeur
-                            </h3>
+            <main className={cx("px-8 pb-8 max-w-7xl mx-auto space-y-6 transition-opacity", chargement && "opacity-60")}>
+                <div role="radiogroup" aria-label="Période" className="inline-flex rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-0.5">
+                    {PERIODES.map((p) => (
+                        <button
+                            key={p.jours}
+                            role="radio"
+                            aria-checked={p.jours === jours}
+                            onClick={() => setJours(p.jours)}
+                            className={cx(
+                                "px-3 py-1.5 rounded-md text-[13px] font-medium whitespace-nowrap transition-colors",
+                                p.jours === jours
+                                    ? "bg-primary text-white dark:bg-primary-container"
+                                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white",
+                            )}
+                        >
+                            {p.libelle}
+                        </button>
+                    ))}
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                    <StatCard label="Véhicules" value={t.vehicles} icon={Car} note={`${t.online_now} en ligne maintenant`} />
+                    <StatCard label="Courses terminées" value={t.completed.toLocaleString("fr-FR")} icon={CircleCheck} />
+                    <StatCard label="Volume des courses" value={`${t.volume.toLocaleString("fr-FR")} FCFA`} icon={Banknote} />
+                    <StatCard
+                        label="Propositions acceptées"
+                        value={tauxAcceptation === null ? "—" : `${tauxAcceptation.toLocaleString("fr-FR")} %`}
+                        icon={Hand}
+                        note={
+                            t.offers
+                                ? `${t.accepted} sur ${t.offers} · ${t.missed} sans réponse · ${t.refused} refusées`
+                                : "Aucune course proposée sur la période"
+                        }
+                    />
+                </div>
+
+                <section className="rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-hidden">
+                    <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                            <h2 className="text-[16px] font-bold tracking-tight text-slate-900 dark:text-white">Activité des chauffeurs</h2>
+                            <p className="mt-1 text-[13px] text-slate-500">Un véhicule par ligne, avec le chauffeur qui le conduit aujourd'hui.</p>
                         </div>
-
-                        <div className="overflow-x-auto no-scrollbar">
-                            <table className="w-full text-left border-collapse min-w-[800px]">
-                                <thead>
-                                    <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
-                                        <th className="px-8 py-5 text-[11px] font-extrabold text-slate-400 uppercase tracking-widest leading-none">Photo</th>
-                                        <th className="px-6 py-5 text-[11px] font-extrabold text-slate-400 uppercase tracking-widest leading-none">Mnémonique</th>
-                                        <th className="px-6 py-5 text-[11px] font-extrabold text-slate-400 uppercase tracking-widest leading-none">Détails Techniques</th>
-                                        <th className="px-6 py-5 text-[11px] font-extrabold text-slate-400 uppercase tracking-widest leading-none">Chauffeur Assigné</th>
-                                        <th className="px-8 py-5 text-[11px] font-extrabold text-slate-400 uppercase tracking-widest leading-none">Statut</th>
+                        {fiche.vehicles.length > 1 && (
+                            <button
+                                onClick={dissocierTout}
+                                className="px-3 py-1.5 rounded-lg text-xs font-medium border border-rose-300 text-rose-700 hover:bg-rose-50 dark:border-rose-900/60 dark:text-rose-400 dark:hover:bg-rose-950/30"
+                            >
+                                Dissocier tous les chauffeurs
+                            </button>
+                        )}
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm min-w-[980px]">
+                            <thead className="text-xs uppercase text-slate-500 bg-slate-50 dark:bg-slate-800/40 text-left">
+                                <tr>
+                                    <th className="px-5 py-3 font-semibold">Véhicule</th>
+                                    <th className="px-5 py-3 font-semibold">Chauffeur</th>
+                                    <th className="px-5 py-3 font-semibold text-right">Courses</th>
+                                    <th className="px-5 py-3 font-semibold text-right">Volume</th>
+                                    <th className="px-5 py-3 font-semibold text-right">Propositions</th>
+                                    <th className="px-5 py-3 font-semibold text-right">Acceptées</th>
+                                    <th className="px-5 py-3 font-semibold">Dernière activité</th>
+                                    <th className="px-5 py-3" />
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+                                {fiche.vehicles.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={8} className="px-5 py-12 text-center text-slate-500">Aucun véhicule rattaché.</td>
                                     </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                    {(contributor.vehicles || []).length > 0 ? (
-                                        contributor.vehicles.map((v: any, index: number) => (
-                                            <tr key={index} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors group">
-                                                <td className="px-8 py-4">
-                                                    <div className="w-16 h-12 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 overflow-hidden flex items-center justify-center">
-                                                        {v.image ? (
-                                                            <img src={v.image} alt={v.matricule} className="w-full h-full object-cover" />
-                                                        ) : (
-                                                            <span className="material-symbols-outlined text-slate-300">directions_car</span>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <p className="font-bold text-slate-800 dark:text-white uppercase">{v.matricule}</p>
-                                                    <p className="text-xs font-medium text-primary bg-primary/10 inline-block px-2 py-0.5 rounded mt-1">{v.categorie?.libelle || "STANDARD"}</p>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">{v.modele || "Non défini"}</p>
-                                                    <div className="flex flex-wrap items-center gap-3 mt-1.5 opacity-80">
-                                                        {v.is_auto && <span className="text-[10px] uppercase font-bold text-slate-500 flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">settings</span> Auto</span>}
-                                                        {v.is_clim && <span className="text-[10px] uppercase font-bold text-slate-500 flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">ac_unit</span> Clim</span>}
-                                                        <span className="text-[10px] uppercase font-bold text-slate-500 flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">reduce_capacity</span> {v.nb_place || 4} pl.</span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    {v.chauffeur ? (
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 font-bold text-xs uppercase">
-                                                                {v.chauffeur.nom?.charAt(0)}
-                                                            </div>
-                                                            <div>
-                                                                <p className="text-sm font-bold text-slate-700 dark:text-slate-200 line-clamp-1">{v.chauffeur.nom} {v.chauffeur.prenom}</p>
-                                                                <p className="text-[11px] font-medium text-slate-400">{v.chauffeur.telephone}</p>
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        <span className="text-xs font-medium text-slate-400 italic">Aucun chauffeur</span>
-                                                    )}
-                                                </td>
-                                                <td className="px-8 py-4">
-                                                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider ${
-                                                        v.statut === 'LIBRE' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' :
-                                                        v.statut === 'OCCUPE' ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400' :
-                                                        'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-400'
-                                                    }`}>
-                                                        <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
-                                                        {v.statut || "INACTIF"}
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        ))
-                                    ) : (
-                                        <tr>
-                                            <td colSpan={5} className="px-8 py-16 text-center">
-                                                <div className="flex flex-col items-center justify-center opacity-50">
-                                                    <span className="material-symbols-outlined text-5xl text-slate-300 mb-3">car_crash</span>
-                                                    <p className="text-slate-500 font-medium">Ce contributeur n'a aucun véhicule associé.</p>
-                                                </div>
+                                ) : (
+                                    fiche.vehicles.map((v) => (
+                                        <tr key={v.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                                            <td className="px-5 py-3">
+                                                <p className="font-semibold text-slate-900 dark:text-white">{v.matricule ?? "—"}</p>
+                                                <p className="text-xs text-slate-500">
+                                                    {[v.modele, v.category, v.ville].filter(Boolean).join(" · ") || "—"}
+                                                </p>
+                                            </td>
+                                            <td className="px-5 py-3">
+                                                {v.driver ? (
+                                                    <>
+                                                        <p className="flex items-center gap-2 text-slate-800 dark:text-slate-200">
+                                                            {/* En ligne : un point et le mot, jamais la couleur seule. */}
+                                                            <span
+                                                                className={cx("size-2 rounded-full", v.is_online ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-600")}
+                                                                aria-hidden
+                                                            />
+                                                            {nomComplet(v.driver.nom, v.driver.prenom)}
+                                                        </p>
+                                                        <p className="text-xs text-slate-500 pl-4">
+                                                            {v.is_online ? "En ligne" : "Hors ligne"}
+                                                            {v.driver.telephone ? ` · ${v.driver.telephone}` : ""}
+                                                        </p>
+                                                    </>
+                                                ) : (
+                                                    <span className="text-slate-400">Aucun chauffeur</span>
+                                                )}
+                                            </td>
+                                            <td className="px-5 py-3 text-right tabular-nums font-semibold text-slate-900 dark:text-white">{v.activity.completed}</td>
+                                            <td className="px-5 py-3 text-right tabular-nums text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                                                {v.activity.volume.toLocaleString("fr-FR")} <span className="text-xs text-slate-500">FCFA</span>
+                                            </td>
+                                            <td className="px-5 py-3 text-right tabular-nums text-slate-700 dark:text-slate-300">{v.activity.offers}</td>
+                                            <td className="px-5 py-3 text-right tabular-nums text-slate-700 dark:text-slate-300">
+                                                {v.activity.acceptance_rate === null ? "—" : `${v.activity.acceptance_rate.toLocaleString("fr-FR")} %`}
+                                            </td>
+                                            <td className="px-5 py-3 text-slate-600 dark:text-slate-400 whitespace-nowrap">{date(v.activity.last_activity_at)}</td>
+                                            <td className="px-5 py-3 text-right">
+                                                {v.driver && (
+                                                    <button type="button" onClick={() => notifier({ destinataires: [{ id: v.driver?.id, nom: [v.driver?.nom, v.driver?.prenom].filter(Boolean).join(" ") }] })} className="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 whitespace-nowrap">Notifier</button>
+                                                )}
+                                                <button
+                                                    onClick={() => dissocier(v)}
+                                                    className="px-3 py-1.5 rounded-lg text-xs font-medium text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 whitespace-nowrap"
+                                                >
+                                                    Dissocier
+                                                </button>
                                             </td>
                                         </tr>
-                                    )}
-                                </tbody>
-                            </table>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section className="rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-hidden">
+                    <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-800">
+                        <h2 className="text-[16px] font-bold tracking-tight text-slate-900 dark:text-white">Dernières courses</h2>
+                        <p className="mt-1 text-[13px] text-slate-500">Les vingt plus récentes de ces chauffeurs, quelle que soit la période.</p>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm min-w-[760px]">
+                            <thead className="text-xs uppercase text-slate-500 bg-slate-50 dark:bg-slate-800/40 text-left">
+                                <tr>
+                                    <th className="px-5 py-3 font-semibold">Quand</th>
+                                    <th className="px-5 py-3 font-semibold">Chauffeur</th>
+                                    <th className="px-5 py-3 font-semibold">Trajet</th>
+                                    <th className="px-5 py-3 font-semibold text-right">Montant</th>
+                                    <th className="px-5 py-3 font-semibold">État</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+                                {fiche.recent_courses.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={5} className="px-5 py-10 text-center text-slate-500">Aucune course pour ces chauffeurs.</td>
+                                    </tr>
+                                ) : (
+                                    fiche.recent_courses.map((course) => (
+                                        <tr key={course.id}>
+                                            <td className="px-5 py-3 text-slate-700 dark:text-slate-300 whitespace-nowrap">{date(course.created_at, true)}</td>
+                                            <td className="px-5 py-3 text-slate-800 dark:text-slate-200">{nomComplet(course.chauffeur_nom, course.chauffeur_prenom)}</td>
+                                            <td className="px-5 py-3 text-slate-600 dark:text-slate-400">
+                                                <p className="truncate max-w-[320px]">{course.lieu_depart ?? "—"}</p>
+                                                <p className="truncate max-w-[320px] text-xs">→ {course.lieu_arrive ?? "—"}</p>
+                                            </td>
+                                            <td className="px-5 py-3 text-right tabular-nums text-slate-900 dark:text-white whitespace-nowrap">
+                                                {(course.montant ?? 0).toLocaleString("fr-FR")} <span className="text-xs text-slate-500">FCFA</span>
+                                            </td>
+                                            <td className="px-5 py-3">
+                                                <span className={cx("px-2 py-0.5 rounded-full text-xs font-medium", TONS[course.statut] ?? "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300")}>
+                                                    {course.statut}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <p className="text-[12px] text-slate-500 dark:text-slate-400">
+                    Les courses n'enregistrent pas le véhicule utilisé : l'activité est celle du chauffeur actuel de chaque véhicule. Un
+                    chauffeur qui a changé de véhicule y apporte son historique.
+                </p>
+            </main>
+
+            {rattacher && (
+                <div className="fixed inset-0 z-[70] grid place-items-center bg-slate-900/50 p-4" onClick={() => setRattacher(false)}>
+                    <div
+                        className="w-full max-w-lg rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900"
+                        onClick={(evenement) => evenement.stopPropagation()}
+                    >
+                        <h2 className="text-[16px] font-bold text-slate-900 dark:text-white">Rattacher un véhicule</h2>
+                        <p className="mt-1 text-[13px] text-slate-500">Seuls les véhicules sans contributeur sont proposés.</p>
+
+                        <div className="mt-4 flex gap-2">
+                            <input
+                                autoFocus
+                                value={recherche}
+                                onChange={(evenement) => setRecherche(evenement.target.value)}
+                                onKeyDown={(evenement) => evenement.key === "Enter" && chercherVehicules()}
+                                placeholder="Matricule, modèle ou chauffeur"
+                                className="flex-1 px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-white"
+                            />
+                            <button
+                                onClick={chercherVehicules}
+                                className="px-4 py-2 rounded-lg text-sm font-medium border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                            >
+                                Chercher
+                            </button>
+                        </div>
+
+                        <div className="mt-4 max-h-72 overflow-y-auto divide-y divide-slate-200 dark:divide-slate-800">
+                            {libres.map((v) => (
+                                <div key={v.id} className="flex items-center justify-between gap-3 py-2.5">
+                                    <div className="min-w-0">
+                                        <p className="font-semibold text-sm text-slate-900 dark:text-white">{v.matricule ?? "—"}</p>
+                                        <p className="text-xs text-slate-500 truncate">
+                                            {[v.modele, v.ville, nomComplet(v.chauffeur_nom, v.chauffeur_prenom)].filter((x) => x && x !== "—").join(" · ")}
+                                        </p>
+                                    </div>
+                                    <button
+                                        disabled={envoi}
+                                        onClick={() => rattacherVehicule(v)}
+                                        className="px-3 py-1.5 rounded-lg text-xs font-medium bg-primary text-white hover:bg-primary/90 dark:bg-primary-container disabled:opacity-40 shrink-0"
+                                    >
+                                        Rattacher
+                                    </button>
+                                </div>
+                            ))}
+                            {libres.length === 0 && <p className="py-6 text-center text-sm text-slate-500">Tapez au moins deux caractères, puis Entrée.</p>}
                         </div>
                     </div>
                 </div>
-
-                {/* Associate Vehicle Modal */}
-                {showAssociateModal && (
-                    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-                        <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-lg shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col max-h-[90vh] overflow-hidden animate-In">
-                            <div className="px-8 py-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50 dark:bg-slate-800/30">
-                                <div>
-                                    <h3 className="text-xl font-bold text-slate-800 dark:text-white">Associer un Véhicule</h3>
-                                    <p className="text-sm font-medium text-slate-500 mt-1">Recherchez dans la flotte OnGo</p>
-                                </div>
-                                <button onClick={() => setShowAssociateModal(false)} className="w-8 h-8 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors shadow-sm">
-                                    <span className="material-symbols-outlined text-lg">close</span>
-                                </button>
-                            </div>
-                            
-                            <div className="p-8 overflow-y-auto flex-1">
-                                <div className="space-y-6">
-                                    <div className="relative">
-                                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2 block">Recherche (Matricule)</label>
-                                        <div className="flex items-center gap-3">
-                                            <div className="relative flex-1">
-                                                <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">search</span>
-                                                <input 
-                                                    type="text" 
-                                                    placeholder="Entrez le matricule du véhicule..." 
-                                                    value={searchQuery}
-                                                    onChange={e => setSearchQuery(e.target.value)}
-                                                    onKeyDown={e => e.key === 'Enter' && handleSearchVehicle()}
-                                                    className="w-full pl-12 pr-4 py-3.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all font-medium text-slate-700 dark:text-slate-200"
-                                                />
-                                            </div>
-                                            <button 
-                                                onClick={handleSearchVehicle}
-                                                disabled={searchLoading}
-                                                className="h-[52px] px-6 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition-colors shrink-0 flex items-center justify-center">
-                                                {searchLoading ? <Loading /> : "Chercher"}
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    {/* Search Results */}
-                                    {searchResults.length > 0 && (
-                                        <div className="space-y-3 pt-2">
-                                            <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Résultats de la recherche</p>
-                                            <div className="max-h-64 overflow-y-auto pr-2 space-y-2 no-scrollbar">
-                                                {searchResults.map(v => (
-                                                    <div 
-                                                        key={v.id} 
-                                                        onClick={() => setSelectedVehicle(v)}
-                                                        className={`p-4 rounded-xl border flex flex-col sm:flex-row gap-4 items-center cursor-pointer transition-all ${selectedVehicle?.id === v.id ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-slate-200 dark:border-slate-700 hover:border-primary/50'}`}>
-                                                        <div className="w-16 h-12 rounded bg-slate-100 flex items-center justify-center shrink-0">
-                                                            {v.image ? <img src={v.image} className="w-full h-full object-cover rounded" /> : <span className="material-symbols-outlined text-slate-400">airport_shuttle</span>}
-                                                        </div>
-                                                        <div className="flex-1 text-center sm:text-left">
-                                                            <p className="font-bold text-slate-800 dark:text-white uppercase">{v.matricule}</p>
-                                                            <div className="flex items-center gap-2 mt-0.5">
-                                                                <p className="text-xs text-slate-500">{v.modele}</p>
-                                                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500">{v.categorie?.libelle || "Catégorie"}</span>
-                                                            </div>
-                                                            
-                                                            {v.chauffeur && (
-                                                                <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800">
-                                                                    <div className="flex items-center justify-between gap-4">
-                                                                        <div className="flex items-center gap-2">
-                                                                            <span className="material-symbols-outlined text-[14px] text-slate-400">person</span>
-                                                                            <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400">
-                                                                                {v.chauffeur.nom} {v.chauffeur.prenom}
-                                                                            </span>
-                                                                        </div>
-                                                                        <div className="flex flex-col items-end">
-                                                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Solde</span>
-                                                                            <span className="text-xs font-black text-emerald-600 dark:text-emerald-400">
-                                                                                {new Intl.NumberFormat('fr-FR').format(v.chauffeur.balance || 0)} XAF
-                                                                            </span>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                        <div className="shrink-0">
-                                                            <span className={`material-symbols-outlined transition-colors ${selectedVehicle?.id === v.id ? 'text-primary' : 'text-slate-200 dark:text-slate-700'}`}>check_circle</span>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {searchResults.length === 0 && searchQuery && !searchLoading && (
-                                        <p className="text-center text-slate-500 text-sm py-4 italic">Aucun véhicule trouvé correspondant.</p>
-                                    )}
-                                </div>
-                            </div>
-                            
-                            <div className="px-8 py-5 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/30 flex justify-end gap-3">
-                                <button onClick={() => setShowAssociateModal(false)} className="px-6 py-2.5 text-sm font-bold text-slate-600 hover:text-slate-800 dark:text-slate-300 transition-colors">
-                                    Annuler
-                                </button>
-                                <button 
-                                    onClick={handleAssociate}
-                                    disabled={!selectedVehicle || associating}
-                                    className="px-6 py-2.5 rounded-full bg-primary hover:bg-primary/90 text-white font-bold text-sm shadow-md shadow-primary/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
-                                    {associating ? <Loading /> : "Confirmer l'Association"}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-            </div>
+            )}
         </MainLayout>
     );
 }

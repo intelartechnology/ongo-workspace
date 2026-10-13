@@ -69,6 +69,10 @@ class ApiService {
         return this.api.post(fullUrl);
     }
 
+    public async deleteData(url: string): Promise<AxiosResponse> {
+        return this.api.delete(url);
+    }
+
     public async updateData(url: string, data: any): Promise<AxiosResponse> {
         return this.api.put(url, data);
     }

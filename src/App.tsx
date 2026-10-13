@@ -27,6 +27,9 @@ import EatDashboard from './pages/EatDashboard';
 import EatPayouts from './pages/EatPayouts';
 import EatTreasury from './pages/EatTreasury';
 import EatCouriers from './pages/EatCouriers';
+import EatCourierDetail from './pages/EatCourierDetail';
+import FinanceBalances from './pages/FinanceBalances';
+import FinanceAccount from './pages/FinanceAccount';
 import EatPromoCodes from './pages/EatPromoCodes';
 import EatAudiences from './pages/EatAudiences';
 import EatFilters from './pages/EatFilters';
@@ -268,6 +271,38 @@ function App() {
           element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>
               <EatCouriers onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/finance/debts"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <FinanceBalances key="debt" sens="debt" onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/finance/credits"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <FinanceBalances key="credit" sens="credit" onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/finance/accounts/:id"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <FinanceAccount onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/eat-couriers/:id"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <EatCourierDetail onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
             </ProtectedRoute>
           }
         />

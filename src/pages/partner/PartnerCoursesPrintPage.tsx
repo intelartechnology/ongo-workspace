@@ -56,7 +56,7 @@ const PartnerCoursesPrintPage: React.FC<PartnerCoursesPrintPageProps> = ({ user 
                 </button>
                 <button 
                     onClick={() => window.print()}
-                    className="bg-[#00327d] text-white px-8 py-3 rounded-full font-bold shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+                    className="bg-[#00327d] text-white px-8 py-3 rounded-full font-bold hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
                 >
                     <span className="material-symbols-outlined">print</span>
                     Imprimer le Rapport
@@ -64,13 +64,13 @@ const PartnerCoursesPrintPage: React.FC<PartnerCoursesPrintPageProps> = ({ user 
             </div>
 
             {/* Report Container */}
-            <div className="max-w-4xl mx-auto bg-white shadow-2xl print:shadow-none border border-slate-100 print:border-none rounded-3xl print:rounded-none overflow-hidden p-8 sm:p-12">
+            <div className="max-w-4xl mx-auto bg-white border border-slate-100 print:border-none rounded-xl print:rounded-none overflow-hidden p-8 sm:p-12">
                 
                 {/* Header */}
                 <div className="flex justify-between items-start border-b-2 border-slate-100 pb-10 mb-10">
                     <div>
                         <div className="flex items-center gap-3 mb-6">
-                            <div className="w-12 h-12 bg-[#00327d] rounded-2xl flex items-center justify-center shadow-lg shadow-blue-900/20">
+                            <div className="w-12 h-12 bg-[#00327d] rounded-xl flex items-center justify-center">
                                 <span className="material-symbols-outlined text-white text-3xl">analytics</span>
                             </div>
                             <h1 className="text-3xl font-black text-[#00327d] tracking-tighter uppercase">Rapport de Flotte</h1>
@@ -89,18 +89,18 @@ const PartnerCoursesPrintPage: React.FC<PartnerCoursesPrintPageProps> = ({ user 
 
                 {/* Summary Tiles */}
                 <div className="grid grid-cols-2 gap-6 mb-12">
-                    <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                    <div className="bg-slate-50 p-6 rounded-xl border border-slate-100">
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Courses</p>
                         <p className="text-3xl font-black text-[#00327d]">{courses.length}</p>
                     </div>
-                    <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100">
+                    <div className="bg-blue-50 p-6 rounded-xl border border-blue-100">
                         <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1">Chiffre d'Affaires</p>
                         <p className="text-3xl font-black text-blue-900">{totalAmount.toLocaleString()} <span className="text-sm">FCFA</span></p>
                     </div>
                 </div>
 
                 {/* Main Table */}
-                <div className="overflow-hidden rounded-2xl border border-slate-100">
+                <div className="overflow-hidden rounded-xl border border-slate-100">
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-slate-50/80 border-b border-slate-100">

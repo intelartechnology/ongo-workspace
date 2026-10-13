@@ -12,6 +12,7 @@ import {
     ResponsiveContainer, 
     Cell
 } from 'recharts';
+import { Avatar } from "../../components/ui";
 
 interface PartnerDashboardProps {
     onLogout: () => void;
@@ -82,7 +83,7 @@ const PartnerDashboard: React.FC<PartnerDashboardProps> = ({ onLogout, user }) =
     const CustomTooltip = ({ active, payload, label }: any) => {
         if (active && payload && payload.length) {
             return (
-                <div className="bg-[#191b22] px-4 py-3 rounded-2xl shadow-2xl border border-white/10 backdrop-blur-md">
+                <div className="bg-[#191b22] px-4 py-3 rounded-xl border border-white/10 backdrop-blur-md">
                     <p className="text-[10px] font-black text-white/40 uppercase tracking-widest mb-1">{label}</p>
                     <p className="text-sm font-black text-white">
                         {payload[0].value?.toLocaleString()} <span className="text-[10px] opacity-50">FCFA</span>
@@ -108,12 +109,12 @@ const PartnerDashboard: React.FC<PartnerDashboardProps> = ({ onLogout, user }) =
                     <h2 className="text-3xl font-extrabold text-[#00327d] tracking-tight mb-1">Partner Dashboard</h2>
                     <p className="text-[#434653] font-medium text-sm">Welcome back, {user?.nom}. Performance overview for your fleet.</p>
                 </div>
-                <div className="flex bg-white p-1 rounded-xl shadow-sm border border-[#c3c6d5]/15">
+                <div className="flex bg-white p-1 rounded-xl border border-[#c3c6d5]/15">
                    {periods.map(p => (
                        <button 
                         key={p.id}
                         onClick={() => setSelectedPeriod(p.id)}
-                        className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${selectedPeriod === p.id ? 'bg-[#00327d] text-white shadow-md' : 'text-[#434653] hover:bg-[#f3f3fc]'}`}
+                        className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${selectedPeriod === p.id ? 'bg-[#00327d] text-white ' : 'text-[#434653] hover:bg-[#f3f3fc]'}`}
                        >
                            {p.label}
                        </button>
@@ -124,7 +125,7 @@ const PartnerDashboard: React.FC<PartnerDashboardProps> = ({ onLogout, user }) =
             {/* Bento Metrics Grid */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
                 {/* Large Metric: Balance */}
-                <div className="md:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-[#c3c6d5]/15 flex flex-col justify-between group hover:border-[#00327d]/30 transition-colors">
+                <div className="md:col-span-2 bg-white p-6 rounded-xl border border-[#c3c6d5]/15 flex flex-col justify-between group hover:border-[#00327d]/30 transition-colors">
                     <div className="flex justify-between items-start">
                         <div>
                             {/* « Total Revenue » affichait 80 % du montant — la part
@@ -143,7 +144,7 @@ const PartnerDashboard: React.FC<PartnerDashboardProps> = ({ onLogout, user }) =
                                 {partnerStats?.commission_rate != null && ` · ${partnerStats.commission_rate} %`}
                             </p>
                         </div>
-                        <div className="bg-[#0047ab]/10 p-3 rounded-2xl group-hover:scale-110 transition-transform">
+                        <div className="bg-[#0047ab]/10 p-3 rounded-xl group-hover:scale-110 transition-transform">
                             <span className="material-symbols-outlined text-[#00327d] text-3xl">payments</span>
                         </div>
                     </div>
@@ -154,8 +155,8 @@ const PartnerDashboard: React.FC<PartnerDashboardProps> = ({ onLogout, user }) =
                 </div>
 
                 {/* Metric: Courses */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#c3c6d5]/15 hover:border-[#00327d]/30 transition-colors">
-                    <div className="bg-[#dae2ff] w-12 h-12 flex items-center justify-center rounded-2xl mb-4">
+                <div className="bg-white p-6 rounded-xl border border-[#c3c6d5]/15 hover:border-[#00327d]/30 transition-colors">
+                    <div className="bg-[#dae2ff] w-12 h-12 flex items-center justify-center rounded-xl mb-4">
                         <span className="material-symbols-outlined text-[#4e5e85] text-2xl">route</span>
                     </div>
                     <p className="text-[#434653] font-semibold text-[10px] uppercase tracking-widest mb-1 opacity-70">Total Courses</p>
@@ -166,8 +167,8 @@ const PartnerDashboard: React.FC<PartnerDashboardProps> = ({ onLogout, user }) =
                 </div>
 
                 {/* Metric: Vehicles */}
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-[#c3c6d5]/15 hover:border-[#00327d]/30 transition-colors">
-                    <div className="bg-[#ffdbcf] w-12 h-12 flex items-center justify-center rounded-2xl mb-4">
+                <div className="bg-white p-6 rounded-xl border border-[#c3c6d5]/15 hover:border-[#00327d]/30 transition-colors">
+                    <div className="bg-[#ffdbcf] w-12 h-12 flex items-center justify-center rounded-xl mb-4">
                         <span className="material-symbols-outlined text-[#651f00] text-2xl">local_taxi</span>
                     </div>
                     <p className="text-[#434653] font-semibold text-[10px] uppercase tracking-widest mb-1 opacity-70">Fleet Size</p>
@@ -182,7 +183,7 @@ const PartnerDashboard: React.FC<PartnerDashboardProps> = ({ onLogout, user }) =
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
                 {/* Earnings Chart Card */}
                 <div className="lg:col-span-2">
-                    <div className="bg-white p-8 rounded-2xl shadow-sm border border-[#c3c6d5]/15 min-h-[420px] relative overflow-hidden">
+                    <div className="bg-white p-8 rounded-xl border border-[#c3c6d5]/15 min-h-[420px] relative overflow-hidden">
                         <div className="flex justify-between items-start mb-10">
                             <div>
                                 <h4 className="text-xl font-black text-[#191b22] tracking-tight capitalize">{selectedPeriod} Earnings</h4>
@@ -236,22 +237,16 @@ const PartnerDashboard: React.FC<PartnerDashboardProps> = ({ onLogout, user }) =
 
                 {/* Latest Course Column */}
                 <div className="lg:col-span-1">
-                    <div className="bg-white h-full p-8 rounded-2xl shadow-sm border border-[#c3c6d5]/15">
+                    <div className="bg-white h-full p-8 rounded-xl border border-[#c3c6d5]/15">
                         <div className="flex justify-between items-center mb-6">
                             <h4 className="text-xl font-black text-[#191b22] tracking-tight">Latest Course</h4>
                             <Link className="text-[#00327d] text-xs font-black hover:underline px-3 py-1 bg-[#f3f3fc] rounded-lg" to="/partner/courses">View All</Link>
                         </div>
                         {latestCourse ? (
-                            <div className="bg-[#f3f3fc]/50 border border-[#c3c6d5]/10 p-5 rounded-2xl relative">
+                            <div className="bg-[#f3f3fc]/50 border border-[#c3c6d5]/10 p-5 rounded-xl relative">
                                 <div className="flex items-center gap-4 mb-6">
-                                    <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center border border-[#c3c6d5]/20 shadow-sm overflow-hidden p-0.5">
-                                        {latestCourse.courses.client?.photo ? (
-                                            <img alt="Client" className="w-full h-full object-cover rounded-xl" src={latestCourse.courses.client.photo} />
-                                        ) : (
-                                            <div className="bg-[#dae2ff] w-full h-full flex items-center justify-center">
-                                                <span className="material-symbols-outlined text-[#00327d]">person</span>
-                                            </div>
-                                        )}
+                                    <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center border border-[#c3c6d5]/20 overflow-hidden p-0.5">
+                                        <Avatar photo={latestCourse.courses.client?.photo} nom={latestCourse.courses.client?.nom || latestCourse.courses.client?.prenom} alt="Client" className="text-base rounded-xl" />
                                     </div>
                                     <div>
                                         <p className="text-[10px] font-black text-[#434653] uppercase opacity-50">Customer</p>
@@ -282,7 +277,7 @@ const PartnerDashboard: React.FC<PartnerDashboardProps> = ({ onLogout, user }) =
                                 </div>
                             </div>
                         ) : (
-                            <div className="flex flex-col items-center justify-center py-20 text-slate-400 bg-[#f3f3fc]/30 rounded-2xl border border-dashed border-[#c3c6d5]">
+                            <div className="flex flex-col items-center justify-center py-20 text-slate-400 bg-[#f3f3fc]/30 rounded-xl border border-dashed border-[#c3c6d5]">
                                 <span className="material-symbols-outlined text-4xl mb-2 opacity-20">history</span>
                                 <p className="text-xs font-bold opacity-40 uppercase tracking-widest">No recent data</p>
                             </div>
@@ -292,7 +287,7 @@ const PartnerDashboard: React.FC<PartnerDashboardProps> = ({ onLogout, user }) =
             </div>
 
             {/* Second Chart: Fleet Driver Balances */}
-            <div className="bg-white p-8 rounded-2xl shadow-sm border border-[#c3c6d5]/15">
+            <div className="bg-white p-8 rounded-xl border border-[#c3c6d5]/15">
                 <div className="flex justify-between items-center mb-8">
                     <div>
                         <h4 className="text-xl font-black text-[#191b22] tracking-tight">Driver Balances Overview</h4>

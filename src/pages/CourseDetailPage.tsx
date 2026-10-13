@@ -135,7 +135,7 @@ export default function CourseDetailPage({
                     <p className="text-slate-500 font-medium">Données de la course introuvables.</p>
                     <button
                         onClick={() => navigate("/courses")}
-                        className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold"
+                        className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white hover:bg-primary/90 dark:bg-primary-container dark:hover:bg-primary-container/90 transition-colors disabled:opacity-40"
                     >
                         Retour aux courses
                     </button>
@@ -148,23 +148,12 @@ export default function CourseDetailPage({
         <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
             <div className="flex flex-col min-h-screen bg-background-light dark:bg-background-dark font-display">
                 {/* Breadcrumb header */}
-                <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 py-4 flex items-center justify-between sticky top-0 z-10">
-                    <div className="flex items-center gap-2 text-sm text-slate-500">
-                        <span>Tableau de bord</span>
-                        <span className="material-symbols-outlined text-xs">chevron_right</span>
-                        <button onClick={() => navigate("/courses")} className="hover:underline">
-                            Courses
-                        </button>
-                        <span className="material-symbols-outlined text-xs">chevron_right</span>
-                        <span className="text-slate-900 dark:text-slate-100 font-medium">
-                            Détails #{course.id}
-                        </span>
-                    </div>
+                <header className="px-6 py-4 flex items-center justify-between">
                     <div className="flex gap-2">
 
                         <button
                             onClick={() => window.open(`/courses/${course.id}/print`, "_blank")}
-                            className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-bold flex items-center gap-2"
+                            className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white hover:bg-primary/90 dark:bg-primary-container dark:hover:bg-primary-container/90 transition-colors disabled:opacity-40 flex items-center gap-2"
                         >
                             <span className="material-symbols-outlined text-lg">print</span>
                             Exporter PDF
@@ -190,7 +179,7 @@ export default function CourseDetailPage({
                         </div>
 
                         {/* Tabbed Card */}
-                        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+                        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
                             {/* Tab Bar */}
                             <div className="flex border-b border-slate-200 dark:border-slate-800 px-6 overflow-x-auto">
                                 {tabs.map((tab) => (
@@ -198,7 +187,7 @@ export default function CourseDetailPage({
                                         key={tab.key}
                                         onClick={() => setActiveTab(tab.key)}
                                         className={`px-6 py-4 text-sm font-bold flex items-center gap-2 whitespace-nowrap transition-colors border-b-2 ${activeTab === tab.key
-                                            ? "border-primary text-primary"
+ ? "border-primary text-primary"
                                             : "border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-slate-300"
                                             }`}
                                     >
@@ -260,7 +249,7 @@ export default function CourseDetailPage({
                                                         </div>
                                                         <span
                                                             className={`px-3 py-1 text-xs font-bold rounded-full ${course.is_paid
-                                                                ? "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
+ ? "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
                                                                 : "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
                                                                 }`}
                                                         >
@@ -418,7 +407,7 @@ export default function CourseDetailPage({
                                                                     </td>
                                                                     <td
                                                                         className={`py-4 px-6 text-sm font-medium ${balance < 0
-                                                                            ? "text-red-500"
+ ? "text-red-500"
                                                                             : "text-primary"
                                                                             }`}
                                                                     >
@@ -499,8 +488,8 @@ export default function CourseDetailPage({
                                                     ].map((card) => (
                                                         <div
                                                             key={card.label}
-                                                            className={`p-4 rounded-xl border shadow-sm ${card.accent
-                                                                ? "bg-primary/5 dark:bg-primary/10 border-primary/10"
+                                                            className={`p-4 rounded-xl border ${card.accent
+ ? "bg-primary/5 dark:bg-primary/10 border-primary/10"
                                                                 : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800"
                                                                 }`}
                                                         >
@@ -527,7 +516,7 @@ export default function CourseDetailPage({
                                                     ].map((card) => (
                                                         <div
                                                             key={card.label}
-                                                            className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm"
+                                                            className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 "
                                                         >
                                                             <span className="material-symbols-outlined text-xl text-slate-400">{card.icon}</span>
                                                             <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mt-1">{card.label}</p>

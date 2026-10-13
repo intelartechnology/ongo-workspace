@@ -5,7 +5,9 @@ import { toast } from "react-toastify";
 import Loading from "../components/Loading";
 import MainLayout from "./MainLayout";
 import { useNavigate } from "react-router-dom";
-import { SearchBar, Button, ActionsMenu, type ActionItem } from "../components/ui";
+import { Car, CircleCheck, Handshake, TriangleAlert } from "lucide-react";
+import { ActionsMenu, StatCard, type ActionItem } from "../components/ui";
+import { notifier } from "../services/notifier";
 
 interface PartnersProps {
     onLogout?: () => void;
@@ -112,6 +114,11 @@ export default function Partners({ onLogout = () => {}, theme = "light", toggleT
     const actionsPartenaire = (partner: any, isActive: boolean): ActionItem[] => [
         { label: "Ouvrir l'espace", icon: "open_in_new", onClick: () => navigate(`/partner/${partner.uuid ?? partner.id}`) },
         { label: "Gérer la flotte", icon: "directions_car", onClick: () => navigate(`/partners/${partner.id}/fleet`) },
+        {
+            label: "Notifier",
+            icon: "notifications",
+            onClick: () => notifier({ destinataires: [{ id: partner.user?.id ?? partner.user_id, nom: partner.name || partner.user?.nom }] }),
+        },
         { label: "Ajuster la commission", icon: "percent", separatorBefore: true, onClick: () => ajusterCommission(partner) },
         {
             label: isActive ? "Suspendre" : "Réactiver",
@@ -147,212 +154,195 @@ export default function Partners({ onLogout = () => {}, theme = "light", toggleT
         fetchPartners("dashboard/partner");
     }, []);
 
+    // Calculés sur la page affichée seulement : l'API ne renvoie pas de
+    // totaux. Les cartes le disent, plutôt que de passer une page pour le tout.
     const totalActive = partners.filter((p) => p.user?.is_active).length;
     const totalFleets = partners.reduce((acc, p) => acc + (p.fleets?.length || 0), 0);
 
+
     return (
         <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
-            <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-background-dark font-display text-slate-900 dark:text-slate-100">
-
-                {/* Header */}
-                <header className="h-20 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-8 flex items-center justify-between sticky top-0 z-10">
+            {/*
+              * Le même gabarit que les écrans d'Ongo Eat et des marchands.
+              *
+              * La page portait sa propre barre — fil d'Ariane en capitales,
+              * cartes à liseré coloré, « +12 % » inventé, une carte « Page
+              * actuelle » qui ne disait rien. Elle reprend la forme commune :
+              * un titre, une phrase, l'action principale à droite.
+              */}
+            <header>
+                <div className="px-8 py-6 max-w-7xl mx-auto flex items-start justify-between gap-6 flex-wrap">
                     <div>
-                        <nav className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">
-                            <span>Admin</span>
-                            <span className="material-symbols-outlined text-[10px]">chevron_right</span>
-                            <span className="text-primary">Gestion des Partenaires</span>
-                        </nav>
-                        <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Liste des Partenaires</h2>
-                    </div>
-                    <button
-                        onClick={() => navigate("/partners/add")}
-                        className="bg-primary hover:bg-primary/90 text-white px-6 py-2.5 rounded-lg font-semibold flex items-center gap-2 transition-all shadow-lg shadow-primary/20"
-                    >
-                        <span className="material-symbols-outlined">person_add</span>
-                        Ajouter un Partenaire
-                    </button>
-                </header>
-
-                <div className="p-8 space-y-6">
-                    {/* Stats */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm border-l-4 border-l-primary">
-                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Total Partenaires</p>
-                            <div className="flex items-end justify-between">
-                                <h3 className="text-2xl font-bold">{meta?.total || partners.length}</h3>
-                                <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md">+12%</span>
-                            </div>
-                        </div>
-                        <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm border-l-4 border-l-emerald-500">
-                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Actifs</p>
-                            <div className="flex items-end justify-between">
-                                <h3 className="text-2xl font-bold">{totalActive}</h3>
-                                <span className="text-xs font-bold text-slate-400">{partners.length ? Math.round((totalActive / partners.length) * 100) : 0}% ratio</span>
-                            </div>
-                        </div>
-                        <div className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm border-l-4 border-l-blue-400">
-                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Véhicules Totaux</p>
-                            <div className="flex items-end justify-between">
-                                <h3 className="text-2xl font-bold">{totalFleets}</h3>
-                                <span className="material-symbols-outlined text-blue-400">local_shipping</span>
-                            </div>
-                        </div>
-                        <div className="bg-primary text-white p-5 rounded-xl shadow-lg shadow-primary/10 relative overflow-hidden">
-                            <p className="text-xs font-bold text-blue-200 uppercase tracking-wider mb-1">Page actuelle</p>
-                            <h3 className="text-2xl font-bold">{meta?.current_page || 1} / {meta?.last_page || 1}</h3>
-                            <span className="material-symbols-outlined absolute -right-4 -bottom-4 text-7xl opacity-10">trending_up</span>
-                        </div>
+                        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Partenaires</h1>
+                        <p className="text-sm text-slate-500 mt-1">
+                            Les loueurs de flotte : leurs chauffeurs roulent pour Ongo, et ils touchent une part de la commission.
+                        </p>
                     </div>
 
-                    {/* Search & Table */}
-                    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-                        <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex flex-wrap items-center gap-4">
-                            <SearchBar
-                                value={search}
-                                onChange={setSearch}
-                                onSearch={handleSearch}
-                                placeholder="Rechercher un partenaire..."
-                            />
-                            <Button icon="filter_list" onClick={handleSearch}>Filtrer</Button>
-                            <Button icon="query_stats" onClick={() => navigate("/partners/activity")}>Suivi d'activité</Button>
-                            <p className="text-xs text-slate-400 ml-auto italic">
-                                {meta ? `${meta.from || 0} - ${meta.to || 0} sur ${meta.total || 0} partenaires` : ""}
-                            </p>
-                        </div>
-
-                        <div className="overflow-x-auto">
-                            {load ? (
-                                <Loading />
-                            ) : (
-                                <table className="w-full text-left border-collapse min-w-[800px]">
-                                    <thead>
-                                        <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
-                                            <th className="px-6 py-4 text-[11px] font-extrabold text-slate-400 uppercase tracking-widest">Partenaire</th>
-                                            <th className="px-6 py-4 text-[11px] font-extrabold text-slate-400 uppercase tracking-widest">Contact</th>
-                                            <th className="px-6 py-4 text-[11px] font-extrabold text-slate-400 uppercase tracking-widest text-center">Flotte</th>
-                                            <th className="px-6 py-4 text-[11px] font-extrabold text-slate-400 uppercase tracking-widest text-center">Solde Total</th>
-                                            <th className="px-6 py-4 text-[11px] font-extrabold text-slate-400 uppercase tracking-widest text-center">Commission</th>
-                                            <th className="px-6 py-4 text-[11px] font-extrabold text-slate-400 uppercase tracking-widest">Statut</th>
-                                            <th className="px-6 py-4 text-[11px] font-extrabold text-slate-400 uppercase tracking-widest text-right">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
-                                        {partners.length > 0 ? (
-                                            partners.map((partner) => {
-                                                const isActive = partner.user?.is_active ?? true;
-                                                return (
-                                                    <tr key={partner.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition-colors">
-                                                        <td className="px-6 py-5">
-                                                            <div className="flex items-center gap-4">
-                                                                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                                                                    <span className="material-symbols-outlined text-primary">handshake</span>
-                                                                </div>
-                                                                <div>
-                                                                    <p className="text-sm font-bold text-slate-800 dark:text-white">{partner.name || partner.user?.nom}</p>
-                                                                    <p className="text-xs text-slate-500">{partner.user?.ville || "—"}</p>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-6 py-5">
-                                                            <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{partner.user?.email || "—"}</p>
-                                                            <p className="text-xs font-bold text-slate-400">{partner.user?.telephone || "—"}</p>
-                                                        </td>
-                                                        <td className="px-6 py-5 text-center">
-                                                            <span className="inline-flex items-center justify-center px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-bold">
-                                                                {partner.fleets?.length || 0} véhicule{(partner.fleets?.length || 0) > 1 ? "s" : ""}
-                                                            </span>
-                                                        </td>
-                                                        <td className="px-6 py-5 text-center">
-                                                            <span className="text-sm font-extrabold text-slate-700 dark:text-slate-200">
-                                                                {(partner.total_balance || 0).toLocaleString()} <small className="text-[10px] text-slate-400">XAF</small>
-                                                            </span>
-                                                        </td>
-                                                        <td className="px-6 py-5 text-center">
-                                                            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-black tabular-nums ${partner.commission_invalid
-                                                                ? "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400"
-                                                                : (partner.commission_rate ?? 0) > 0
-                                                                    ? "bg-primary/10 text-primary"
-                                                                    : "bg-slate-100 dark:bg-slate-800 text-slate-400"}`}>
-                                                                {partner.commission_invalid && <span className="material-symbols-outlined text-[14px]">warning</span>}
-                                                                {partner.commission_rate ?? 0} %
-                                                            </span>
-                                                        </td>
-                                                        <td className="px-6 py-5">
-                                                            {isActive ? (
-                                                                <div className="flex items-center gap-2">
-                                                                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                                                                    <span className="text-xs font-bold text-emerald-600 uppercase">Actif</span>
-                                                                </div>
-                                                            ) : (
-                                                                <div className="flex items-center gap-2">
-                                                                    <div className="w-2 h-2 rounded-full bg-slate-300"></div>
-                                                                    <span className="text-xs font-bold text-slate-400 uppercase">Inactif</span>
-                                                                </div>
-                                                            )}
-                                                        </td>
-                                                        <td className="px-6 py-5 text-right">
-                                                            <div className="flex items-center justify-end gap-1.5">
-                                                                <Button size="sm" icon="open_in_new" onClick={() => navigate(`/partner/${partner.uuid ?? partner.id}`)}>
-                                                                    Espace
-                                                                </Button>
-                                                                <ActionsMenu items={actionsPartenaire(partner, isActive)} />
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                );
-                                            })
-                                        ) : (
-                                            <tr>
-                                                <td colSpan={7} className="px-6 py-12 text-center text-slate-500">
-                                                    <div className="flex flex-col items-center gap-3">
-                                                        <span className="material-symbols-outlined text-4xl text-slate-300">search_off</span>
-                                                        <p>Aucun partenaire trouvé</p>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        )}
-                                    </tbody>
-                                </table>
-                            )}
-                        </div>
-
-                        {/* Pagination */}
-                        {pagination.length > 0 && (
-                            <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between border-t border-slate-100 dark:border-slate-800">
-                                <p className="text-xs text-slate-500 font-medium">
-                                    Page {meta?.current_page} de {meta?.last_page}
-                                </p>
-                                <div className="flex items-center gap-2">
-                                    {pagination.map((item: any, index: number) => {
-                                        if (item.label.includes("Previous") || item.label.includes("&laquo;")) {
-                                            return (
-                                                <button key={index} disabled={!item.url} onClick={() => item.url && fetchPartners(item.url, true)}
-                                                    className={`w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 text-slate-400 transition-colors ${!item.url ? "opacity-50 cursor-not-allowed" : "hover:bg-white"}`}>
-                                                    <span className="material-symbols-outlined text-sm">chevron_left</span>
-                                                </button>
-                                            );
-                                        }
-                                        if (item.label.includes("Next") || item.label.includes("&raquo;")) {
-                                            return (
-                                                <button key={index} disabled={!item.url} onClick={() => item.url && fetchPartners(item.url, true)}
-                                                    className={`w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 text-slate-400 transition-colors ${!item.url ? "opacity-50 cursor-not-allowed" : "hover:bg-white"}`}>
-                                                    <span className="material-symbols-outlined text-sm">chevron_right</span>
-                                                </button>
-                                            );
-                                        }
-                                        return (
-                                            <button key={index} onClick={() => item.url && fetchPartners(item.url, true)}
-                                                className={`w-8 h-8 flex items-center justify-center rounded-lg border text-xs font-medium transition-colors ${item.active ? "bg-primary text-white border-primary" : "border-slate-200 dark:border-slate-700 text-slate-600 hover:bg-white"}`}>
-                                                <span dangerouslySetInnerHTML={{ __html: item.label }} />
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        )}
+                    <div className="flex items-center gap-2 shrink-0">
+                        <button
+                            onClick={() => navigate("/partners/activity")}
+                            className="px-4 py-2 rounded-lg text-sm font-medium border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                        >
+                            Suivi d'activité
+                        </button>
+                        <button
+                            onClick={() => navigate("/partners/add")}
+                            className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white dark:bg-primary-container"
+                        >
+                            Nouveau partenaire
+                        </button>
                     </div>
                 </div>
-            </div>
+            </header>
+
+            <main className="px-8 py-8 max-w-7xl mx-auto space-y-6">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <StatCard label="Partenaires" value={meta?.total ?? partners.length} icon={Handshake} />
+                    <StatCard
+                        label="Actifs"
+                        value={totalActive}
+                        icon={CircleCheck}
+                        note={`${partners.length ? Math.round((totalActive / partners.length) * 100) : 0} % de cette page`}
+                    />
+                    <StatCard label="Véhicules" value={totalFleets} icon={Car} note="Flottes des partenaires de cette page" />
+                </div>
+
+                {/* Entrée lance la recherche ; un champ vidé ramène la liste entière. */}
+                <div className="flex items-center gap-4">
+                    <input
+                        value={search}
+                        onChange={(evenement) => setSearch(evenement.target.value)}
+                        onKeyDown={(evenement) => evenement.key === "Enter" && handleSearch()}
+                        placeholder="Chercher un partenaire — nom, email, téléphone, puis Entrée"
+                        className="flex-1 px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder:text-slate-400"
+                    />
+                    {meta && (
+                        <p className="text-sm text-slate-500 whitespace-nowrap tabular-nums">
+                            {meta.from || 0}–{meta.to || 0} sur {meta.total || 0}
+                        </p>
+                    )}
+                </div>
+
+                <div className="rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-hidden">
+                    {load ? (
+                        <Loading />
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm min-w-[800px]">
+                                <thead className="text-xs uppercase text-slate-500 bg-slate-50 dark:bg-slate-800/40 text-left">
+                                    <tr>
+                                        <th className="px-5 py-3 font-semibold">Partenaire</th>
+                                        <th className="px-5 py-3 font-semibold">Contact</th>
+                                        <th className="px-5 py-3 font-semibold text-right">Flotte</th>
+                                        <th className="px-5 py-3 font-semibold text-right">Solde</th>
+                                        <th className="px-5 py-3 font-semibold text-right">Commission</th>
+                                        <th className="px-5 py-3 font-semibold">Statut</th>
+                                        <th className="px-5 py-3" />
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+                                    {partners.length > 0 ? (
+                                        partners.map((partner) => {
+                                            const isActive = partner.user?.is_active ?? true;
+                                            const flotte = partner.fleets?.length || 0;
+
+                                            return (
+                                                <tr key={partner.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                                                    <td className="px-5 py-3">
+                                                        <p className="font-semibold text-slate-900 dark:text-white">{partner.name || partner.user?.nom}</p>
+                                                        <p className="text-xs text-slate-500">{partner.user?.ville || "—"}</p>
+                                                    </td>
+                                                    <td className="px-5 py-3">
+                                                        <p className="text-slate-700 dark:text-slate-300">{partner.user?.email || "—"}</p>
+                                                        <p className="text-xs text-slate-500">{partner.user?.telephone || "—"}</p>
+                                                    </td>
+                                                    <td className="px-5 py-3 text-right tabular-nums text-slate-700 dark:text-slate-300">
+                                                        {flotte} véhicule{flotte > 1 ? "s" : ""}
+                                                    </td>
+                                                    <td className="px-5 py-3 text-right tabular-nums font-semibold text-slate-900 dark:text-white whitespace-nowrap">
+                                                        {(partner.total_balance || 0).toLocaleString("fr-FR")} <span className="text-xs font-normal text-slate-500">FCFA</span>
+                                                    </td>
+                                                    <td className="px-5 py-3 text-right">
+                                                        {/* En ambre quand le taux dépasse la commission plateforme : il n'est alors pas appliqué. */}
+                                                        <span
+                                                            title={partner.commission_invalid ? "Taux supérieur à la commission plateforme" : undefined}
+                                                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium tabular-nums ${
+                                                                partner.commission_invalid
+                                                                    ? "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300"
+                                                                    : (partner.commission_rate ?? 0) > 0
+                                                                      ? "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200"
+                                                                      : "text-slate-400"
+                                                            }`}
+                                                        >
+                                                            {partner.commission_invalid && <TriangleAlert className="size-3" />}
+                                                            {partner.commission_rate ?? 0} %
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-5 py-3">
+                                                        <span
+                                                            className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                                                                isActive
+                                                                    ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300"
+                                                                    : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                                                            }`}
+                                                        >
+                                                            {isActive ? "Actif" : "Suspendu"}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-5 py-3">
+                                                        <div className="flex items-center justify-end gap-1.5">
+                                                            <button
+                                                                onClick={() => navigate(`/partner/${partner.uuid ?? partner.id}`)}
+                                                                className="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                                                            >
+                                                                Espace
+                                                            </button>
+                                                            <ActionsMenu items={actionsPartenaire(partner, isActive)} />
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })
+                                    ) : (
+                                        <tr>
+                                            <td colSpan={7} className="px-5 py-12 text-center text-slate-500">
+                                                Aucun partenaire trouvé.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+
+                    {pagination.length > 3 && (
+                        <div className="px-5 py-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-4">
+                            <p className="text-xs text-slate-500">
+                                Page {meta?.current_page} sur {meta?.last_page}
+                            </p>
+                            <div className="flex flex-wrap gap-1">
+                                {pagination.map((lien: any, index: number) => (
+                                    <button
+                                        key={index}
+                                        disabled={!lien.url || lien.active}
+                                        onClick={() => lien.url && fetchPartners(lien.url, true)}
+                                        className={`px-3 py-1.5 rounded-md text-xs font-medium ${
+                                            lien.active
+                                                ? "bg-primary text-white dark:bg-primary-container"
+                                                : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                                        } ${!lien.url ? "opacity-40 cursor-not-allowed" : ""}`}
+                                        // Les libellés de Laravel : « &laquo; Previous », « Next &raquo; ».
+                                        dangerouslySetInnerHTML={{
+                                            __html: lien.label.replace("Previous", "Précédent").replace("Next", "Suivant"),
+                                        }}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </main>
         </MainLayout>
     );
 }

@@ -151,9 +151,9 @@ export default function Hours({ merchantId, storeId, storeName, canEditWeek }: H
         <div className="max-w-3xl space-y-8">
             {/* ------------------------------------------------ aujourd'hui */}
             <section
-                className={`p-6 rounded-2xl border ${
-                    ouvert
-                        ? "border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/30"
+                className={`p-6 rounded-xl border ${
+ ouvert
+ ? "border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/30"
                         : "border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900"
                 }`}
             >
@@ -184,7 +184,7 @@ export default function Hours({ merchantId, storeId, storeName, canEditWeek }: H
                             <button
                                 onClick={() => bouton("closed")}
                                 disabled={envoi}
-                                className="px-6 py-3 rounded-xl bg-slate-900 text-white font-semibold disabled:opacity-50 dark:bg-white dark:text-slate-900"
+                                className="px-6 py-3 rounded-xl bg-primary text-white font-semibold disabled:opacity-50 dark:bg-primary-container"
                             >
                                 Fermer maintenant
                             </button>
@@ -210,7 +210,7 @@ export default function Hours({ merchantId, storeId, storeName, canEditWeek }: H
             </section>
 
             {/* ------------------------------------------------ la semaine */}
-            <section className="p-6 rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+            <section className="p-6 rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
                 <div className="flex items-center justify-between mb-2">
                     <h3 className="text-base font-semibold text-slate-900 dark:text-white">Horaires de la semaine</h3>
                     {canEditWeek && (
@@ -237,10 +237,10 @@ export default function Hours({ merchantId, storeId, storeName, canEditWeek }: H
                                 disabled={!canEditWeek}
                                 onClick={() => modifier(rang, { is_open: !jour.is_open })}
                                 className={`relative inline-flex h-7 w-12 shrink-0 rounded-full transition-colors disabled:opacity-60 ${
-                                    jour.is_open ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-700"
+ jour.is_open ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-700"
                                 }`}
                             >
-                                <span className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-transform ${jour.is_open ? "translate-x-6" : "translate-x-1"}`} />
+                                <span className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-transform ${jour.is_open ? "translate-x-6" : "translate-x-1"}`} />
                             </button>
                             <span className={`w-16 text-sm ${jour.is_open ? "text-emerald-700 dark:text-emerald-400" : "text-slate-500"}`}>
                                 {jour.is_open ? "Ouvert" : "Fermé"}
@@ -275,7 +275,7 @@ export default function Hours({ merchantId, storeId, storeName, canEditWeek }: H
                         <button
                             onClick={enregistrer}
                             disabled={envoi}
-                            className="px-5 py-2.5 rounded-lg bg-slate-900 text-white text-sm font-medium disabled:opacity-50 dark:bg-white dark:text-slate-900"
+                            className="px-5 py-2.5 rounded-lg bg-primary text-white text-sm font-medium disabled:opacity-50 dark:bg-primary-container"
                         >
                             {envoi ? "Enregistrement…" : "Enregistrer les horaires"}
                         </button>

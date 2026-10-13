@@ -6,7 +6,7 @@ import { notifier } from '../services/notifier';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import jsPDF from 'jspdf';
-import { SearchBar, Select, Button, ActionsMenu, type ActionItem } from "../components/ui";
+import { SearchBar, Select, Button, ActionsMenu, type ActionItem, Avatar } from "../components/ui";
 
 interface UsersProps {
     onLogout: () => void;
@@ -48,7 +48,16 @@ const Users: React.FC<UsersProps> = ({ onLogout, theme, toggleTheme }) => {
             toast.error(title);
         }
     };
-    const fetchUsers = async (url: string = "utilisateur/liste-utilisateurs") => {
+    // Le serveur trie : l'ordre s'applique à toute la liste, et non aux dix
+    // comptes de la page reçue — qui étaient, sans lui, les dix plus anciens.
+    const listeTriee = (ordre: 'recent' | 'ancien') => `utilisateur/liste-utilisateurs?ordre=${ordre}`;
+
+    const changerTri = (ordre: 'recent' | 'ancien') => {
+        setTri(ordre);
+        fetchUsers(listeTriee(ordre));
+    };
+
+    const fetchUsers = async (url: string = listeTriee(tri)) => {
         setLoading(true);
         try {
             const response = await api.getData(url);
@@ -133,9 +142,10 @@ const Users: React.FC<UsersProps> = ({ onLogout, theme, toggleTheme }) => {
         }
     };
 
-    // Le tri porte sur la page courante : l'API rend les utilisateurs
-    // paginés et sans paramètre d'ordre. `created_at` manque sur certains
-    // comptes, d'où le repli sur l'identifiant, qui croît dans le même sens.
+    // Le serveur rend déjà la page dans l'ordre choisi ; ce tri local ne fait
+    // que le maintenir après une modification. `created_at` manque sur
+    // certains comptes, d'où le repli sur l'identifiant, qui croît dans le
+    // même sens.
     const dateDeCreation = (u: any): number => {
         const t = u?.created_at ? Date.parse(u.created_at) : NaN;
         return Number.isNaN(t) ? Number(u?.id) || 0 : t;
@@ -216,15 +226,10 @@ const Users: React.FC<UsersProps> = ({ onLogout, theme, toggleTheme }) => {
 
     return (
         <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
-            {/* Header section with breadcrumbs and title */}
-            <div className="bg-white dark:bg-slate-900 px-4 md:px-8 py-6 border-b border-slate-200 dark:border-slate-800 flex flex-col gap-4">
-                <div className="flex items-center gap-2 text-sm text-slate-500">
-                    <a className="hover:text-primary transition-colors" href="/dashboard">Tableau de bord</a>
-                    <span className="material-symbols-outlined text-sm">chevron_right</span>
-                    <span className="text-slate-900 dark:text-slate-100 font-medium">Utilisateurs</span>
-                </div>
+            {/* Le titre et les actions, sans fond ni fil d'Ariane. */}
+            <div className="px-4 md:px-8 py-6 flex flex-col gap-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <h2 className="text-2xl md:text-3xl font-black tracking-tight text-slate-900 dark:text-white">Gestion des Utilisateurs</h2>
+                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Utilisateurs</h1>
                     <div className="flex gap-2 w-full sm:w-auto">
                         <button
                             onClick={generatePDF}
@@ -233,7 +238,7 @@ const Users: React.FC<UsersProps> = ({ onLogout, theme, toggleTheme }) => {
                             <span className="material-symbols-outlined text-[20px]">picture_as_pdf</span>
                             PDF
                         </button>
-                        <button className="bg-primary hover:bg-primary/90 text-white px-5 py-2.5 rounded-lg font-bold text-sm transition-all flex items-center gap-2 shadow-lg shadow-primary/20 w-full sm:w-auto justify-center">
+                        <button className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white hover:bg-primary/90 dark:bg-primary-container dark:hover:bg-primary-container/90 transition-colors disabled:opacity-40 flex items-center gap-2 w-full sm:w-auto justify-center">
                             <span className="material-symbols-outlined text-[20px]">add_circle</span>
                             Ajouter un utilisateur
                         </button>
@@ -243,7 +248,7 @@ const Users: React.FC<UsersProps> = ({ onLogout, theme, toggleTheme }) => {
 
             {/* Search and Filters */}
             <div className="px-4 md:px-8 py-6">
-                <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-wrap gap-4 items-center">
+                <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-wrap gap-4 items-center">
                     <SearchBar
                         value={searchTerm}
                         onChange={setSearchTerm}
@@ -251,7 +256,7 @@ const Users: React.FC<UsersProps> = ({ onLogout, theme, toggleTheme }) => {
                         minWidth={280}
                     />
                     <div className="flex flex-wrap gap-2">
-                        <Select value={tri} onChange={(e) => setTri(e.target.value as 'recent' | 'ancien')}>
+                        <Select value={tri} onChange={(e) => changerTri(e.target.value as 'recent' | 'ancien')}>
                             <option value="recent">Plus récents d'abord</option>
                             <option value="ancien">Plus anciens d'abord</option>
                         </Select>
@@ -274,7 +279,7 @@ const Users: React.FC<UsersProps> = ({ onLogout, theme, toggleTheme }) => {
 
             {/* User Table container */}
             <div className="px-4 md:px-8 pb-8">
-                <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col">
+                <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col">
                     <div className="overflow-x-auto custom-scrollbar">
                         <table className="w-full text-left border-collapse min-w-[900px]">
                             <thead>
@@ -288,7 +293,7 @@ const Users: React.FC<UsersProps> = ({ onLogout, theme, toggleTheme }) => {
                                     <th className={entete}>
                                         <button
                                             type="button"
-                                            onClick={() => setTri((t) => (t === 'recent' ? 'ancien' : 'recent'))}
+                                            onClick={() => changerTri(tri === 'recent' ? 'ancien' : 'recent')}
                                             title={tri === 'recent' ? "Trier du plus ancien au plus récent" : "Trier du plus récent au plus ancien"}
                                             className="inline-flex items-center gap-1 uppercase tracking-wider hover:text-primary transition-colors"
                                         >
@@ -327,11 +332,7 @@ const Users: React.FC<UsersProps> = ({ onLogout, theme, toggleTheme }) => {
                                                         }}
                                                         className="relative size-9 shrink-0 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 group/photo"
                                                     >
-                                                        {user.photo ? (
-                                                            <img src={user.photo} alt="" className="w-full h-full object-cover" />
-                                                        ) : (
-                                                            <span className="material-symbols-outlined text-[20px] text-slate-400 leading-9">person</span>
-                                                        )}
+                                                        <Avatar photo={user?.photo} nom={user?.nom || user?.prenom} className="text-base" />
                                                         <span className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover/photo:opacity-100 transition-opacity flex items-center justify-center">
                                                             <span className="material-symbols-outlined text-[16px] text-white">photo_camera</span>
                                                         </span>
@@ -395,11 +396,11 @@ const Users: React.FC<UsersProps> = ({ onLogout, theme, toggleTheme }) => {
                                     onClick={() => link.url && fetchUsers(link.url)}
                                     disabled={!link.url || link.active}
                                     className={`px-3 py-1.5 rounded-md text-xs font-medium 
-                                        ${link.active
-                                            ? 'bg-primary text-white font-bold'
-                                            : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400'
-                                        } 
-                                        ${!link.url ? 'opacity-50 cursor-not-allowed' : ''}`}
+ ${link.active
+ ? 'bg-primary text-white dark:bg-primary-container font-bold'
+ : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400'
+ } 
+ ${!link.url ? 'opacity-50 cursor-not-allowed' : ''}`}
                                     dangerouslySetInnerHTML={{ __html: link.label }}
                                 />
                             ))}
@@ -411,7 +412,7 @@ const Users: React.FC<UsersProps> = ({ onLogout, theme, toggleTheme }) => {
             {/* Edit Form Modal (Logic Implementation) */}
             {currentData && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70]">
-                    <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-xl w-96 relative">
+                    <div className="bg-white dark:bg-slate-800 p-6 rounded-lg w-96 relative">
                         <button
                             onClick={() => setCurrentData(null)}
                             className="absolute top-2 right-2 text-slate-500 hover:text-slate-700"
@@ -445,7 +446,7 @@ const Users: React.FC<UsersProps> = ({ onLogout, theme, toggleTheme }) => {
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="bg-primary text-white py-2 rounded font-bold hover:bg-primary/90 disabled:opacity-70"
+                                className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white hover:bg-primary/90 dark:bg-primary-container dark:hover:bg-primary-container/90 transition-colors disabled:opacity-40"
                             >
                                 {loading ? 'Enregistrement...' : 'Enregistrer'}
                             </button>

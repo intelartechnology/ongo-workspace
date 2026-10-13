@@ -177,15 +177,10 @@ const AddDriver: React.FC<AddDriverProps> = ({ onLogout, theme, toggleTheme }) =
       <ToastContainer />
       <main className="flex-1 overflow-y-auto flex flex-col bg-background-light dark:bg-background-dark">
         <header className="px-8 pt-8 pb-4">
-          <nav className="flex items-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">
-            <a className="hover:text-primary transition-colors" href="#">Dashboard</a>
-            <span className="material-symbols-outlined text-xs">chevron_right</span>
-            <span className="text-slate-900 dark:text-white">Ajouter un chauffeur</span>
-          </nav>
           <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Chauffeur</h1>
         </header>
         <div className="px-8 pb-8 flex-1">
-          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden max-w-5xl">
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden max-w-5xl">
             <div className="p-6 border-b border-slate-100 dark:border-slate-800">
               <h2 className="text-xl font-bold text-slate-900 dark:text-white">Ajouter un chauffeur</h2>
               <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Veuillez remplir les informations ci-dessous pour enregistrer un nouveau chauffeur.</p>
@@ -312,7 +307,7 @@ const AddDriver: React.FC<AddDriverProps> = ({ onLogout, theme, toggleTheme }) =
                 <button className="px-6 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors" type="button">
                   Fermer
                 </button>
-                <button className="px-8 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-primary/90 rounded-lg shadow-sm shadow-primary/20 transition-all flex items-center gap-2" type="submit">
+                <button className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white hover:bg-primary/90 dark:bg-primary-container dark:hover:bg-primary-container/90 transition-colors disabled:opacity-40 flex items-center gap-2" type="submit">
                   <span className="material-symbols-outlined text-sm">save</span>
                   Enregistrer
                 </button>

@@ -506,7 +506,7 @@ export default function EatPayouts({ onLogout, theme, toggleTheme }: EatPayoutsP
 
     return (
         <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
-            <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+            <header>
                 <div className="px-8 py-6 max-w-7xl mx-auto flex items-start justify-between gap-6">
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Reversements</h1>
@@ -699,7 +699,7 @@ export default function EatPayouts({ onLogout, theme, toggleTheme }: EatPayoutsP
 
                                     <button
                                         onClick={() => reglerLeDu(ligne)}
-                                        className="px-4 py-2 rounded-lg text-sm font-medium bg-slate-900 text-white dark:bg-white dark:text-slate-900 shrink-0"
+                                        className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white dark:bg-primary-container shrink-0"
                                     >
                                         {ligne.due < 0 ? "Récupérer" : ligne.due === 0 ? "Solder" : "Régler"}
                                     </button>
@@ -749,7 +749,7 @@ export default function EatPayouts({ onLogout, theme, toggleTheme }: EatPayoutsP
                             onClick={() => setStatut(cle)}
                             className={`px-4 py-2 rounded-lg text-sm font-medium ${
                                 statut === cle
-                                    ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
+                                    ? "bg-primary text-white dark:bg-primary-container"
                                     : "border border-slate-300 text-slate-700 dark:border-slate-700 dark:text-slate-300"
                             }`}
                         >
@@ -844,7 +844,7 @@ export default function EatPayouts({ onLogout, theme, toggleTheme }: EatPayoutsP
                                 ) : (
                                     <button
                                         onClick={() => regler(releve)}
-                                        className="px-4 py-2 rounded-lg text-sm font-medium bg-slate-900 text-white dark:bg-white dark:text-slate-900 shrink-0"
+                                        className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white dark:bg-primary-container shrink-0"
                                     >
                                         {aEncaisser(releve)
                                             ? "Récupérer"

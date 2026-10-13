@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import ApiService from "../services/ApiService";
 import Loading from "../components/Loading";
 import MainLayout from "./MainLayout";
-import { toast } from "react-toastify";
-import { useNavigate } from "react-router-dom";
-import { SearchBar, Button } from "../components/ui";
-
+import { notifier } from "../services/notifier";
 
 interface ContributorsProps {
     onLogout?: () => void;
@@ -13,215 +12,203 @@ interface ContributorsProps {
     toggleTheme?: () => void;
 }
 
+/** Une ligne de la liste : une personne, et ce que font ses véhicules. */
+interface Contributeur {
+    id: number;
+    nom: string | null;
+    prenom: string | null;
+    telephone: string | null;
+    email: string | null;
+    vehicles: number;
+    online_now: number;
+    completed: number;
+    volume: number;
+    last_activity_at: string | null;
+}
+
+interface Lien {
+    url: string | null;
+    label: string;
+    active: boolean;
+}
+
+interface Page {
+    data: Contributeur[];
+    links: Lien[];
+    from: number | null;
+    to: number | null;
+    total: number;
+    current_page: number;
+    last_page: number;
+}
+
+const ADRESSE = "v3/admin/contributors";
+
+const derniereFois = (iso: string | null) => {
+    if (!iso) return "Jamais";
+    const quand = new Date(iso.replace(" ", "T"));
+    const jours = Math.floor((Date.now() - quand.getTime()) / 86_400_000);
+    if (jours <= 0) return "Aujourd'hui";
+    if (jours === 1) return "Hier";
+    if (jours < 30) return `Il y a ${jours} jours`;
+    return new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", year: "numeric" }).format(quand);
+};
+
+/**
+ * Les contributeurs : les comptes rattachés à des véhicules de la flotte.
+ *
+ * La page affichait une ligne par rattachement — le même nom quatorze fois —
+ * et lisait `item.user`, que l'API ne renvoyait pas : la liste sortait vide.
+ * Elle montre désormais une ligne par personne, avec ce que ses chauffeurs
+ * ont fait ces trente derniers jours ; la fiche détaille véhicule par véhicule.
+ */
 export default function Contributors({ onLogout = () => {}, theme = "light", toggleTheme = () => {} }: ContributorsProps) {
-    const [contributors, setContributors] = useState<any[]>([]);
-    const [pagination, setPagination] = useState<any[]>([]);
-    const [meta, setMeta] = useState<any>(null);
-    const [load, setLoad] = useState(true);
-    const [search, setSearch] = useState("");
-    const Api = new ApiService();
+    const [page, setPage] = useState<Page | null>(null);
+    const [chargement, setChargement] = useState(true);
+    const [recherche, setRecherche] = useState("");
     const navigate = useNavigate();
 
-
-    const fetchContributors = async (url: string, isPag = false) => {
-        setLoad(true);
+    const charger = async (adresse: string) => {
+        setChargement(true);
         try {
-            const { data } = await Api.getDatawithPagination(url, isPag);
-            if (data.success) {
-                setContributors(data.data.data || data.data);
-                setPagination(data.data.links || []);
-                setMeta({
-                    current_page: data.data.current_page,
-                    from: data.data.from,
-                    to: data.data.to,
-                    total: data.data.total,
-                    last_page: data.data.last_page,
-                });
-            } else {
-                toast.error(data.message || "Erreur lors du chargement");
-            }
+            const { data } = await new ApiService().getData(adresse);
+            if (data.success) setPage(data.data.page);
+            else toast.error(data.message || "Erreur lors du chargement");
         } catch {
             toast.error("Connexion au serveur impossible");
         } finally {
-            setLoad(false);
+            setChargement(false);
         }
     };
 
-    const handleSearch = () => {
-        if (!search.trim()) {
-            fetchContributors("utilisateur/list-contributor");
-        } else {
-            fetchContributors(`utilisateur/search-contributor?q=${encodeURIComponent(search)}`);
-        }
-    };
+    const chercher = () => charger(recherche.trim() ? `${ADRESSE}?q=${encodeURIComponent(recherche.trim())}` : ADRESSE);
 
     useEffect(() => {
-        fetchContributors("utilisateur/list-contributor");
+        charger(ADRESSE);
     }, []);
 
     return (
         <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
-            <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-background-dark font-display text-slate-900 dark:text-slate-100">
-                {/* Header */}
-                <header className="h-20 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-8 flex items-center justify-between sticky top-0 z-10">
+            <header>
+                <div className="px-8 py-6 max-w-7xl mx-auto flex items-start justify-between gap-6 flex-wrap">
                     <div>
-                        <nav className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">
-                            <span>Admin</span>
-                            <span className="material-symbols-outlined text-[10px]">chevron_right</span>
-                            <span className="text-primary">Gestion des Contributeurs</span>
-                        </nav>
-                        <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Liste des Contributeurs</h2>
+                        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Contributeurs</h1>
+                        <p className="text-sm text-slate-500 mt-1">
+                            Les comptes rattachés à des véhicules de la flotte, et l'activité des chauffeurs qui les conduisent.
+                        </p>
                     </div>
-                    <button onClick={() => navigate("/contributors/add")}
-                        className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-6 py-2.5 rounded-full font-bold text-sm shadow-lg shadow-primary/20 transition-all">
-                        <span className="material-symbols-outlined text-lg">person_add</span>
-                        Ajouter un Contributeur
+                    <button
+                        onClick={() => navigate("/contributors/add")}
+                        className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white hover:bg-primary/90 dark:bg-primary-container dark:hover:bg-primary-container/90 transition-colors shrink-0"
+                    >
+                        Rattacher un véhicule
                     </button>
-                </header>
+                </div>
+            </header>
 
+            <main className="px-8 pb-8 max-w-7xl mx-auto space-y-6">
+                <div className="flex items-center gap-4">
+                    <input
+                        value={recherche}
+                        onChange={(evenement) => setRecherche(evenement.target.value)}
+                        onKeyDown={(evenement) => evenement.key === "Enter" && chercher()}
+                        placeholder="Chercher un contributeur — nom, téléphone, email, puis Entrée"
+                        className="flex-1 px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder:text-slate-400"
+                    />
+                    {page && (
+                        <p className="text-sm text-slate-500 whitespace-nowrap tabular-nums">
+                            {page.from || 0}–{page.to || 0} sur {page.total}
+                        </p>
+                    )}
+                </div>
 
-                <div className="p-8 space-y-6">
-                    {/* Search & Table */}
-                    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-                        <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex flex-wrap items-center gap-4">
-                            <SearchBar
-                                value={search}
-                                onChange={setSearch}
-                                onSearch={handleSearch}
-                                placeholder="Rechercher un contributeur (nom, matricule)..."
-                            />
-                            <Button icon="filter_list" onClick={handleSearch}>Filtrer</Button>
-                            <p className="text-xs text-slate-400 ml-auto italic">
-                                {meta ? `${meta.from || 0} - ${meta.to || 0} sur ${meta.total || 0} contributeurs` : ""}
-                            </p>
-                        </div>
-
+                <div className="rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-hidden">
+                    {chargement && !page ? (
+                        <Loading />
+                    ) : (
                         <div className="overflow-x-auto">
-                            {load ? (
-                                <Loading />
-                            ) : (
-                                <table className="w-full text-left border-collapse min-w-[800px]">
-                                    <thead>
-                                        <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
-                                            <th className="px-6 py-4 text-[11px] font-extrabold text-slate-400 uppercase tracking-widest">Contributeur</th>
-                                            <th className="px-6 py-4 text-[11px] font-extrabold text-slate-400 uppercase tracking-widest">Contact</th>
-                                            <th className="px-6 py-4 text-[11px] font-extrabold text-slate-400 uppercase tracking-widest">Véhicule</th>
-                                            <th className="px-6 py-4 text-[11px] font-extrabold text-slate-400 uppercase tracking-widest">Chauffeur</th>
-                                            <th className="px-6 py-4 text-[11px] font-extrabold text-slate-400 uppercase tracking-widest">Statut Véhicule</th>
-                                            <th className="px-6 py-4 text-[11px] font-extrabold text-slate-400 uppercase tracking-widest text-right">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
-                                        {contributors.length > 0 ? (
-                                            contributors.map((item) => {
-                                                const u = item.user;
-                                                const v = item.vehicle;
-                                                return (
-                                                    <tr key={item.id} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition-colors">
-                                                        <td className="px-6 py-5">
-                                                            <div className="flex items-center gap-4">
-                                                                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                                                                    <span className="material-symbols-outlined text-primary">person</span>
-                                                                </div>
-                                                                <div>
-                                                                    <p className="text-sm font-bold text-slate-800 dark:text-white">{u?.nom} {u?.prenom}</p>
-                                                                    <p className="text-xs text-slate-500">{u?.ville || v?.ville || "—"}</p>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-6 py-5">
-                                                            <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{u?.email || "—"}</p>
-                                                            <p className="text-xs font-bold text-slate-400">{u?.telephone || "—"}</p>
-                                                        </td>
-                                                        <td className="px-6 py-5">
-                                                            {v ? (
-                                                                <div>
-                                                                    <p className="text-sm font-bold text-slate-800 dark:text-white">{v.matricule}</p>
-                                                                    <p className="text-xs text-slate-500">{v.modele}</p>
-                                                                </div>
-                                                            ) : "—"}
-                                                        </td>
-                                                        <td className="px-6 py-5">
-                                                            {v?.chauffeur ? (
-                                                                <div>
-                                                                    <p className="text-sm font-medium text-slate-700 dark:text-slate-300">{v.chauffeur.nom} {v.chauffeur.prenom}</p>
-                                                                    <p className="text-xs text-slate-400">{v.chauffeur.telephone}</p>
-                                                                </div>
-                                                            ) : "—"}
-                                                        </td>
-                                                        <td className="px-6 py-5">
-                                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase transition-all ${
-                                                                v?.statut === 'LIBRE' ? 'bg-emerald-100 text-emerald-700' :
-                                                                v?.statut === 'OCCUPE' ? 'bg-blue-100 text-blue-700' :
-                                                                'bg-slate-100 text-slate-500'
-                                                            }`}>
-                                                                {v?.statut || "INCONNU"}
-                                                            </span>
-                                                        </td>
-                                                        <td className="px-6 py-5 text-right">
-                                                            <button 
-                                                                onClick={() => navigate(`/contributors/${u.id}`)}
-                                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-primary hover:border-primary/50 hover:bg-primary/5 transition-all text-xs font-bold"
-                                                            >
-                                                                <span className="material-symbols-outlined text-[16px]">visibility</span>
-                                                                Détails
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                );
-                                            })
-                                        ) : (
-                                            <tr>
-                                                <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
-                                                    <div className="flex flex-col items-center gap-3">
-                                                        <span className="material-symbols-outlined text-4xl text-slate-300">search_off</span>
-                                                        <p>Aucun contributeur trouvé</p>
+                            <table className="w-full text-sm min-w-[860px]">
+                                <thead className="text-xs uppercase text-slate-500 bg-slate-50 dark:bg-slate-800/40 text-left">
+                                    <tr>
+                                        <th className="px-5 py-3 font-semibold">Contributeur</th>
+                                        <th className="px-5 py-3 font-semibold text-right">Véhicules</th>
+                                        <th className="px-5 py-3 font-semibold text-right">En ligne</th>
+                                        <th className="px-5 py-3 font-semibold text-right">Courses · 30 j</th>
+                                        <th className="px-5 py-3 font-semibold text-right">Volume · 30 j</th>
+                                        <th className="px-5 py-3 font-semibold">Dernière activité</th>
+                                        <th className="px-5 py-3" />
+                                    </tr>
+                                </thead>
+                                <tbody className={`divide-y divide-slate-200 dark:divide-slate-800 ${chargement ? "opacity-60" : ""}`}>
+                                    {page && page.data.length > 0 ? (
+                                        page.data.map((c) => (
+                                            <tr
+                                                key={c.id}
+                                                onClick={() => navigate(`/contributors/${c.id}`)}
+                                                className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors"
+                                            >
+                                                <td className="px-5 py-3">
+                                                    <p className="font-semibold text-slate-900 dark:text-white">
+                                                        {[c.nom, c.prenom].filter(Boolean).join(" ") || `Compte #${c.id}`}
+                                                    </p>
+                                                    <p className="text-xs text-slate-500">{c.telephone || c.email || "—"}</p>
+                                                </td>
+                                                <td className="px-5 py-3 text-right tabular-nums text-slate-700 dark:text-slate-300">{c.vehicles}</td>
+                                                <td className="px-5 py-3 text-right tabular-nums text-slate-700 dark:text-slate-300">
+                                                    {c.online_now}
+                                                    <span className="text-slate-400"> / {c.vehicles}</span>
+                                                </td>
+                                                <td className="px-5 py-3 text-right tabular-nums font-semibold text-slate-900 dark:text-white">{c.completed}</td>
+                                                <td className="px-5 py-3 text-right tabular-nums text-slate-700 dark:text-slate-300 whitespace-nowrap">
+                                                    {c.volume.toLocaleString("fr-FR")} <span className="text-xs text-slate-500">FCFA</span>
+                                                </td>
+                                                <td className="px-5 py-3 text-slate-600 dark:text-slate-400 whitespace-nowrap">{derniereFois(c.last_activity_at)}</td>
+                                                <td className="px-5 py-3 text-right">
+                                                    <div className="flex items-center justify-end gap-3">
+                                                        <button type="button" onClick={(e) => { e.stopPropagation(); notifier({ destinataires: [{ id: c.id, nom: [c.nom, c.prenom].filter(Boolean).join(" ") }] }); }} className="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 whitespace-nowrap">Notifier</button>
+                                                        <span className="text-xs font-medium text-primary dark:text-primary-fixed-dim whitespace-nowrap">Voir l'activité →</span>
                                                     </div>
                                                 </td>
                                             </tr>
-                                        )}
-                                    </tbody>
-                                </table>
-                            )}
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td colSpan={7} className="px-5 py-12 text-center text-slate-500">
+                                                Aucun contributeur trouvé.
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
                         </div>
+                    )}
 
-                        {/* Pagination */}
-                        {pagination.length > 0 && (
-                            <div className="px-6 py-4 bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between border-t border-slate-100 dark:border-slate-800">
-                                <p className="text-xs text-slate-500 font-medium">
-                                    Page {meta?.current_page} de {meta?.last_page}
-                                </p>
-                                <div className="flex items-center gap-2">
-                                    {pagination.map((item: any, index: number) => {
-                                        if (item.label.includes("Previous") || item.label.includes("&laquo;")) {
-                                            return (
-                                                <button key={index} disabled={!item.url} onClick={() => item.url && fetchContributors(item.url, true)}
-                                                    className={`w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 text-slate-400 transition-colors ${!item.url ? "opacity-50 cursor-not-allowed" : "hover:bg-white"}`}>
-                                                    <span className="material-symbols-outlined text-sm">chevron_left</span>
-                                                </button>
-                                            );
-                                        }
-                                        if (item.label.includes("Next") || item.label.includes("&raquo;")) {
-                                            return (
-                                                <button key={index} disabled={!item.url} onClick={() => item.url && fetchContributors(item.url, true)}
-                                                    className={`w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-slate-700 text-slate-400 transition-colors ${!item.url ? "opacity-50 cursor-not-allowed" : "hover:bg-white"}`}>
-                                                    <span className="material-symbols-outlined text-sm">chevron_right</span>
-                                                </button>
-                                            );
-                                        }
-                                        return (
-                                            <button key={index} onClick={() => item.url && fetchContributors(item.url, true)}
-                                                className={`w-8 h-8 flex items-center justify-center rounded-lg border text-xs font-medium transition-colors ${item.active ? "bg-primary text-white border-primary" : "border-slate-200 dark:border-slate-700 text-slate-600 hover:bg-white"}`}>
-                                                <span dangerouslySetInnerHTML={{ __html: item.label }} />
-                                            </button>
-                                        );
-                                    })}
-                                </div>
+                    {page && page.last_page > 1 && (
+                        <div className="px-5 py-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between gap-4">
+                            <p className="text-xs text-slate-500">
+                                Page {page.current_page} sur {page.last_page}
+                            </p>
+                            <div className="flex flex-wrap gap-1">
+                                {page.links.map((lien, index) => (
+                                    <button
+                                        key={index}
+                                        disabled={!lien.url || lien.active}
+                                        onClick={() => lien.url && charger(lien.url)}
+                                        className={`px-3 py-1.5 rounded-md text-xs font-medium ${
+                                            lien.active
+                                                ? "bg-primary text-white dark:bg-primary-container"
+                                                : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                                        } ${!lien.url ? "opacity-40 cursor-not-allowed" : ""}`}
+                                        dangerouslySetInnerHTML={{
+                                            __html: lien.label.replace("Previous", "Précédent").replace("Next", "Suivant"),
+                                        }}
+                                    />
+                                ))}
                             </div>
-                        )}
-                    </div>
+                        </div>
+                    )}
                 </div>
-            </div>
+            </main>
         </MainLayout>
     );
 }

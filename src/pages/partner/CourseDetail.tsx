@@ -7,10 +7,10 @@ import GoogleMapReact from 'google-map-react';
 // Helper components for Google Maps
 const CourseMarker: React.FC<{ lat: number; lng: number; label: string; color: string }> = ({ label, color }) => (
     <div className="relative -translate-x-1/2 -translate-y-full flex flex-col items-center animate-in zoom-in duration-500">
-        <div className="bg-white/95 backdrop-blur px-3 py-1.5 rounded-lg shadow-xl border border-outline-variant/10 text-[10px] font-black mb-1 whitespace-nowrap text-primary uppercase tracking-wider">
+        <div className="bg-white/95 backdrop-blur px-3 py-1.5 rounded-lg border border-outline-variant/10 text-[10px] font-black mb-1 whitespace-nowrap text-primary uppercase tracking-wider">
             {label}
         </div>
-        <div className="w-4 h-4 rounded-full border-2 border-white shadow-lg flex items-center justify-center" style={{ backgroundColor: color }}>
+        <div className="w-4 h-4 rounded-full border-2 border-white flex items-center justify-center" style={{ backgroundColor: color }}>
              <div className="w-1.5 h-1.5 rounded-full bg-white/50"></div>
         </div>
     </div>
@@ -174,7 +174,7 @@ const CourseDetail: React.FC<PartnerCourseDetailProps> = ({ onLogout, user }) =>
                     <p className="text-outline mt-2 mb-8">La course que vous recherchez n'existe pas ou a été supprimée.</p>
                     <button 
                         onClick={() => navigate('/partner/courses')}
-                        className="px-8 py-3 bg-primary text-on-primary rounded-2xl font-bold shadow-lg shadow-primary/20 hover:scale-105 transition-transform"
+                        className="px-8 py-3 bg-primary text-on-primary rounded-xl font-bold hover:scale-105 transition-transform"
                     >
                         Retour à la liste
                     </button>
@@ -199,20 +199,15 @@ const CourseDetail: React.FC<PartnerCourseDetailProps> = ({ onLogout, user }) =>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 font-body animate-in fade-in duration-700">
                 
                 {/* --- HERO HEADER --- */}
-                <div className="relative mb-12 p-8 rounded-[2rem] bg-gradient-to-br from-primary to-primary-fixed overflow-hidden shadow-2xl shadow-primary/30">
+                <div className="relative mb-12 p-8 rounded-[2rem] bg-gradient-to-br from-primary to-primary-fixed overflow-hidden">
                     <div className="absolute top-0 right-0 w-1/3 h-full bg-white/5 skew-x-[-20deg] translate-x-20"></div>
                     <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-white/5 rounded-full blur-3xl"></div>
                     
                     <div className="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-end gap-8">
                         <div className="space-y-4">
-                            <div className="flex flex-wrap items-center gap-2 text-white/70 text-xs font-black uppercase tracking-[0.2em]">
-                                <button onClick={() => navigate('/partner/courses')} className="hover:text-white transition-colors py-1">Courses</button>
-                                <span className="material-symbols-outlined text-[10px] md:text-[12px]">chevron_right</span>
-                                <span className="text-white py-1">Détails de la course</span>
-                            </div>
                             
                             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                                <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center text-white border border-white/20 shrink-0">
+                                <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center text-white border border-white/20 shrink-0">
                                     <span className="material-symbols-outlined text-2xl md:text-3xl">route</span>
                                 </div>
                                 <div>
@@ -241,12 +236,12 @@ const CourseDetail: React.FC<PartnerCourseDetailProps> = ({ onLogout, user }) =>
                         <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto mt-6 lg:mt-0">
                             <button 
                                 onClick={handlePrint}
-                                className="flex-1 sm:flex-none justify-center px-8 py-3.5 bg-white text-primary rounded-2xl font-black text-sm shadow-xl hover:bg-surface-container-highest transition-all flex items-center gap-3 group"
+                                className="flex-1 sm:flex-none justify-center px-8 py-3.5 bg-white text-primary rounded-xl font-black text-sm hover:bg-surface-container-highest transition-all flex items-center gap-3 group"
                             >
                                 <span className="material-symbols-outlined text-xl group-hover:rotate-12 transition-transform">print</span>
                                 Imprimer la Fiche
                             </button>
-                            <button className="flex-1 sm:flex-none justify-center px-8 py-3.5 bg-white/10 text-white backdrop-blur-md rounded-2xl font-black text-sm border border-white/20 hover:bg-white/20 transition-all flex items-center gap-3">
+                            <button className="flex-1 sm:flex-none justify-center px-8 py-3.5 bg-white/10 text-white backdrop-blur-md rounded-xl font-black text-sm border border-white/20 hover:bg-white/20 transition-all flex items-center gap-3">
                                 <span className="material-symbols-outlined text-xl">share</span>
                                 Partager
                             </button>
@@ -261,7 +256,7 @@ const CourseDetail: React.FC<PartnerCourseDetailProps> = ({ onLogout, user }) =>
                     <div className="lg:col-span-8 space-y-8">
                         
                         {/* Tab Switcher */}
-                        <div className="p-1.5 bg-surface-container-low rounded-2xl flex gap-1 w-full overflow-x-auto no-scrollbar border border-outline-variant/10 shadow-inner">
+                        <div className="p-1.5 bg-surface-container-low rounded-xl flex gap-1 w-full overflow-x-auto no-scrollbar border border-outline-variant/10">
                             {[
                                 { id: 'details', label: 'Trajet', icon: 'route' },
                                 { id: 'client', label: 'Client', icon: 'person' },
@@ -272,10 +267,10 @@ const CourseDetail: React.FC<PartnerCourseDetailProps> = ({ onLogout, user }) =>
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id as any)}
                                     className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 whitespace-nowrap flex-shrink-0 ${
-                                        activeTab === tab.id 
-                                        ? 'bg-white shadow-lg text-primary border border-outline-variant/5' 
-                                        : 'text-outline hover:bg-surface-container-high'
-                                    }`}
+ activeTab === tab.id 
+ ? 'bg-white text-primary border border-outline-variant/5' 
+ : 'text-outline hover:bg-surface-container-high'
+ }`}
                                 >
                                     <span className="material-symbols-outlined text-[18px]">{tab.icon}</span>
                                     {tab.label}
@@ -287,7 +282,7 @@ const CourseDetail: React.FC<PartnerCourseDetailProps> = ({ onLogout, user }) =>
                         <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
                             {activeTab === 'details' && (
                                 <div className="space-y-8">
-                                    <div className="bg-white rounded-[2rem] p-6 md:p-10 shadow-sm border border-outline-variant/5 relative overflow-hidden group">
+                                    <div className="bg-white rounded-[2rem] p-6 md:p-10 border border-outline-variant/5 relative overflow-hidden group">
                                         <div className="absolute top-0 right-0 p-6 md:p-8 opacity-5 group-hover:opacity-10 transition-opacity">
                                             <span className="material-symbols-outlined text-6xl md:text-8xl text-primary">directions_car</span>
                                         </div>
@@ -317,7 +312,7 @@ const CourseDetail: React.FC<PartnerCourseDetailProps> = ({ onLogout, user }) =>
                                             </div>
 
                                             <div className="w-full md:w-64 space-y-1 relative mt-6 md:mt-0">
-                                                <div className="p-6 bg-surface-container-low rounded-3xl border border-outline-variant/10 text-center flex flex-col items-center">
+                                                <div className="p-6 bg-surface-container-low rounded-xl border border-outline-variant/10 text-center flex flex-col items-center">
                                                     <span className="text-[10px] font-black text-outline uppercase tracking-[0.2em] mb-4">Montant Total</span>
                                                     <div className="text-4xl font-black text-primary font-headline">
                                                         {course.montant.toLocaleString()}
@@ -360,9 +355,9 @@ const CourseDetail: React.FC<PartnerCourseDetailProps> = ({ onLogout, user }) =>
                                     </div>
 
                                     {/* Map Component */}
-                                    <div className="bg-white rounded-[2rem] h-[300px] md:h-[450px] overflow-hidden shadow-sm border border-outline-variant/5 relative group">
+                                    <div className="bg-white rounded-[2rem] h-[300px] md:h-[450px] overflow-hidden border border-outline-variant/5 relative group">
                                          <CourseMap course={course} />
-                                         <div className="absolute top-6 left-6 p-4 bg-white/80 backdrop-blur-md rounded-2xl shadow-xl border border-outline-variant/10 flex items-center gap-3">
+                                         <div className="absolute top-6 left-6 p-4 bg-white/80 backdrop-blur-md rounded-xl border border-outline-variant/10 flex items-center gap-3">
                                              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
                                                  <span className="material-symbols-outlined text-xl animate-pulse">radar</span>
                                              </div>
@@ -376,23 +371,23 @@ const CourseDetail: React.FC<PartnerCourseDetailProps> = ({ onLogout, user }) =>
                             )}
 
                             {activeTab === 'client' && (
-                                <div className="bg-white rounded-[2rem] p-6 md:p-12 shadow-sm border border-outline-variant/5 text-center flex flex-col items-center">
-                                    <div className="w-24 h-24 md:w-32 md:h-32 rounded-[2rem] md:rounded-[2.5rem] bg-surface-container-high flex items-center justify-center text-3xl md:text-4xl font-headline font-black text-primary shadow-xl border-4 border-white mb-6 md:mb-8">
+                                <div className="bg-white rounded-[2rem] p-6 md:p-12 border border-outline-variant/5 text-center flex flex-col items-center">
+                                    <div className="w-24 h-24 md:w-32 md:h-32 rounded-[2rem] md:rounded-[2.5rem] bg-surface-container-high flex items-center justify-center text-3xl md:text-4xl font-headline font-black text-primary border-4 border-white mb-6 md:mb-8">
                                         {course.client ? `${course.client.prenom[0]}${course.client.nom[0]}` : "?"}
                                     </div>
                                     <h3 className="text-2xl md:text-3xl font-black text-on-surface mb-2">{course.client?.prenom} {course.client?.nom}</h3>
                                     <p className="text-outline font-bold tracking-widest uppercase text-xs mb-8 md:mb-10">Identifiant Client: #{course.client?.id}</p>
                                     
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl">
-                                        <div className="p-5 md:p-6 bg-surface-container-low rounded-3xl border border-outline-variant/10 text-left group hover:bg-primary/5 transition-all">
-                                            <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-primary shadow-sm mb-4">
+                                        <div className="p-5 md:p-6 bg-surface-container-low rounded-xl border border-outline-variant/10 text-left group hover:bg-primary/5 transition-all">
+                                            <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-primary mb-4">
                                                 <span className="material-symbols-outlined text-xl">alternate_email</span>
                                             </div>
                                             <p className="text-[10px] font-black text-outline uppercase tracking-widest mb-1">Email</p>
                                             <p className="font-bold text-on-surface text-base md:text-lg break-all">{course.client?.email || 'Non renseigné'}</p>
                                         </div>
-                                        <div className="p-5 md:p-6 bg-surface-container-low rounded-3xl border border-outline-variant/10 text-left group hover:bg-primary/5 transition-all">
-                                            <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-primary shadow-sm mb-4">
+                                        <div className="p-5 md:p-6 bg-surface-container-low rounded-xl border border-outline-variant/10 text-left group hover:bg-primary/5 transition-all">
+                                            <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-primary mb-4">
                                                 <span className="material-symbols-outlined text-xl">call</span>
                                             </div>
                                             <p className="text-[10px] font-black text-outline uppercase tracking-widest mb-1">Téléphone</p>
@@ -403,10 +398,10 @@ const CourseDetail: React.FC<PartnerCourseDetailProps> = ({ onLogout, user }) =>
                             )}
 
                             {activeTab === 'driver' && (
-                                <div className="bg-white rounded-[2rem] p-6 md:p-12 shadow-sm border border-outline-variant/5">
+                                <div className="bg-white rounded-[2rem] p-6 md:p-12 border border-outline-variant/5">
                                     {driver ? (
                                         <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-center md:items-start text-center md:text-left">
-                                            <div className="w-32 h-32 md:w-40 md:h-40 rounded-[2.5rem] md:rounded-[3rem] bg-secondary-container flex items-center justify-center text-4xl md:text-5xl font-headline font-black text-primary shadow-2xl border-8 border-white ring-8 ring-primary/5 flex-shrink-0">
+                                            <div className="w-32 h-32 md:w-40 md:h-40 rounded-[2.5rem] md:rounded-[3rem] bg-secondary-container flex items-center justify-center text-4xl md:text-5xl font-headline font-black text-primary border-8 border-white ring-8 ring-primary/5 flex-shrink-0">
                                                 {driver.prenom[0]}{driver.nom[0]}
                                             </div>
                                             <div className="flex-1 space-y-6 md:space-y-8 mt-2 md:mt-4">
@@ -415,21 +410,21 @@ const CourseDetail: React.FC<PartnerCourseDetailProps> = ({ onLogout, user }) =>
                                                     <p className="text-outline font-bold tracking-[0.2em] uppercase text-xs">Identifiant Chauffeur: #{driver.id}</p>
                                                 </div>
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                                    <div className="p-5 bg-surface-container-low rounded-3xl border border-outline-variant/10">
+                                                    <div className="p-5 bg-surface-container-low rounded-xl border border-outline-variant/10">
                                                         <p className="text-[10px] font-black text-outline uppercase tracking-widest mb-1">Véhicule</p>
                                                         <p className="font-bold text-on-surface flex items-center gap-2">
                                                             <span className="material-symbols-outlined text-sm">directions_car</span>
                                                             {driver.vehicules?.[0]?.modele || 'N/A'}
                                                         </p>
                                                     </div>
-                                                    <div className="p-5 bg-surface-container-low rounded-3xl border border-outline-variant/10">
+                                                    <div className="p-5 bg-surface-container-low rounded-xl border border-outline-variant/10">
                                                         <p className="text-[10px] font-black text-outline uppercase tracking-widest mb-1">Immatriculation</p>
                                                         <p className="font-black text-primary font-mono text-lg flex items-center gap-2">
                                                             <span className="material-symbols-outlined text-sm">badge</span>
                                                             {driver.vehicules?.[0]?.matricule || 'N/A'}
                                                         </p>
                                                     </div>
-                                                    <div className="p-5 bg-surface-container-low rounded-3xl border border-outline-variant/10 col-span-1 sm:col-span-2">
+                                                    <div className="p-5 bg-surface-container-low rounded-xl border border-outline-variant/10 col-span-1 sm:col-span-2">
                                                         <p className="text-[10px] font-black text-outline uppercase tracking-widest mb-1">Téléphone</p>
                                                         <p className="font-bold text-on-surface flex items-center gap-2">
                                                             <span className="material-symbols-outlined text-sm text-primary">call</span>
@@ -441,7 +436,7 @@ const CourseDetail: React.FC<PartnerCourseDetailProps> = ({ onLogout, user }) =>
                                         </div>
                                     ) : (
                                         <div className="py-20 text-center flex flex-col items-center">
-                                            <div className="w-16 h-16 rounded-2xl bg-surface-container-high flex items-center justify-center text-outline mb-4">
+                                            <div className="w-16 h-16 rounded-xl bg-surface-container-high flex items-center justify-center text-outline mb-4">
                                                 <span className="material-symbols-outlined text-4xl">person_off</span>
                                             </div>
                                             <p className="text-outline font-bold italic tracking-wide uppercase text-xs">Aucun chauffeur n'est encore attribué à cette course</p>
@@ -451,8 +446,8 @@ const CourseDetail: React.FC<PartnerCourseDetailProps> = ({ onLogout, user }) =>
                             )}
 
                             {activeTab === 'review' && (
-                                <div className="bg-white rounded-[2rem] py-20 md:py-32 shadow-sm border border-outline-variant/5 text-center flex flex-col items-center px-4">
-                                    <div className="w-20 h-20 rounded-3xl bg-surface-container-high flex items-center justify-center text-surface-dim mb-8">
+                                <div className="bg-white rounded-[2rem] py-20 md:py-32 border border-outline-variant/5 text-center flex flex-col items-center px-4">
+                                    <div className="w-20 h-20 rounded-xl bg-surface-container-high flex items-center justify-center text-surface-dim mb-8">
                                         <span className="material-symbols-outlined text-4xl">rate_review</span>
                                     </div>
                                     <p className="text-xl md:text-2xl font-bold text-outline/40 italic">Aucune note laissée pour cette course</p>
@@ -465,7 +460,7 @@ const CourseDetail: React.FC<PartnerCourseDetailProps> = ({ onLogout, user }) =>
                     <div className="lg:col-span-4 space-y-8">
                         
                         {/* Transaction Card */}
-                        <div className="bg-on-surface rounded-[2rem] p-8 text-surface shadow-2xl relative overflow-hidden group">
+                        <div className="bg-on-surface rounded-[2rem] p-8 text-surface relative overflow-hidden group">
                            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-[60px] group-hover:bg-primary/40 transition-all duration-700"></div>
                            <h4 className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em] mb-8 flex items-center gap-2">
                                <span className="material-symbols-outlined text-primary text-[16px]">receipt_long</span>
@@ -482,7 +477,7 @@ const CourseDetail: React.FC<PartnerCourseDetailProps> = ({ onLogout, user }) =>
                                    <span className="text-sm font-black text-white">{course.montant.toLocaleString()} FCFA</span>
                                </div>
                                
-                               <div className="mt-6 md:mt-8 p-5 md:p-6 bg-white/5 rounded-3xl border border-white/10 backdrop-blur-md">
+                               <div className="mt-6 md:mt-8 p-5 md:p-6 bg-white/5 rounded-xl border border-white/10 backdrop-blur-md">
                                    <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-2">Montant à encaisser</p>
                                    <div className="flex flex-wrap items-baseline gap-2">
                                        <span className="text-3xl sm:text-4xl font-headline font-black text-white">{course.montant.toLocaleString()}</span>
@@ -493,7 +488,7 @@ const CourseDetail: React.FC<PartnerCourseDetailProps> = ({ onLogout, user }) =>
                         </div>
 
                         {/* Fast Actions */}
-                        <div className="bg-white rounded-[2rem] p-8 border border-outline-variant/10 shadow-sm space-y-6">
+                        <div className="bg-white rounded-[2rem] p-8 border border-outline-variant/10 space-y-6">
                             <h4 className="text-[10px] font-black text-outline uppercase tracking-[0.3em] flex items-center gap-2 mb-2">
                                 <span className="material-symbols-outlined text-primary text-[14px]">bolt</span>
                                 Actions Centrales
@@ -502,9 +497,9 @@ const CourseDetail: React.FC<PartnerCourseDetailProps> = ({ onLogout, user }) =>
                             <div className="space-y-3">
                                 <button 
                                     onClick={handlePrint}
-                                    className="w-full flex items-center gap-4 p-4 rounded-2xl bg-surface-container-low hover:bg-primary/5 border border-outline-variant/5 transition-all group"
+                                    className="w-full flex items-center gap-4 p-4 rounded-xl bg-surface-container-low hover:bg-primary/5 border border-outline-variant/5 transition-all group"
                                 >
-                                    <div className="w-12 h-12 rounded-xl bg-white shadow-sm flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all transform group-hover:scale-110">
+                                    <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all transform group-hover:scale-110">
                                         <span className="material-symbols-outlined text-xl">print</span>
                                     </div>
                                     <div className="text-left">
@@ -513,8 +508,8 @@ const CourseDetail: React.FC<PartnerCourseDetailProps> = ({ onLogout, user }) =>
                                     </div>
                                 </button>
 
-                                <button className="w-full flex items-center gap-4 p-4 rounded-2xl bg-surface-container-low hover:bg-error/5 border border-outline-variant/5 transition-all group">
-                                    <div className="w-12 h-12 rounded-xl bg-white shadow-sm flex items-center justify-center text-error group-hover:bg-error group-hover:text-white transition-all transform group-hover:scale-110 font-bold">
+                                <button className="w-full flex items-center gap-4 p-4 rounded-xl bg-surface-container-low hover:bg-error/5 border border-outline-variant/5 transition-all group">
+                                    <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center text-error group-hover:bg-error group-hover:text-white transition-all transform group-hover:scale-110 font-bold">
                                          <span className="material-symbols-outlined text-xl">report</span>
                                     </div>
                                     <div className="text-left">

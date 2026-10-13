@@ -112,7 +112,7 @@ export default function PaymentMethods({ merchantId, storeId, canEdit }: Props) 
                     <button
                         onClick={enregistrer}
                         disabled={envoi || acceptes.length === 0}
-                        className="px-5 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium disabled:opacity-40 dark:bg-white dark:text-slate-900"
+                        className="px-5 py-2 rounded-lg bg-primary text-white text-sm font-medium disabled:opacity-40 dark:bg-primary-container"
                     >
                         {envoi ? "Enregistrement…" : "Enregistrer"}
                     </button>

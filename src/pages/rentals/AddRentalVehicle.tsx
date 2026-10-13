@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useNavigate, useParams, Link } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import MainLayout from '../MainLayout';
 import ApiService from '../../services/ApiService';
 import { toast } from 'react-toastify';
@@ -155,24 +155,17 @@ const AddRentalVehicle: React.FC<AddRentalVehicleProps> = ({ onLogout, theme, to
 
     return (
         <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
-            <div className="bg-white dark:bg-slate-900 px-4 md:px-8 py-6 border-b border-slate-200 dark:border-slate-800 font-manrope">
-                <div className="flex items-center gap-2 text-sm text-slate-500 mb-4">
-                    <Link className="hover:text-primary transition-colors" to="/dashboard">Tableau de bord</Link>
-                    <span className="material-symbols-outlined text-sm">chevron_right</span>
-                    <Link className="hover:text-primary transition-colors" to="/rental-vehicles">Flotte Location</Link>
-                    <span className="material-symbols-outlined text-sm">chevron_right</span>
-                    <span className="text-slate-900 dark:text-slate-100 font-bold">{id ? 'Éditer' : 'Ajouter'} un véhicule</span>
-                </div>
-                <h2 className="text-2xl md:text-3xl font-black tracking-tight text-[#00327d] dark:text-white uppercase leading-none font-headline">
+            <div className="px-4 md:px-8 py-6">
+                <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
                     {id ? 'Mise à jour Véhicule' : 'Nouveau Véhicule'}
-                </h2>
+                </h1>
             </div>
 
             <div className="p-4 md:p-8">
                 <form onSubmit={formik.handleSubmit} className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Left Column: Image & Basic Info */}
                     <div className="lg:col-span-1 flex flex-col gap-6">
-                        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+                        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
                             <div 
                                 className="aspect-square bg-slate-50 dark:bg-slate-800/50 relative cursor-pointer group"
                                 onClick={() => fileInputRef.current?.click()}
@@ -197,8 +190,8 @@ const AddRentalVehicle: React.FC<AddRentalVehicleProps> = ({ onLogout, theme, to
                             </div>
                         </div>
 
-                        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 flex flex-col gap-4 shadow-sm">
-                            <div className="flex flex-col gap-1.5 font-manrope">
+                        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 flex flex-col gap-4">
+                            <div className="flex flex-col gap-1.5">
                                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Libellé du Véhicule (Affichage)</label>
                                 <input 
                                     type="text" 
@@ -210,7 +203,7 @@ const AddRentalVehicle: React.FC<AddRentalVehicleProps> = ({ onLogout, theme, to
                                 />
                                 {formik.errors.libelle && <p className="text-[9px] font-bold text-rose-400 uppercase">{formik.errors.libelle as string}</p>}
                             </div>
-                            <div className="flex flex-col gap-1.5 font-manrope">
+                            <div className="flex flex-col gap-1.5">
                                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Modèle du Véhicule</label>
                                 <input 
                                     type="text" 
@@ -222,7 +215,7 @@ const AddRentalVehicle: React.FC<AddRentalVehicleProps> = ({ onLogout, theme, to
                                 />
                                 {formik.errors.modele && <p className="text-[9px] font-bold text-rose-400 uppercase">{formik.errors.modele as string}</p>}
                             </div>
-                            <div className="flex flex-col gap-1.5 font-manrope">
+                            <div className="flex flex-col gap-1.5">
                                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Plaque d'immatriculation</label>
                                 <input 
                                     type="text" 
@@ -234,7 +227,7 @@ const AddRentalVehicle: React.FC<AddRentalVehicleProps> = ({ onLogout, theme, to
                                 />
                                 {formik.errors.matricule && <p className="text-[9px] font-bold text-rose-400 uppercase">{formik.errors.matricule as string}</p>}
                             </div>
-                            <div className="flex flex-col gap-1.5 font-manrope">
+                            <div className="flex flex-col gap-1.5">
                                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Description du Véhicule</label>
                                 <textarea 
                                     name="description"
@@ -249,8 +242,8 @@ const AddRentalVehicle: React.FC<AddRentalVehicleProps> = ({ onLogout, theme, to
                     </div>
 
                     {/* Right Column: Detailed Configuration */}
-                    <div className="lg:col-span-2 flex flex-col gap-8 font-manrope">
-                        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-8 shadow-sm flex flex-col gap-8">
+                    <div className="lg:col-span-2 flex flex-col gap-8">
+                        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-8 flex flex-col gap-8">
                             {/* Section 1: Classification */}
                             <div>
                                 <h3 className="text-xs font-black uppercase tracking-[0.2em] text-[#00327d] mb-6 flex items-center gap-2">
@@ -327,8 +320,8 @@ const AddRentalVehicle: React.FC<AddRentalVehicleProps> = ({ onLogout, theme, to
                                     <span className="size-2 rounded-full bg-primary"></span>
                                     Configuration Tarifaire
                                 </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 font-manrope">
-                                    <div className="bg-[#00327d]/5 dark:bg-slate-800/80 p-6 rounded-3xl border border-[#00327d]/10 flex flex-col gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div className="bg-[#00327d]/5 dark:bg-slate-800/80 p-6 rounded-xl border border-[#00327d]/10 flex flex-col gap-4">
                                         <div className="flex items-center gap-3">
                                             <span className="material-symbols-outlined text-primary">apartment</span>
                                             <label className="text-[11px] font-black uppercase tracking-widest text-slate-500">Tarif Ville (Journalier)</label>
@@ -337,14 +330,14 @@ const AddRentalVehicle: React.FC<AddRentalVehicleProps> = ({ onLogout, theme, to
                                             <input 
                                                 type="number" 
                                                 name="montant"
-                                                className="w-full pl-6 pr-16 py-4 bg-white dark:bg-slate-900 border-2 border-transparent focus:border-primary rounded-2xl outline-none font-black text-2xl text-[#00327d] dark:text-primary-container"
+                                                className="w-full pl-6 pr-16 py-4 bg-white dark:bg-slate-900 border-2 border-transparent focus:border-primary rounded-xl outline-none font-black text-2xl text-[#00327d] dark:text-primary-container"
                                                 onChange={formik.handleChange}
                                                 value={formik.values.montant}
                                             />
                                             <span className="absolute right-6 top-1/2 -translate-y-1/2 font-black text-xs text-slate-400">XAF</span>
                                         </div>
                                     </div>
-                                    <div className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-3xl border border-slate-100 dark:border-slate-800 flex flex-col gap-4 opacity-80">
+                                    <div className="bg-slate-50 dark:bg-slate-800/50 p-6 rounded-xl border border-slate-100 dark:border-slate-800 flex flex-col gap-4 opacity-80">
                                         <div className="flex items-center gap-3">
                                             <span className="material-symbols-outlined text-emerald-500">travel_explore</span>
                                             <label className="text-[11px] font-black uppercase tracking-widest text-slate-500">Tarif Hors-Ville (Journalier)</label>
@@ -353,7 +346,7 @@ const AddRentalVehicle: React.FC<AddRentalVehicleProps> = ({ onLogout, theme, to
                                             <input 
                                                 type="number" 
                                                 name="montant_hors_ville"
-                                                className="w-full pl-6 pr-16 py-4 bg-white dark:bg-slate-900 border-2 border-transparent focus:border-primary rounded-2xl outline-none font-black text-2xl text-slate-700 dark:text-slate-300"
+                                                className="w-full pl-6 pr-16 py-4 bg-white dark:bg-slate-900 border-2 border-transparent focus:border-primary rounded-xl outline-none font-black text-2xl text-slate-700 dark:text-slate-300"
                                                 onChange={formik.handleChange}
                                                 value={formik.values.montant_hors_ville}
                                             />
@@ -367,14 +360,14 @@ const AddRentalVehicle: React.FC<AddRentalVehicleProps> = ({ onLogout, theme, to
                                 <button 
                                     type="button"
                                     onClick={() => navigate('/rental-vehicles')}
-                                    className="px-8 py-4 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-black uppercase tracking-widest hover:bg-slate-200 transition-all text-xs"
+                                    className="px-8 py-4 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-black uppercase tracking-widest hover:bg-slate-200 transition-all text-xs"
                                 >
                                     Annuler
                                 </button>
                                 <button 
                                     type="submit"
                                     disabled={loading}
-                                    className="flex-1 px-8 py-4 rounded-2xl bg-[#00327d] hover:bg-[#00327d]/90 text-white font-black uppercase tracking-widest shadow-2xl shadow-indigo-900/20 disabled:opacity-50 transition-all text-xs flex items-center justify-center gap-3"
+                                    className="flex-1 px-8 py-4 rounded-xl bg-[#00327d] hover:bg-[#00327d]/90 text-white font-black uppercase tracking-widest disabled:opacity-50 transition-all text-xs flex items-center justify-center gap-3"
                                 >
                                     {loading && <span className="material-symbols-outlined animate-spin">sync</span>}
                                     {id ? 'Mettre à jour le véhicule' : 'Enregistrer dans la flotte'}

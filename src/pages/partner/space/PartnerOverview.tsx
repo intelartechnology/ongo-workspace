@@ -1,6 +1,8 @@
 import React from "react";
 import { Button } from "../../../components/ui";
 import type { Partenaire } from "../PartnerSpace";
+import { StatCard } from "../../../components/ui";
+import { Banknote, Bike, Route, Wallet, type LucideIcon } from "lucide-react";
 
 const francs = (v: number | null | undefined): string =>
     v == null ? "—" : `${Number(v).toLocaleString("fr-FR")} FCFA`;
@@ -22,15 +24,8 @@ interface Props {
 const PartnerOverview: React.FC<Props> = ({ partenaire, onVoirChauffeurs }) => {
     const s = partenaire.stats;
 
-    const tuile = (libelle: string, valeur: string, icone: string, detail?: string) => (
-        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-            <div className="flex items-start justify-between">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{libelle}</p>
-                <span className="material-symbols-outlined text-[20px] text-slate-300 dark:text-slate-600">{icone}</span>
-            </div>
-            <p className="text-2xl font-black text-slate-900 dark:text-white mt-2 tabular-nums">{valeur}</p>
-            {detail && <p className="text-[11px] text-slate-500 mt-1">{detail}</p>}
-        </div>
+    const tuile = (libelle: string, valeur: string, icone: LucideIcon, detail?: string) => (
+        <StatCard label={libelle} value={valeur} icon={icone} note={detail} />
     );
 
     if (!s) {
@@ -44,18 +39,18 @@ const PartnerOverview: React.FC<Props> = ({ partenaire, onVoirChauffeurs }) => {
     return (
         <div className="flex flex-col gap-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-                {tuile("Chauffeurs", String(s.drivers_total), "sports_motorsports", `${s.drivers_active} actif${s.drivers_active > 1 ? "s" : ""}`)}
-                {tuile("Courses ce mois", s.courses_month.toLocaleString("fr-FR"), "route")}
-                {tuile("Chiffre d'affaires", francs(s.revenue_month), "payments", "encaissé par les chauffeurs")}
+                {tuile("Chauffeurs", String(s.drivers_total), Bike, `${s.drivers_active} actif${s.drivers_active > 1 ? "s" : ""}`)}
+                {tuile("Courses ce mois", s.courses_month.toLocaleString("fr-FR"), Route)}
+                {tuile("Chiffre d'affaires", francs(s.revenue_month), Banknote, "encaissé par les chauffeurs")}
                 {/* `commission_month` est nul pour un membre d'equipe : le
                     serveur ne le lui envoie pas. Afficher un tiret laisserait
                     croire a zero franc gagne. */}
                 {s.commission_month != null &&
-                    tuile("Votre commission", francs(s.commission_month), "account_balance_wallet", `${partenaire.commission_rate} % des courses`)}
+                    tuile("Votre commission", francs(s.commission_month), Wallet, `${partenaire.commission_rate} % des courses`)}
             </div>
 
             {s.drivers_total === 0 && (
-                <div className="py-14 px-6 bg-white dark:bg-slate-900 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 flex flex-col items-center text-center gap-3">
+                <div className="py-14 px-6 bg-white dark:bg-slate-900 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-800 flex flex-col items-center text-center gap-3">
                     <span className="material-symbols-outlined text-5xl text-primary/30">person_add</span>
                     <p className="font-black text-base uppercase tracking-tight text-slate-800 dark:text-slate-100">Aucun chauffeur</p>
                     <p className="text-sm text-slate-500 max-w-sm">

@@ -315,7 +315,7 @@ export default function AudienceBuilder({
                 <button
                     onClick={enregistrer}
                     disabled={envoi}
-                    className="px-5 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium disabled:opacity-40 dark:bg-white dark:text-slate-900"
+                    className="px-5 py-2 rounded-lg bg-primary text-white text-sm font-medium disabled:opacity-40 dark:bg-primary-container"
                 >
                     {envoi ? "Enregistrement…" : "Enregistrer l'audience"}
                 </button>
@@ -414,7 +414,7 @@ function LigneRegle({
                                 <button
                                     key={valeur}
                                     onClick={() => basculer(valeur)}
-                                    className="px-2 py-1 rounded-full text-xs bg-slate-900 text-white dark:bg-white dark:text-slate-900"
+                                    className="px-2 py-1 rounded-full text-xs bg-primary text-white dark:bg-primary-container"
                                 >
                                     {valeurs.find((v) => v.value === valeur)?.label ?? valeur} ×
                                 </button>

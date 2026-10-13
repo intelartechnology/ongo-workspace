@@ -262,7 +262,7 @@ export default function Promotions({ merchantId, storeId, storeName }: Promotion
                         <p className="text-sm text-slate-500">Un taux sur une sélection de produits, pour une période. Les prix reviennent seuls à la fin.</p>
                     </div>
                     {!nouvelle && (
-                        <button onClick={() => setNouvelle(true)} className="px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium dark:bg-white dark:text-slate-900">
+                        <button onClick={() => setNouvelle(true)} className="px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium dark:bg-primary-container">
                             Nouvelle promotion
                         </button>
                     )}
@@ -315,7 +315,7 @@ export default function Promotions({ merchantId, storeId, storeName }: Promotion
                             <button
                                 onClick={lancer}
                                 disabled={!nom.trim() || choisis.length === 0 || tauxNombre < 1}
-                                className="px-5 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium disabled:opacity-40 dark:bg-white dark:text-slate-900"
+                                className="px-5 py-2 rounded-lg bg-primary text-white text-sm font-medium disabled:opacity-40 dark:bg-primary-container"
                             >
                                 Lancer la promotion
                             </button>
@@ -358,7 +358,7 @@ export default function Promotions({ merchantId, storeId, storeName }: Promotion
                         </p>
                     </div>
                     {!code && (
-                        <button onClick={() => setCode({ ...codeVide })} className="px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium dark:bg-white dark:text-slate-900">
+                        <button onClick={() => setCode({ ...codeVide })} className="px-4 py-2 rounded-lg bg-primary text-white text-sm font-medium dark:bg-primary-container">
                             Nouveau code
                         </button>
                     )}
@@ -446,7 +446,7 @@ export default function Promotions({ merchantId, storeId, storeName }: Promotion
                                         <input type="color" className="block mt-1 h-10 w-20 rounded" value={code.ticket_color} onChange={(e) => setCode({ ...code, ticket_color: e.target.value })} />
                                     </label>
                                 </div>
-                                <div className="p-4 rounded-2xl bg-slate-100 dark:bg-slate-900">
+                                <div className="p-4 rounded-xl bg-slate-100 dark:bg-slate-900">
                                     <PromoTicketPreview form={code} />
                                 </div>
                             </div>
@@ -459,7 +459,7 @@ export default function Promotions({ merchantId, storeId, storeName }: Promotion
                             <button
                                 onClick={enregistrerCode}
                                 disabled={!code.code.trim() || !code.value}
-                                className="px-5 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium disabled:opacity-40 dark:bg-white dark:text-slate-900"
+                                className="px-5 py-2 rounded-lg bg-primary text-white text-sm font-medium disabled:opacity-40 dark:bg-primary-container"
                             >
                                 Enregistrer
                             </button>

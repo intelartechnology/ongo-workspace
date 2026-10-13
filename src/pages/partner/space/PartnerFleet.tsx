@@ -362,7 +362,7 @@ const PartnerFleet: React.FC<Props> = ({ partnerId, actif }) => {
 
     return (
         <div className="flex flex-col gap-4">
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-wrap items-center gap-3">
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-wrap items-center gap-3">
                 <div className="mr-auto">
                     <h3 className="text-sm font-black uppercase tracking-tight text-slate-900 dark:text-white">Flotte</h3>
                     <p className="text-xs text-slate-500 mt-0.5">
@@ -377,7 +377,7 @@ const PartnerFleet: React.FC<Props> = ({ partnerId, actif }) => {
             </div>
 
             {ajout && (
-                <form onSubmit={ajouter} className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-wrap items-end gap-3">
+                <form onSubmit={ajouter} className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-wrap items-end gap-3">
                     <label className="flex flex-col gap-1.5 min-w-[160px]">
                         <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Matricule *</span>
                         <Input value={matricule} onChange={(e) => setMatricule(e.target.value)} placeholder="LT 1234 AB" autoFocus />
@@ -422,7 +422,7 @@ const PartnerFleet: React.FC<Props> = ({ partnerId, actif }) => {
                 </form>
             )}
 
-            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse min-w-[780px]">
                         <thead>
@@ -496,7 +496,7 @@ const PartnerFleet: React.FC<Props> = ({ partnerId, actif }) => {
                                 disabled={!lien.url || lien.active}
                                 onClick={() => lien.url && charger(lien.url)}
                                 className={`px-3 py-1.5 rounded-md text-xs font-medium ${lien.active
-                                    ? "bg-primary text-white font-bold"
+ ? "bg-primary text-white font-bold"
                                     : "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400"} ${!lien.url ? "opacity-50 cursor-not-allowed" : ""}`}
                                 dangerouslySetInnerHTML={{ __html: lien.label }}
                             />

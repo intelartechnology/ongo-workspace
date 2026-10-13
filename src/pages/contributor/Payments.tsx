@@ -115,7 +115,7 @@ const ContributorPayments: React.FC<ContributorPaymentsProps> = ({ onLogout, use
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Left: Balance Card & Actions */}
                 <div className="lg:col-span-1 space-y-6">
-                    <div className="bg-gradient-to-br from-emerald-800 to-emerald-600 p-8 rounded-3xl shadow-xl text-white relative overflow-hidden">
+                    <div className="bg-gradient-to-br from-emerald-800 to-emerald-600 p-8 rounded-xl text-white relative overflow-hidden">
                         <div className="relative z-10">
                             <p className="text-emerald-100 font-bold text-xs uppercase tracking-widest mb-2 opacity-80">Solde Disponible</p>
                             <h3 className="text-5xl font-black mb-6">
@@ -126,7 +126,7 @@ const ContributorPayments: React.FC<ContributorPaymentsProps> = ({ onLogout, use
                             <div className="pt-6 border-t border-white/10 flex gap-4">
                                 <button
                                     onClick={() => setShowWithdrawModal(true)}
-                                    className="flex-1 bg-white text-emerald-800 font-bold py-3 px-4 rounded-xl shadow-lg hover:bg-emerald-50 transition-colors flex items-center justify-center gap-2 text-sm"
+                                    className="flex-1 bg-white text-emerald-800 font-bold py-3 px-4 rounded-xl hover:bg-emerald-50 transition-colors flex items-center justify-center gap-2 text-sm"
                                 >
                                     <span className="material-symbols-outlined text-lg">payout</span>
                                     Retirer
@@ -144,7 +144,7 @@ const ContributorPayments: React.FC<ContributorPaymentsProps> = ({ onLogout, use
                         <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-white/10 rounded-full blur-3xl"/>
                     </div>
 
-                    <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+                    <div className="bg-white p-6 rounded-xl border border-slate-100">
                         <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
                             <span className="material-symbols-outlined text-base">info</span>
                             Informations
@@ -168,7 +168,7 @@ const ContributorPayments: React.FC<ContributorPaymentsProps> = ({ onLogout, use
 
                 {/* Right: Transaction History */}
                 <div className="lg:col-span-2">
-                    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                    <div className="bg-white rounded-xl border border-slate-100 overflow-hidden">
                         <div className="px-8 py-5 border-b border-slate-100 flex justify-between items-center">
                             <h4 className="text-lg font-bold text-slate-800 tracking-tight">Historique des Transactions</h4>
                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-2.5 py-1 rounded-full">
@@ -217,10 +217,10 @@ const ContributorPayments: React.FC<ContributorPaymentsProps> = ({ onLogout, use
                                                 </td>
                                                 <td className="px-6 py-4 text-center">
                                                     <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase ${
-                                                        tx.status === 'verified'
-                                                            ? 'bg-emerald-100 text-emerald-700'
-                                                            : 'bg-amber-100 text-amber-700'
-                                                    }`}>
+ tx.status === 'verified'
+ ? 'bg-emerald-100 text-emerald-700'
+ : 'bg-amber-100 text-amber-700'
+ }`}>
                                                         {tx.status === 'verified' ? 'Consolidé' : 'En attente'}
                                                     </span>
                                                 </td>
@@ -249,10 +249,10 @@ const ContributorPayments: React.FC<ContributorPaymentsProps> = ({ onLogout, use
                                             onClick={() => handlePageChange(link.url)}
                                             disabled={!link.url}
                                             className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all ${
-                                                link.active
-                                                    ? 'bg-emerald-700 text-white shadow-md'
-                                                    : 'bg-white text-slate-500 hover:bg-slate-100 border border-slate-200'
-                                            } ${!link.url ? 'opacity-40 cursor-not-allowed' : ''}`}
+ link.active
+ ? 'bg-emerald-700 text-white '
+ : 'bg-white text-slate-500 hover:bg-slate-100 border border-slate-200'
+ } ${!link.url ? 'opacity-40 cursor-not-allowed' : ''}`}
                                             dangerouslySetInnerHTML={{ __html: link.label }}
                                         />
                                     ))}
@@ -267,7 +267,7 @@ const ContributorPayments: React.FC<ContributorPaymentsProps> = ({ onLogout, use
             {showWithdrawModal && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
                     <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => !submitting && setShowWithdrawModal(false)}/>
-                    <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl relative z-10 overflow-hidden animate-in fade-in zoom-in duration-200">
+                    <div className="bg-white w-full max-w-md rounded-xl relative z-10 overflow-hidden animate-in fade-in zoom-in duration-200">
                         <div className="bg-emerald-800 p-6 text-white text-center">
                             <h3 className="text-xl font-bold">Demander un Retrait</h3>
                             <p className="text-emerald-200 text-xs font-medium mt-1">Saisissez les informations de paiement</p>
@@ -307,10 +307,10 @@ const ContributorPayments: React.FC<ContributorPaymentsProps> = ({ onLogout, use
                                         type="button"
                                         onClick={() => setWithdrawMode('OM')}
                                         className={`py-3 rounded-xl font-bold flex flex-col items-center gap-1 border-2 transition-all ${
-                                            withdrawMode === 'OM'
-                                                ? 'bg-emerald-50 border-emerald-600 text-emerald-800'
-                                                : 'bg-slate-50 border-slate-100 text-slate-500 hover:border-slate-200'
-                                        }`}
+ withdrawMode === 'OM'
+ ? 'bg-emerald-50 border-emerald-600 text-emerald-800'
+ : 'bg-slate-50 border-slate-100 text-slate-500 hover:border-slate-200'
+ }`}
                                         disabled={submitting}
                                     >
                                         <span className="text-xs">Orange Money</span>
@@ -319,10 +319,10 @@ const ContributorPayments: React.FC<ContributorPaymentsProps> = ({ onLogout, use
                                         type="button"
                                         onClick={() => setWithdrawMode('MTN')}
                                         className={`py-3 rounded-xl font-bold flex flex-col items-center gap-1 border-2 transition-all ${
-                                            withdrawMode === 'MTN'
-                                                ? 'bg-emerald-50 border-emerald-600 text-emerald-800'
-                                                : 'bg-slate-50 border-slate-100 text-slate-500 hover:border-slate-200'
-                                        }`}
+ withdrawMode === 'MTN'
+ ? 'bg-emerald-50 border-emerald-600 text-emerald-800'
+ : 'bg-slate-50 border-slate-100 text-slate-500 hover:border-slate-200'
+ }`}
                                         disabled={submitting}
                                     >
                                         <span className="text-xs">MTN Mobile Money</span>
@@ -341,7 +341,7 @@ const ContributorPayments: React.FC<ContributorPaymentsProps> = ({ onLogout, use
                                 </button>
                                 <button
                                     type="submit"
-                                    className="flex-1 bg-emerald-700 text-white py-3.5 rounded-xl font-bold shadow-lg hover:bg-emerald-800 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                                    className="flex-1 bg-emerald-700 text-white py-3.5 rounded-xl font-bold hover:bg-emerald-800 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                                     disabled={submitting}
                                 >
                                     {submitting ? (

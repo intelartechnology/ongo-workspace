@@ -70,9 +70,9 @@ export default function ProductPreview({ name, description, ingredients, image, 
         <div className="sticky top-6">
             <p className="text-xs font-semibold uppercase text-slate-500 mb-2">Aperçu client</p>
 
-            <div className="w-full max-w-[340px] rounded-[28px] border-8 border-slate-900 bg-slate-100 overflow-hidden shadow-xl">
+            <div className="w-full max-w-[340px] rounded-[28px] border-8 border-slate-900 bg-slate-100 overflow-hidden">
                 <div className="max-h-[560px] overflow-y-auto">
-                    <div className="bg-white rounded-b-3xl pb-5">
+                    <div className="bg-white rounded-b-xl pb-5">
                         <div className="aspect-[1.1] bg-slate-200 flex items-center justify-center">
                             {image ? <img src={image} alt="" className="h-full w-full object-cover" /> : <span className="text-xs text-slate-400">Sans photo</span>}
                         </div>
@@ -99,7 +99,7 @@ export default function ProductPreview({ name, description, ingredients, image, 
                     </div>
 
                     {groupes.length > 0 && (
-                        <div className="mt-3 bg-white rounded-3xl pl-4 py-2">
+                        <div className="mt-3 bg-white rounded-xl pl-4 py-2">
                             {groupes.map((g, gi) => (
                                 <div key={g.id ?? gi}>
                                     <div className="flex items-center justify-between pr-4 pt-4 pb-1">
@@ -119,7 +119,7 @@ export default function ProductPreview({ name, description, ingredients, image, 
                                             <button key={o.id ?? oi} onClick={() => basculer(gi, oi)} className="w-full flex items-center gap-3 text-left">
                                                 <span
                                                     className={`h-6 w-6 shrink-0 flex items-center justify-center text-white text-xs ${
-                                                        Number(g.max_choices) === 1 ? "rounded-full" : "rounded-md"
+ Number(g.max_choices) === 1 ? "rounded-full" : "rounded-md"
                                                     } ${coche ? "bg-slate-900" : "bg-slate-100"}`}
                                                 >
                                                     {coche ? "✓" : ""}
@@ -149,12 +149,12 @@ export default function ProductPreview({ name, description, ingredients, image, 
                         <p className={`text-lg font-bold ${remise > 0 ? "text-red-600" : "text-slate-900"}`}>{francs((price + supplements) * quantite)}</p>
                     </div>
                     <div className="flex gap-2 mt-3">
-                        <div className="flex items-center rounded-2xl bg-slate-100">
+                        <div className="flex items-center rounded-xl bg-slate-100">
                             <button onClick={() => setQuantite(Math.max(1, quantite - 1))} className="w-9 h-11 text-lg">−</button>
                             <span className="w-5 text-center text-sm font-semibold">{quantite}</span>
                             <button onClick={() => setQuantite(quantite + 1)} className="w-9 h-11 text-lg">+</button>
                         </div>
-                        <div className={`flex-1 h-11 rounded-2xl flex items-center justify-center text-sm font-semibold ${manque ? "bg-slate-100 text-slate-500" : "bg-sky-900 text-white"}`}>
+                        <div className={`flex-1 h-11 rounded-xl flex items-center justify-center text-sm font-semibold ${manque ? "bg-slate-100 text-slate-500" : "bg-sky-900 text-white"}`}>
                             {manque ? `Choisissez « ${manque.name || "…"} »` : "Ajouter"}
                         </div>
                     </div>

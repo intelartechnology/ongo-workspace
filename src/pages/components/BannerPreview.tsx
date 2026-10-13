@@ -148,8 +148,8 @@ export function Carte({ banniere, h = 150 }: { banniere: Apercu; h?: number }) {
         const pastille = Math.max(5 * echelle, 2);
 
         return (
-            <div className={`${cadre} rounded-3xl flex gap-2 bg-slate-100`} style={{ height: h, width: largeur, padding: 8 * echelle }}>
-                <div className="relative flex flex-col items-center justify-center text-center overflow-hidden rounded-2xl" style={{ background: fond, flex: 62, padding: 8 * echelle }}>
+            <div className={`${cadre} rounded-xl flex gap-2 bg-slate-100`} style={{ height: h, width: largeur, padding: 8 * echelle }}>
+                <div className="relative flex flex-col items-center justify-center text-center overflow-hidden rounded-xl" style={{ background: fond, flex: 62, padding: 8 * echelle }}>
                     <span className="font-black uppercase leading-none" style={{ fontSize: TAILLES_COUPON.titre * echelle, letterSpacing: "-0.02em", color: encreTitre }}>
                         {title || "Titre du coupon"}
                     </span>
@@ -200,7 +200,7 @@ export function Carte({ banniere, h = 150 }: { banniere: Apercu; h?: number }) {
                   : "items-start justify-start text-left";
 
         return (
-            <div className={`${cadre} rounded-3xl flex flex-col ${place}`} style={{ height: h, width: largeur, background: fond, padding: marge }}>
+            <div className={`${cadre} rounded-xl flex flex-col ${place}`} style={{ height: h, width: largeur, background: fond, padding: marge }}>
                 {image && <img src={image} alt="" className="absolute inset-0 w-full h-full object-cover" />}
                 {/* Le même voile que l'application : un titre blanc sur une photo claire ne se lit pas. */}
                 {image && (
@@ -232,7 +232,7 @@ export function Carte({ banniere, h = 150 }: { banniere: Apercu; h?: number }) {
     }
 
     return (
-        <div className={`${cadre} rounded-3xl`} style={{ height: h, width: largeur }}>
+        <div className={`${cadre} rounded-xl`} style={{ height: h, width: largeur }}>
             {image && <img src={image} alt="" className="w-full h-full object-cover" />}
         </div>
     );

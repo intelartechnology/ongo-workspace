@@ -24,7 +24,7 @@ const PartnerSidebar: React.FC<PartnerSidebarProps> = ({ onLogout, isOpen = fals
             <div className="mb-10 px-2 flex justify-between items-center">
                 <div>
                     <h1 className="text-xl font-bold text-blue-900 tracking-tight">Ongo 237</h1>
-                    <p className="text-xs font-manrope text-slate-500 font-medium lowercase">Partner Portal</p>
+                    <p className="text-xs text-slate-500 font-medium lowercase">Partner Portal</p>
                 </div>
                 <button 
                     onClick={onClose} 
@@ -48,7 +48,7 @@ const PartnerSidebar: React.FC<PartnerSidebarProps> = ({ onLogout, isOpen = fals
                         }
                     >
                         <span className="material-symbols-outlined">{item.icon}</span>
-                        <span className="font-manrope text-sm tracking-tight">{item.label}</span>
+                        <span className="text-sm tracking-tight">{item.label}</span>
                     </NavLink>
                 ))}
             </nav>
@@ -62,7 +62,7 @@ const PartnerSidebar: React.FC<PartnerSidebarProps> = ({ onLogout, isOpen = fals
                     className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-500 hover:bg-slate-200/50 transition-colors"
                 >
                     <span className="material-symbols-outlined">logout</span>
-                    <span className="font-manrope text-sm tracking-tight">Logout</span>
+                    <span className="text-sm tracking-tight">Logout</span>
                 </button>
             </div>
         </aside>

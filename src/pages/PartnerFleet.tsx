@@ -6,6 +6,9 @@ import { toast } from "react-toastify";
 import Loading from "../components/Loading";
 import MainLayout from "./MainLayout";
 import { useNavigate, useParams } from "react-router-dom";
+import { Car, CircleCheck, Wallet, Wrench } from "lucide-react";
+import { StatCard, Avatar } from "../components/ui";
+import { notifier } from "../services/notifier";
 
 interface PartnerFleetProps {
     onLogout?: () => void;
@@ -131,23 +134,18 @@ export default function PartnerFleet({ onLogout = () => {}, theme = "light", tog
             <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-background-dark font-display text-slate-900 dark:text-slate-100">
 
                 {/* Header */}
-                <header className="h-20 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-8 flex items-center justify-between sticky top-0 z-10">
+                <header className="py-6 px-8 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <button onClick={() => navigate("/partners")} className="text-slate-400 hover:text-primary p-2 rounded-lg hover:bg-slate-100 transition-all">
                             <span className="material-symbols-outlined">arrow_back</span>
                         </button>
                         <div>
-                            <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">
-                                <span className="hover:text-primary cursor-pointer" onClick={() => navigate("/partners")}>Partenaires</span>
-                                <span className="material-symbols-outlined text-[10px]">chevron_right</span>
-                                <span className="text-primary">{partner?.name || partner?.user?.nom || "..."}</span>
-                            </div>
                             <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Gérer la Flotte du Partenaire</h2>
                         </div>
                     </div>
                     <button
                         onClick={openAddModal}
-                        className="bg-primary hover:bg-primary/90 text-white px-6 py-2.5 rounded-lg font-semibold flex items-center gap-2 transition-all shadow-lg shadow-primary/20"
+                        className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white hover:bg-primary/90 dark:bg-primary-container dark:hover:bg-primary-container/90 transition-colors disabled:opacity-40 flex items-center gap-2"
                     >
                         <span className="material-symbols-outlined">add</span>
                         Ajouter un Véhicule
@@ -168,25 +166,27 @@ export default function PartnerFleet({ onLogout = () => {}, theme = "light", tog
                     )}
 
                     {/* Stats */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        {[
-                            { label: "Total Véhicules", value: meta?.total || fleets.length, sub: `+${meta?.total || 0} ce mois`, subColor: "text-emerald-600" },
-                            { label: "Solde Total Flotte", value: `${(partner?.total_balance || 0).toLocaleString()} XAF`, sub: "Gain cumulé", subColor: "text-primary" },
-                            { label: "En Service", value: totalActive, sub: `${fleets.length ? Math.round((totalActive / fleets.length) * 100) : 0}% Capacité`, subColor: "text-slate-500" },
-                            { label: "Maintenance", value: inMaintenance, sub: inMaintenance > 0 ? "Action Requise" : "Aucune", subColor: "text-amber-600" },
-                        ].map((s) => (
-                            <div key={s.label} className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{s.label}</p>
-                                <div className="flex items-baseline gap-2">
-                                    <span className="text-2xl font-extrabold">{s.value}</span>
-                                    <span className={`text-xs font-semibold ${s.subColor}`}>{s.sub}</span>
-                                </div>
-                            </div>
-                        ))}
+                    {/* « +N ce mois » répétait le total : il n'y a pas de date d'entrée à compter. */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <StatCard label="Véhicules" value={meta?.total || fleets.length} icon={Car} />
+                        <StatCard label="Solde de la flotte" value={`${(partner?.total_balance || 0).toLocaleString("fr-FR")} FCFA`} icon={Wallet} note="Gain cumulé" />
+                        <StatCard
+                            label="En service"
+                            value={totalActive}
+                            icon={CircleCheck}
+                            note={`${fleets.length ? Math.round((totalActive / fleets.length) * 100) : 0} % de la flotte`}
+                        />
+                        <StatCard
+                            label="En maintenance"
+                            value={inMaintenance}
+                            icon={Wrench}
+                            alert={inMaintenance > 0}
+                            note={inMaintenance > 0 ? "Action requise" : "Aucun"}
+                        />
                     </div>
 
                     {/* Fleet Table */}
-                    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
                         <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                             <h3 className="font-bold text-slate-800 dark:text-white">Détails de la Flotte Active</h3>
                             <p className="text-xs text-slate-400 italic">
@@ -248,11 +248,7 @@ export default function PartnerFleet({ onLogout = () => {}, theme = "light", tog
                                                             {driver ? (
                                                                 <div className="flex items-center gap-2">
                                                                     <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center overflow-hidden">
-                                                                        {driver.photo ? (
-                                                                            <img src={driver.photo} alt="Driver" className="w-full h-full object-cover" />
-                                                                        ) : (
-                                                                            <span className="material-symbols-outlined text-xs text-slate-500">person</span>
-                                                                        )}
+                                                                        <Avatar photo={driver?.photo} nom={driver?.nom || driver?.prenom} alt="Driver" className="text-xs" />
                                                                     </div>
                                                                     <p className="text-sm font-semibold">{driver.nom} {driver.prenom || ""}</p>
                                                                 </div>
@@ -273,6 +269,14 @@ export default function PartnerFleet({ onLogout = () => {}, theme = "light", tog
                                                             <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${st.bg}`}>{st.text}</span>
                                                         </td>
                                                         <td className="px-6 py-5 text-right">
+                                                            {driver && (
+                                                                <button
+                                                                    onClick={() => notifier({ destinataires: [{ id: driver.id, nom: [driver.nom, driver.prenom].filter(Boolean).join(" ") }] })}
+                                                                    className="p-2 text-slate-400 hover:text-primary transition-colors rounded-lg hover:bg-slate-100"
+                                                                    title="Notifier le chauffeur">
+                                                                    <span className="material-symbols-outlined">notifications</span>
+                                                                </button>
+                                                            )}
                                                             <button onClick={() => removeFromFleet(fleet.id)}
                                                                 className="p-2 text-slate-400 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50"
                                                                 title="Retirer de la flotte">
@@ -318,7 +322,7 @@ export default function PartnerFleet({ onLogout = () => {}, theme = "light", tog
                                         }
                                         return (
                                             <button key={index} onClick={() => item.url && fetchFleets(item.url, true)}
-                                                className={`w-8 h-8 flex items-center justify-center rounded-lg border text-xs font-medium transition-colors ${item.active ? "bg-primary text-white border-primary" : "border-slate-200 text-slate-600 hover:bg-white"}`}>
+                                                className={`w-8 h-8 flex items-center justify-center rounded-lg border text-xs font-medium transition-colors ${item.active ? "bg-primary text-white dark:bg-primary-container border-primary dark:border-primary-container" : "border-slate-200 text-slate-600 hover:bg-white"}`}>
                                                 <span dangerouslySetInnerHTML={{ __html: item.label }} />
                                             </button>
                                         );
@@ -332,7 +336,7 @@ export default function PartnerFleet({ onLogout = () => {}, theme = "light", tog
                 {/* Add Vehicle Modal */}
                 {showAddModal && createPortal(
                     <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
-                        <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-2xl shadow-2xl p-8 relative">
+                        <div className="bg-white dark:bg-slate-900 w-full max-w-md rounded-xl p-8 relative">
                             <button onClick={() => { setShowAddModal(false); setSelectedVehicleId(""); }}
                                 className="absolute top-4 right-4 text-slate-400 hover:text-slate-700 p-1 rounded-lg hover:bg-slate-100">
                                 <span className="material-symbols-outlined">close</span>
@@ -370,7 +374,7 @@ export default function PartnerFleet({ onLogout = () => {}, theme = "light", tog
                                         Annuler
                                     </button>
                                     <button type="button" onClick={addVehicleToFleet} disabled={addLoading || !selectedVehicleId}
-                                        className="flex-1 py-3 rounded-xl bg-primary text-white font-bold text-sm shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2 disabled:opacity-60 hover:bg-primary/90">
+                                        className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white hover:bg-primary/90 dark:bg-primary-container dark:hover:bg-primary-container/90 transition-colors disabled:opacity-40 flex-1 flex items-center justify-center gap-2">
                                         {addLoading ? <span className="material-symbols-outlined animate-spin">refresh</span> : <span className="material-symbols-outlined">add</span>}
                                         {addLoading ? "Ajout..." : "Ajouter"}
                                     </button>

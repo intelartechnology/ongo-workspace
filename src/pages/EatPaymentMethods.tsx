@@ -99,7 +99,7 @@ export default function EatPaymentMethods({ onLogout, theme, toggleTheme }: EatP
 
     return (
         <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
-            <header className="px-8 py-6 border-b border-slate-200 dark:border-slate-800">
+            <header className="px-8 py-6">
                 <h1 className="text-2xl font-semibold text-slate-900 dark:text-white">Moyens de paiement</h1>
                 <p className="text-sm text-slate-500 mt-1">
                     Ce que le client lit à la caisse. Chaque marchand accepte ensuite les siens parmi ceux qui sont ouverts ;
@@ -139,7 +139,7 @@ export default function EatPaymentMethods({ onLogout, theme, toggleTheme }: EatP
                                     <button
                                         onClick={enregistrer}
                                         disabled={!form.title.trim()}
-                                        className="px-5 py-2 rounded-lg bg-slate-900 text-white text-sm font-medium disabled:opacity-40 dark:bg-white dark:text-slate-900"
+                                        className="px-5 py-2 rounded-lg bg-primary text-white text-sm font-medium disabled:opacity-40 dark:bg-primary-container"
                                     >
                                         Enregistrer
                                     </button>
@@ -179,7 +179,7 @@ export default function EatPaymentMethods({ onLogout, theme, toggleTheme }: EatP
                                         className={`px-3 py-1.5 rounded-lg text-sm ${
                                             m.is_active
                                                 ? "border border-slate-300 dark:border-slate-700"
-                                                : "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
+                                                : "bg-primary text-white dark:bg-primary-container"
                                         }`}
                                     >
                                         {m.is_active ? "Fermer" : "Ouvrir"}

@@ -141,7 +141,7 @@ export default function Sponsorships({ merchantId, canEdit }: Props) {
                 {canEdit && (
                     <button
                         onClick={() => setForm("nouveau")}
-                        className="px-4 py-2 rounded-lg text-sm font-medium bg-slate-900 text-white dark:bg-white dark:text-slate-900 shrink-0"
+                        className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white dark:bg-primary-container shrink-0"
                     >
                         Nouveau sponsoring
                     </button>

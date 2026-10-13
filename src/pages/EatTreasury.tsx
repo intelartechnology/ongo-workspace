@@ -3,6 +3,7 @@ import Swal from "sweetalert2";
 import MainLayout from "./MainLayout";
 import ApiService from "../services/ApiService";
 import Loading from "../components/Loading";
+import { StatCard } from "../components/ui";
 
 /**
  * La trésorerie d'Ongo Eat.
@@ -95,27 +96,15 @@ export default function EatTreasury({ onLogout, theme, toggleTheme }: EatTreasur
         charger();
     }, [bornes.du, bornes.au]);
 
-    const carte = (titre: string, valeur: string, note?: string, alerte?: boolean) => (
-        <div
-            className={`p-5 rounded-xl border ${
-                alerte
-                    ? "border-rose-300 bg-rose-50 dark:border-rose-900 dark:bg-rose-950/30"
-                    : "border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
-            }`}
-        >
-            <p className="text-sm text-slate-500">{titre}</p>
-            <p className={`text-2xl font-bold mt-1 ${alerte ? "text-rose-700 dark:text-rose-300" : "text-slate-900 dark:text-white"}`}>
-                {valeur}
-            </p>
-            {note && <p className="text-xs text-slate-500 mt-1">{note}</p>}
-        </div>
+    const carte = (titre: string, valeur: string, legende?: string, alerte?: boolean) => (
+        <StatCard label={titre} value={valeur} note={legende} alert={alerte} />
     );
 
     const ecart = tresorerie ? tresorerie.book.total - tresorerie.wallet.total : 0;
 
     return (
         <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
-            <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+            <header>
                 <div className="px-8 py-6 max-w-7xl mx-auto flex items-end justify-between gap-6 flex-wrap">
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Trésorerie</h1>

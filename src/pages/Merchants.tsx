@@ -7,6 +7,7 @@ import OwnerPicker from "./components/OwnerPicker";
 import type { CompteOngo } from "./components/OwnerPicker";
 import StoreProfileForm from "./components/StoreProfileForm";
 import type { Cuisine, Fiche } from "./components/StoreProfileForm";
+import { ActionsMenu } from "../components/ui";
 
 /**
  * Les marchands d'Ongo.
@@ -409,7 +410,7 @@ export default function Merchants({ onLogout, theme, toggleTheme }: MerchantsPro
 
     return (
         <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
-            <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+            <header>
                 <div className="px-8 py-6 max-w-7xl mx-auto flex items-start justify-between gap-6">
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Marchands</h1>
@@ -420,7 +421,7 @@ export default function Merchants({ onLogout, theme, toggleTheme }: MerchantsPro
 
                     <button
                         onClick={() => setFormulaire(!formulaire)}
-                        className="px-4 py-2 rounded-lg text-sm font-medium bg-slate-900 text-white dark:bg-white dark:text-slate-900 shrink-0"
+                        className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white dark:bg-primary-container shrink-0"
                     >
                         {formulaire ? "Fermer" : "Nouveau marchand"}
                     </button>
@@ -486,7 +487,7 @@ export default function Merchants({ onLogout, theme, toggleTheme }: MerchantsPro
                         <button
                             onClick={creer}
                             disabled={envoi}
-                            className="mt-6 px-5 py-2.5 rounded-lg text-sm font-medium bg-slate-900 text-white disabled:bg-slate-300 dark:bg-white dark:text-slate-900"
+                            className="mt-6 px-5 py-2.5 rounded-lg text-sm font-medium bg-primary text-white disabled:bg-slate-300 dark:bg-primary-container"
                         >
                             {envoi ? "Création…" : "Créer, puis remplir la fiche"}
                         </button>
@@ -569,24 +570,22 @@ export default function Merchants({ onLogout, theme, toggleTheme }: MerchantsPro
                                         )}
 
                                         {/*
-                                          * Une boutique se touche pour ouvrir sa fiche.
+                                          * Ses boutiques, pour mémoire.
                                           *
-                                          * C'est le même formulaire que la création, et le
-                                          * seul endroit d'où l'administration change un
-                                          * logo, une position ou des cuisines sans passer
-                                          * par l'écran des boutiques.
+                                          * Leur fiche — le même formulaire que la création,
+                                          * et le seul endroit d'où l'administration change un
+                                          * logo, une position ou des cuisines — s'ouvre depuis
+                                          * le menu d'actions, avec les autres actions.
                                           */}
                                         <div className="flex flex-wrap gap-2 mt-3">
                                             {(marchand.stores ?? []).map((boutique) => (
-                                                <button
+                                                <span
                                                     key={boutique.public_id}
-                                                    onClick={() => ouvrirLaFiche(boutique, marchand)}
-                                                    className="px-2.5 py-1 rounded-lg text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:ring-1 hover:ring-slate-400"
+                                                    className="px-2.5 py-1 rounded-lg text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300"
                                                 >
                                                     {boutique.name} · {TYPES[boutique.type] ?? boutique.type}
                                                     {boutique.city ? ` · ${boutique.city}` : ""}
-                                                    <span className="ml-1 text-slate-400">· fiche</span>
-                                                </button>
+                                                </span>
                                             ))}
                                         </div>
 
@@ -617,7 +616,7 @@ export default function Merchants({ onLogout, theme, toggleTheme }: MerchantsPro
                                                     <button
                                                         onClick={enregistrerLEnseigne}
                                                         disabled={envoi}
-                                                        className="px-4 py-2 rounded-lg text-sm font-medium bg-slate-900 text-white disabled:opacity-40 dark:bg-white dark:text-slate-900"
+                                                        className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white disabled:opacity-40 dark:bg-primary-container"
                                                     >
                                                         {envoi ? "Enregistrement…" : "Enregistrer"}
                                                     </button>
@@ -657,37 +656,49 @@ export default function Merchants({ onLogout, theme, toggleTheme }: MerchantsPro
                                         )}
                                     </div>
 
-                                    <div className="flex flex-col gap-2 shrink-0">
-                                        <button
-                                            onClick={() => {
-                                                setFiche(null);
-                                                setRepreneur(null);
-                                                setEdition(
-                                                    edition?.marchand.public_id === marchand.public_id
-                                                        ? null
-                                                        : {
-                                                            marchand,
-                                                            name: marchand.name ?? "",
-                                                            phone: marchand.phone ?? "",
-                                                            email: marchand.email ?? "",
-                                                        }
-                                                );
-                                            }}
-                                            className="px-3 py-1.5 rounded-lg text-sm font-medium border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300"
-                                        >
-                                            {edition?.marchand.public_id === marchand.public_id ? "Fermer" : "Modifier"}
-                                        </button>
-
-                                        <button
-                                            onClick={() => basculer(marchand)}
-                                            className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
-                                                marchand.status === "suspended"
-                                                    ? "bg-emerald-600 text-white"
-                                                    : "border border-red-300 text-red-600 dark:border-red-800 dark:text-red-400"
-                                            }`}
-                                        >
-                                            {marchand.status === "suspended" ? "Réactiver" : "Suspendre"}
-                                        </button>
+                                    {/* Les actions dans un menu, comme sur les boutiques. */}
+                                    <div className="shrink-0">
+                                        <ActionsMenu
+                                            title={`Actions sur ${marchand.name}`}
+                                            items={[
+                                                // La fiche d'abord : c'est ce qu'on ouvre le plus souvent.
+                                                // Une entrée par boutique quand le marchand en a plusieurs.
+                                                ...(marchand.stores ?? []).map((boutique) => ({
+                                                    label: (marchand.stores?.length ?? 0) > 1 ? `Fiche · ${boutique.name}` : "Consulter la fiche",
+                                                    icon: "storefront",
+                                                    onClick: () => {
+                                                        setEdition(null);
+                                                        ouvrirLaFiche(boutique, marchand);
+                                                    },
+                                                })),
+                                                {
+                                                    label: edition?.marchand.public_id === marchand.public_id ? "Fermer la modification" : "Modifier",
+                                                    icon: "edit",
+                                                    separatorBefore: (marchand.stores?.length ?? 0) > 0,
+                                                    onClick: () => {
+                                                        setFiche(null);
+                                                        setRepreneur(null);
+                                                        setEdition(
+                                                            edition?.marchand.public_id === marchand.public_id
+                                                                ? null
+                                                                : {
+                                                                      marchand,
+                                                                      name: marchand.name ?? "",
+                                                                      phone: marchand.phone ?? "",
+                                                                      email: marchand.email ?? "",
+                                                                  },
+                                                        );
+                                                    },
+                                                },
+                                                {
+                                                    label: marchand.status === "suspended" ? "Réactiver" : "Suspendre",
+                                                    icon: marchand.status === "suspended" ? "check_circle" : "block",
+                                                    danger: marchand.status !== "suspended",
+                                                    separatorBefore: true,
+                                                    onClick: () => basculer(marchand),
+                                                },
+                                            ]}
+                                        />
                                     </div>
                                 </div>
                             </div>

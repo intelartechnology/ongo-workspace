@@ -40,7 +40,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children, onLogout, theme, togg
             />
 
             {/* Main Content */}
-            <main className="flex-1 lg:ml-72 flex flex-col min-h-screen transition-colors duration-300 min-w-0">
+            <main className="flex-1 lg:ml-[272px] flex flex-col min-h-screen transition-colors duration-300 min-w-0">
                 <Header
                     onToggleSidebar={toggleSidebar}
                     onToggleTheme={toggleTheme}

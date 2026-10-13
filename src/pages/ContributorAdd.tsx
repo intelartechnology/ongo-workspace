@@ -34,7 +34,7 @@ export default function ContributorAdd({ onLogout = () => {}, theme = "light", t
     const fetchUsers = async (q = "") => {
         setUsersLoading(true);
         try {
-            const { data } = await Api.getData(`utilisateur/search-user-contributor?q=${encodeURIComponent(q)}`);
+            const { data } = await Api.getData(`v3/admin/contributors/search/users?q=${encodeURIComponent(q)}`);
             if (data.success) {
                 setUsers(data.data.data || data.data || []);
             }
@@ -48,7 +48,7 @@ export default function ContributorAdd({ onLogout = () => {}, theme = "light", t
     const fetchVehicles = async (q = "") => {
         setVehiclesLoading(true);
         try {
-            const { data } = await Api.getData(`utilisateur/search-vehicle-contributor?q=${encodeURIComponent(q)}`);
+            const { data } = await Api.getData(`v3/admin/contributors/search/vehicles?q=${encodeURIComponent(q)}`);
             if (data.success) {
                 setVehicles(data.data.data || data.data || []);
             }
@@ -79,7 +79,7 @@ export default function ContributorAdd({ onLogout = () => {}, theme = "light", t
         }
         setLoading(true);
         try {
-            const { data } = await Api.postData("utilisateur/add-contributor", {
+            const { data } = await Api.postData("v3/admin/contributors", {
                 user_id: selectedUser.id,
                 vehicle_id: selectedVehicle.id
             });
@@ -101,17 +101,12 @@ export default function ContributorAdd({ onLogout = () => {}, theme = "light", t
             <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-background-dark font-display">
 
                 {/* Header */}
-                <header className="h-20 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-8 flex items-center justify-between sticky top-0 z-10">
+                <header className="py-6 px-8 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <button onClick={() => navigate("/contributors")} className="text-slate-400 hover:text-primary p-2 rounded-lg hover:bg-slate-100 transition-all">
                             <span className="material-symbols-outlined">arrow_back</span>
                         </button>
                         <div>
-                            <nav className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">
-                                <span className="hover:text-primary cursor-pointer" onClick={() => navigate("/contributors")}>Contributeurs</span>
-                                <span className="material-symbols-outlined text-[10px]">chevron_right</span>
-                                <span className="text-primary">Nouveau Contributeur</span>
-                            </nav>
                             <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Ajouter un Contributeur</h2>
                         </div>
                     </div>
@@ -119,7 +114,7 @@ export default function ContributorAdd({ onLogout = () => {}, theme = "light", t
 
                 <div className="flex-1 p-8 flex justify-center">
                     <div className="w-full max-w-4xl">
-                        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-8 md:p-10 relative overflow-hidden">
+                        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-8 md:p-10 relative overflow-hidden">
                             <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full -mr-32 -mt-32 pointer-events-none" />
 
                             <div className="relative z-10">
@@ -197,7 +192,7 @@ export default function ContributorAdd({ onLogout = () => {}, theme = "light", t
                                             Annuler
                                         </button>
                                         <button type="submit" disabled={loading || !selectedUser || !selectedVehicle}
-                                            className="w-full sm:w-auto px-10 py-3 rounded-full bg-primary hover:bg-primary/90 text-white font-bold text-sm shadow-xl shadow-primary/20 transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
+                                            className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white hover:bg-primary/90 dark:bg-primary-container dark:hover:bg-primary-container/90 transition-colors disabled:opacity-40 w-full sm:w-auto flex items-center justify-center gap-2 disabled:cursor-not-allowed">
                                             {loading ? (
                                                 <span className="material-symbols-outlined animate-spin text-lg">refresh</span>
                                             ) : (
@@ -215,7 +210,7 @@ export default function ContributorAdd({ onLogout = () => {}, theme = "light", t
                 {/* User Search Modal */}
                 {showUserModal && createPortal(
                     <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
-                        <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden relative flex flex-col" style={{ maxHeight: "80vh" }}>
+                        <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-xl overflow-hidden relative flex flex-col" style={{ maxHeight: "80vh" }}>
                             <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex-shrink-0">
                                 <div className="flex items-center justify-between mb-3">
                                     <h3 className="text-lg font-extrabold text-slate-800 dark:text-white">Sélectionner un Utilisateur</h3>
@@ -266,7 +261,7 @@ export default function ContributorAdd({ onLogout = () => {}, theme = "light", t
                 {/* Vehicle Search Modal */}
                 {showVehicleModal && createPortal(
                     <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
-                        <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden relative flex flex-col" style={{ maxHeight: "80vh" }}>
+                        <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-xl overflow-hidden relative flex flex-col" style={{ maxHeight: "80vh" }}>
                             <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex-shrink-0">
                                 <div className="flex items-center justify-between mb-3">
                                     <h3 className="text-lg font-extrabold text-slate-800 dark:text-white">Sélectionner un Véhicule</h3>

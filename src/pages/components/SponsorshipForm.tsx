@@ -492,7 +492,7 @@ export default function SponsorshipForm({
                             <div className="sm:col-span-2">
                                 <span className="text-xs font-semibold uppercase text-slate-500">Aperçu</span>
                                 <div
-                                    className="mt-2 relative w-56 h-28 rounded-2xl overflow-hidden"
+                                    className="mt-2 relative w-56 h-28 rounded-xl overflow-hidden"
                                     style={{ background: form.tile_tint || "#FBE7C8" }}
                                 >
                                     {form.tile_image && (
@@ -635,7 +635,7 @@ export default function SponsorshipForm({
                                                 }
                                                 className={`px-3 py-1.5 rounded-lg text-sm border ${
                                                     form.subsection_id === String(r.id)
-                                                        ? "bg-slate-900 text-white border-slate-900 dark:bg-white dark:text-slate-900"
+                                                        ? "bg-primary text-white border-primary dark:bg-primary-container"
                                                         : "border-slate-300 dark:border-slate-700 dark:text-white"
                                                 }`}
                                             >
@@ -794,7 +794,7 @@ export default function SponsorshipForm({
                 <button
                     onClick={enregistrer}
                     disabled={envoi}
-                    className="px-4 py-2 rounded-lg text-sm font-medium bg-slate-900 text-white dark:bg-white dark:text-slate-900 disabled:opacity-50"
+                    className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white dark:bg-primary-container disabled:opacity-50"
                 >
                     {envoi ? "Envoi…" : "Enregistrer"}
                 </button>

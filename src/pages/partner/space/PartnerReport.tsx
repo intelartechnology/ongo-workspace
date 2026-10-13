@@ -58,7 +58,7 @@ const PartnerReport: React.FC<Props> = ({ partnerId }) => {
 
     return (
         <div className="flex flex-col gap-4">
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-wrap items-end gap-3">
+            <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex flex-wrap items-end gap-3">
                 <DateField size="sm" label="Du" value={du} onChange={(e) => setDu(e.target.value)} />
                 <DateField size="sm" label="Au" value={au} onChange={(e) => setAu(e.target.value)} />
                 <Button variant="primary" icon="summarize" onClick={charger} loading={chargement}>Générer</Button>
@@ -85,7 +85,7 @@ const PartnerReport: React.FC<Props> = ({ partnerId }) => {
                             ["Votre commission", francs(t?.commission_partenaire), "account_balance_wallet"],
                             ["Taux moyen", t?.taux_moyen != null ? `${t.taux_moyen} %` : "—", "percent"],
                         ].map(([libelle, valeur, icone]) => (
-                            <div key={libelle as string} className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                            <div key={libelle as string} className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800">
                                 <div className="flex items-start justify-between">
                                     <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{libelle}</p>
                                     <span className="material-symbols-outlined text-[20px] text-slate-300 dark:text-slate-600">{icone}</span>
@@ -95,7 +95,7 @@ const PartnerReport: React.FC<Props> = ({ partnerId }) => {
                         ))}
                     </div>
 
-                    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
                         <div className="px-5 py-3 border-b border-slate-200 dark:border-slate-800">
                             <h3 className="text-sm font-black uppercase tracking-tight text-slate-900 dark:text-white">Détail par chauffeur</h3>
                             {rapport.periode && (

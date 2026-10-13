@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import MainLayout from "./MainLayout";
 import ApiService from "../services/ApiService";
 import Loading from "../components/Loading";
+import { ilYA } from "../functions/temps";
+import { notifier } from "../services/notifier";
 
 /**
  * Les livreurs d'Ongo sur Ongo Eat.
@@ -32,6 +35,12 @@ interface Livreur {
     modele: string | null;
     debt: number;
     ceiling: number;
+    is_online: boolean;
+    /** La plus récente de sa dernière position et de sa dernière livraison. */
+    last_activity_at: string | null;
+    /** Positif quand Ongo lui doit, négatif quand il garde des espèces pour elle. */
+    balance: number;
+    deliveries_30d: number;
 }
 
 interface EatCouriersProps {
@@ -51,6 +60,7 @@ export default function EatCouriers({ onLogout, theme, toggleTheme }: EatCourier
     const [chargement, setChargement] = useState(true);
 
     const api = new ApiService();
+    const navigate = useNavigate();
 
     const charger = async () => {
         setChargement(true);
@@ -139,42 +149,6 @@ export default function EatCouriers({ onLogout, theme, toggleTheme }: EatCourier
      * plafond d'un chauffeur non inscrit. Et s'il doit encore de l'argent, le
      * dire ici évite de retirer celui qu'on cherchait justement à relancer.
      */
-    const retirer = async (livreur: Livreur) => {
-        const nom = `${livreur.prenom ?? ""} ${livreur.nom ?? ""}`.trim() || "ce livreur";
-
-        const confirmation = await Swal.fire({
-            icon: "warning",
-            title: `Retirer ${nom} ?`,
-            html:
-                `<p style="font-size:14px">Il garde son compte et ses courses. Son plafond d'espèces retombe à ${francs(
-                    plafonds.driver
-                )}.</p>` +
-                (livreur.debt > 0
-                    ? `<p style="font-size:13px;color:#b91c1c;margin-top:8px">Il doit encore ${francs(
-                          livreur.debt
-                      )} à Ongo.</p>`
-                    : ""),
-            showCancelButton: true,
-            confirmButtonText: "Retirer",
-            cancelButtonText: "Annuler",
-        });
-
-        if (!confirmation.isConfirmed) return;
-
-        try {
-            const { data } = await api.postData("v3/admin/eat/couriers/remove", { user_id: livreur.user_id });
-
-            if (!data.success) {
-                Swal.fire({ icon: "error", title: "Non retiré", text: data.message });
-                return;
-            }
-
-            await charger();
-        } catch (erreur) {
-            Swal.fire({ icon: "warning", title: "Retrait impossible", text: String(erreur) });
-        }
-    };
-
     const actifs = livreurs.filter((l) => l.removed_at === null);
     const retires = livreurs.filter((l) => l.removed_at !== null);
 
@@ -183,15 +157,40 @@ export default function EatCouriers({ onLogout, theme, toggleTheme }: EatCourier
             key={livreur.id}
             className="p-5 flex items-center gap-4 flex-wrap"
         >
-            <div className="flex-1 min-w-0">
-                <p className="font-medium text-slate-900 dark:text-white">
+            {/* Toute la partie gauche ouvre la fiche : historique, statistiques, compte. */}
+            <button
+                type="button"
+                onClick={() => navigate(`/eat-couriers/${livreur.user_id}`)}
+                className="flex-1 min-w-0 text-left group"
+            >
+                <p className="font-medium text-slate-900 dark:text-white group-hover:text-primary dark:group-hover:text-primary-fixed-dim flex items-center gap-2">
+                    {/* En ligne : un point et le mot, jamais la couleur seule. */}
+                    <span
+                        aria-hidden
+                        className={`size-2 rounded-full shrink-0 ${livreur.is_online ? "bg-emerald-500" : "bg-slate-300 dark:bg-slate-600"}`}
+                    />
                     {`${livreur.prenom ?? ""} ${livreur.nom ?? ""}`.trim() || "—"}
                 </p>
-                <p className="text-sm text-slate-500">
-                    {livreur.telephone ?? "—"}
+                <p className="text-sm text-slate-500 pl-4">
+                    <span className={livreur.is_online ? "text-emerald-700 dark:text-emerald-400 font-medium" : ""}>
+                        {livreur.is_online ? "En ligne" : "Hors ligne"}
+                    </span>
+                    {` · actif ${ilYA(livreur.last_activity_at)}`}
+                    {livreur.telephone ? ` · ${livreur.telephone}` : ""}
                     {livreur.matricule ? ` · ${livreur.matricule}` : ""}
-                    {livreur.modele ? ` ${livreur.modele}` : ""}
                 </p>
+            </button>
+
+            <div className="text-right w-24">
+                <p className="font-semibold text-slate-900 dark:text-white tabular-nums">{livreur.deliveries_30d}</p>
+                <p className="text-xs text-slate-500">livraisons · 30 j</p>
+            </div>
+
+            <div className="text-right w-28">
+                <p className={`font-semibold tabular-nums ${livreur.balance < 0 ? "text-rose-700 dark:text-rose-300" : "text-slate-900 dark:text-white"}`}>
+                    {francs(livreur.balance)}
+                </p>
+                <p className="text-xs text-slate-500">solde du compte</p>
             </div>
 
             {livreur.removed_at === null ? (
@@ -210,10 +209,17 @@ export default function EatCouriers({ onLogout, theme, toggleTheme }: EatCourier
                     </div>
 
                     <button
-                        onClick={() => retirer(livreur)}
-                        className="px-3 py-1.5 rounded-lg text-sm border border-slate-300 text-slate-700 dark:border-slate-700 dark:text-slate-300"
+                        onClick={() => notifier({ destinataires: [{ id: livreur.user_id, nom: `${livreur.prenom ?? ""} ${livreur.nom ?? ""}`.trim() }] })}
+                        className="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
                     >
-                        Retirer
+                        Notifier
+                    </button>
+                    {/* Retirer se fait depuis la fiche, où l'on voit ce qu'il doit avant de confirmer. */}
+                    <button
+                        onClick={() => navigate(`/eat-couriers/${livreur.user_id}`)}
+                        className="px-3 py-1.5 rounded-lg text-sm font-medium border border-slate-300 text-slate-700 dark:border-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+                    >
+                        Consulter
                     </button>
                 </>
             ) : (
@@ -224,7 +230,7 @@ export default function EatCouriers({ onLogout, theme, toggleTheme }: EatCourier
 
     return (
         <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
-            <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+            <header>
                 <div className="px-8 py-6 max-w-7xl mx-auto flex items-start justify-between gap-6">
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Livreurs Ongo Eat</h1>
@@ -236,7 +242,7 @@ export default function EatCouriers({ onLogout, theme, toggleTheme }: EatCourier
 
                     <button
                         onClick={inscrire}
-                        className="px-4 py-2 rounded-lg text-sm font-medium bg-slate-900 text-white dark:bg-white dark:text-slate-900 shrink-0"
+                        className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white dark:bg-primary-container shrink-0"
                     >
                         Inscrire un livreur
                     </button>
