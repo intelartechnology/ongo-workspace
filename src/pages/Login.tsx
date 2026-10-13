@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { CarTaxiFront, Eye, EyeOff, KeyRound, LoaderCircle, TriangleAlert, Users, UtensilsCrossed, Wallet } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
@@ -47,15 +48,12 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(false);
+    const [voirMotDePasse, setVoirMotDePasse] = useState(false);
+    const [majuscules, setMajuscules] = useState(false);
+    // Le refus du serveur s'affiche dans le formulaire, là où l'on regarde,
+    // et non dans un toast qui disparaît.
+    const [erreur, setErreur] = useState<string | null>(null);
     const Api = new ApiService();
-
-    const notify = (title: string, type: 'success' | 'error') => {
-        if (type === 'success') {
-            toast.success(`🦄 ${title}`);
-        } else {
-            toast.error(`🦄 ${title}`);
-        }
-    };
 
     const formik = useFormik({
         initialValues: {
@@ -63,22 +61,23 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             password: '',
         },
         validationSchema: Yup.object({
-            tel: Yup.string().required("L'email ou téléphone est obligatoire"),
+            tel: Yup.string().trim().required("Saisissez votre téléphone ou votre email"),
             password: Yup.string()
                 .min(6, "Le mot de passe doit contenir au moins 6 caractères")
-                .required("Le mot de passe est obligatoire"),
+                .required("Saisissez votre mot de passe"),
         }),
         onSubmit: async (values) => {
             try {
                 setLoading(true);
+                setErreur(null);
                 const formData = {
-                    telephone: values.tel,
+                    telephone: values.tel.trim(),
                     password: values.password,
                     isAdmin: true,
                 };
 
+                // Pas de journal de la réponse : elle porte le jeton de session.
                 const response = await Api.postData('utilisateur/loginDash', formData);
-                console.log(response);
                 if (response.data.success) {
                     const userData = response.data.data;
 
@@ -89,7 +88,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     onLogin();
 
                     setLoading(false);
-                    notify("Utilisateur connecté avec succès", "success");
+                    toast.success("Connexion réussie");
                     // Un marchand ne doit pas atterrir sur le tableau de bord
                     // d'Ongo : il est conduit dans son espace. Un seul
                     // marchand, on y va ; plusieurs, il choisira ; aucun, c'est
@@ -97,13 +96,15 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                     await conduireVersSonEspace(navigate);
                 } else {
                     setLoading(false);
-                    notify(response.data.message || "Erreur lors de la connexion", "error");
+                    setErreur(response.data.message || "Identifiants incorrects.");
                 }
-            } catch (error: any) {
-           
+            } catch (error: unknown) {
                 setLoading(false);
-                const errorMsg = error.response?.data?.message || "Erreur lors de la connexion";
-                notify(errorMsg, "error");
+                const reponse = (error as { response?: { status?: number; data?: { message?: string } } })?.response;
+                setErreur(
+                    reponse?.data?.message
+                        || (reponse ? "Connexion refusée." : "Le serveur ne répond pas. Vérifiez votre connexion et réessayez."),
+                );
             }
         },
     });
@@ -117,96 +118,163 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         }
     }, [dispatch]);
 
-    return (
-        <div className="flex min-h-screen w-full">
-            {/* Left Side: Login Form */}
-            <div className="flex flex-1 flex-col justify-center px-6 py-12 md:px-12 lg:px-24 xl:px-32 bg-white dark:bg-background-dark transition-colors duration-300">
-                <div className="mx-auto w-full max-w-sm lg:max-w-md">
-                    {/* Logo & Heading */}
-                    <div className="flex items-center gap-2 mb-8 lg:mb-10">
-                        <img src="/logo.png" alt="Ongo 237" className="h-10 w-auto object-contain" />
-                        <span className="text-xl font-bold tracking-tight text-gray-900 dark:text-white">Ongo 237</span>
-                    </div>
-                    <div className="mb-6 lg:mb-8">
-                        <h1 className="text-2xl md:text-3xl font-black tracking-tight text-gray-900 dark:text-white mb-2">Welcome back to Ongo 237</h1>
-                        <p className="text-gray-500 dark:text-gray-400 text-sm md:text-base">Please enter your details to access your account.</p>
-                    </div>
+    const champ = (enErreur: boolean) =>
+        `block w-full rounded-lg border bg-white dark:bg-slate-900 px-3.5 py-2.5 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 dark:focus:border-primary-fixed-dim ${enErreur ? 'border-rose-400 dark:border-rose-500' : 'border-slate-300 dark:border-slate-700'}`;
 
-                    {/* Login Form */}
-                    <form onSubmit={formik.handleSubmit} className="space-y-5 lg:space-y-6">
+    /*
+     * Ce que le back-office pilote, en clair.
+     *
+     * Le panneau promettait une « sécurité de niveau entreprise » et « des
+     * milliers d'utilisateurs » : des phrases de modèle, en anglais. Il dit
+     * désormais à quoi sert l'espace qu'on ouvre.
+     */
+    const services = [
+        // Un verbe d'action, puis ce sur quoi il porte : on lit ce qu'on vient
+        // faire ici, et non l'inventaire des tables.
+        { icone: CarTaxiFront, titre: 'Courses et flotte', texte: 'Suivez les courses en direct, gérez chauffeurs et véhicules.' },
+        { icone: Users, titre: 'Covoiturage', texte: 'Validez les covoitureurs, suivez les trajets, remboursez.' },
+        { icone: UtensilsCrossed, titre: 'Ongo Eat', texte: 'Pilotez commandes, boutiques et livreurs en temps réel.' },
+        { icone: KeyRound, titre: 'Location', texte: 'Gérez les réservations et la flotte de location.' },
+        { icone: Wallet, titre: 'Finance', texte: 'Surveillez les soldes, les dettes et les reversements.' },
+    ];
+
+    return (
+        <div className="flex min-h-screen w-full bg-white dark:bg-background-dark">
+            <div className="flex flex-1 flex-col justify-center px-6 py-12 md:px-12 lg:px-20 xl:px-28">
+                <div className="mx-auto w-full max-w-sm">
+
+                    <h1 className="text-2xl md:text-[28px] font-bold tracking-tight text-slate-900 dark:text-white">Connexion</h1>
+                    <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                        Pilotez l'activité d'Ongo, ou gérez votre boutique, depuis un seul espace.
+                    </p>
+
+                    {erreur && (
+                        <div role="alert" className="mt-6 flex items-start gap-2.5 rounded-lg border border-rose-200 bg-rose-50 px-3.5 py-3 text-sm text-rose-800 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-300">
+                            <TriangleAlert className="size-4 mt-0.5 shrink-0" />
+                            <span>{erreur}</span>
+                        </div>
+                    )}
+
+                    <form onSubmit={formik.handleSubmit} noValidate className="mt-8 space-y-5">
                         <div>
-                            <label className="block text-sm font-semibold leading-6 text-gray-900 dark:text-white mb-2" htmlFor="tel">Email or Phone</label>
+                            <label className="block text-sm font-medium text-slate-800 dark:text-slate-200 mb-1.5" htmlFor="tel">
+                                Téléphone ou email
+                            </label>
                             <input
                                 id="tel"
                                 name="tel"
                                 type="text"
-                                onChange={formik.handleChange}
+                                autoComplete="username"
+                                autoFocus
+                                onChange={(e) => {
+                                    setErreur(null);
+                                    formik.handleChange(e);
+                                }}
                                 onBlur={formik.handleBlur}
                                 value={formik.values.tel}
-                                className={`block w-full rounded-lg border-0 py-2.5 md:py-3 text-gray-900 ring-1 ring-inset ${formik.touched.tel && formik.errors.tel ? 'ring-red-500' : 'ring-gray-300'} placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary dark:bg-gray-800 dark:text-white dark:ring-gray-700 sm:text-sm sm:leading-6 transition-all`}
-                                placeholder="Enter your email or phone"
+                                aria-invalid={Boolean(formik.touched.tel && formik.errors.tel)}
+                                className={champ(Boolean(formik.touched.tel && formik.errors.tel))}
+                                placeholder="6XX XX XX XX ou nom@exemple.com"
                             />
                             {formik.touched.tel && formik.errors.tel && (
-                                <p className="mt-1 text-xs text-red-500 font-medium">{formik.errors.tel}</p>
+                                <p className="mt-1.5 text-xs text-rose-600 dark:text-rose-400">{formik.errors.tel}</p>
                             )}
                         </div>
+
                         <div>
-                            <div className="flex items-center justify-between mb-2">
-                                <label className="block text-sm font-semibold leading-6 text-gray-900 dark:text-white" htmlFor="password">Password</label>
+                            <label className="block text-sm font-medium text-slate-800 dark:text-slate-200 mb-1.5" htmlFor="password">
+                                Mot de passe
+                            </label>
+                            <div className="relative">
+                                <input
+                                    id="password"
+                                    name="password"
+                                    type={voirMotDePasse ? 'text' : 'password'}
+                                    autoComplete="current-password"
+                                    onChange={(e) => {
+                                        setErreur(null);
+                                        formik.handleChange(e);
+                                    }}
+                                    onBlur={formik.handleBlur}
+                                    // Prévenir des majuscules verrouillées : la cause la plus
+                                    // fréquente d'un mot de passe « faux » qui est juste.
+                                    onKeyUp={(e) => setMajuscules(e.getModifierState('CapsLock'))}
+                                    value={formik.values.password}
+                                    aria-invalid={Boolean(formik.touched.password && formik.errors.password)}
+                                    className={`${champ(Boolean(formik.touched.password && formik.errors.password))} pr-11`}
+                                    placeholder="Votre mot de passe"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setVoirMotDePasse((v) => !v)}
+                                    aria-label={voirMotDePasse ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                                    title={voirMotDePasse ? 'Masquer' : 'Afficher'}
+                                    className="absolute inset-y-0 right-0 grid w-11 place-items-center text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                                >
+                                    {voirMotDePasse ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                                </button>
                             </div>
-                            <input
-                                id="password"
-                                name="password"
-                                type="password"
-                                onChange={formik.handleChange}
-                                onBlur={formik.handleBlur}
-                                value={formik.values.password}
-                                className={`block w-full rounded-lg border-0 py-2.5 md:py-3 text-gray-900 ring-1 ring-inset ${formik.touched.password && formik.errors.password ? 'ring-red-500' : 'ring-gray-300'} placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary dark:bg-gray-800 dark:text-white dark:ring-gray-700 sm:text-sm sm:leading-6 transition-all`}
-                                placeholder="Enter your password"
-                            />
                             {formik.touched.password && formik.errors.password && (
-                                <p className="mt-1 text-xs text-red-500 font-medium">{formik.errors.password}</p>
+                                <p className="mt-1.5 text-xs text-rose-600 dark:text-rose-400">{formik.errors.password}</p>
                             )}
+                            {majuscules && <p className="mt-1.5 text-xs text-amber-700 dark:text-amber-400">Majuscules verrouillées.</p>}
                         </div>
-                        <div className="pt-2">
-                            <button
-                                type="submit"
-                                disabled={loading}
-                                className="flex w-full justify-center items-center gap-3 rounded-lg bg-primary px-3 py-3 text-sm font-bold leading-6 text-white hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-all disabled:opacity-70 disabled:cursor-not-allowed"
-                            >
-                                {loading && (
-                                    <div className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                )}
-                                Login
-                            </button>
-                        </div>
+
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary/90 dark:bg-primary-container dark:hover:bg-primary-container/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                            {loading && <LoaderCircle className="size-4 animate-spin" />}
+                            {loading ? 'Connexion…' : 'Se connecter'}
+                        </button>
                     </form>
+
+                    <p className="mt-8 text-xs text-slate-400 dark:text-slate-500">
+                        Mot de passe oublié ? Demandez sa réinitialisation à un administrateur d'Ongo.
+                    </p>
                 </div>
             </div>
-            {/* Right Side: Visual Image/Pane */}
-            <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-pattern items-center justify-center p-12">
-                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary via-transparent to-background-dark/30 opacity-60"></div>
-                <div className="relative z-10 max-w-lg text-center">
-                    <div className="mb-8 inline-flex items-center justify-center p-4 bg-white/10 backdrop-blur-md rounded-xl border border-white/20">
-                        <div className="bg-white p-6 rounded-xl">
-                            <img src="/logo.png" alt="Ongo 237" className="size-16 object-contain" />
-                        </div>
-                    </div>
-                    <h2 className="text-4xl font-black text-white mb-4 leading-tight">Fast, Reliable, & Efficient</h2>
-                    <p className="text-white/80 text-lg">Join thousands of users who trust Ongo 237 for their daily professional needs.</p>
-                    <div className="mt-12 flex flex-col gap-4 max-w-sm mx-auto">
-                        <div className="flex items-center gap-4 bg-white/10 backdrop-blur-sm p-4 rounded-xl border border-white/10">
-                            <span className="material-symbols-outlined text-white">verified_user</span>
-                            <span className="text-white text-sm font-medium">Enterprise-grade security</span>
-                        </div>
-                        <div className="flex items-center gap-4 bg-white/10 backdrop-blur-sm p-4 rounded-xl border border-white/10">
-                            <span className="material-symbols-outlined text-white">bolt</span>
-                            <span className="text-white text-sm font-medium">Real-time performance analytics</span>
-                        </div>
+
+            <div className="hidden lg:flex lg:w-[46%] relative overflow-hidden bg-pattern items-center justify-center p-14">
+                <div className="relative z-10 w-full max-w-md text-white">
+                    {/* Le logo en blanc, sans fond : `logo-blanc.png` est tiré de
+                        `logo.png`, dont le fond blanc n'est pas transparent. */}
+                    <img src="/logo-blanc.png" alt="Ongo 237" className="h-14 w-auto" />
+                    <h2 className="mt-8 text-[32px] font-bold leading-tight tracking-tight">
+                        Toute l'activité d'Ongo,
+                        <br />
+                        <span className="text-[#ffbd59]">au même endroit.</span>
+                    </h2>
+                    {/*
+                      * Les services, qui montent en boucle.
+                      *
+                      * Doublés pour que la boucle se referme sans saut ; le second
+                      * exemplaire est caché aux lecteurs d'écran, qui n'ont pas à
+                      * entendre la liste deux fois. Le survol met en pause.
+                      */}
+                    <div className="mt-10 h-[17rem] overflow-hidden fondu-vertical">
+                        <ul className="defilement-vertical">
+                            {[...services, ...services].map(({ icone: Icone, titre, texte }, i) => (
+                                <li
+                                    key={`${titre}-${i}`}
+                                    aria-hidden={i >= services.length || undefined}
+                                    className="flex items-start gap-4 py-2.5"
+                                >
+                                    <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-white/10 ring-1 ring-white/15">
+                                        <Icone className="size-5" strokeWidth={1.75} />
+                                    </span>
+                                    <span>
+                                        <span className="block text-sm font-semibold">{titre}</span>
+                                        <span className="mt-0.5 block text-[13px] leading-snug text-white/75">{texte}</span>
+                                    </span>
+                                </li>
+                            ))}
+                        </ul>
                     </div>
                 </div>
-                <div className="absolute -bottom-24 -right-24 size-96 bg-primary-dark rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
-                <div className="absolute -top-24 -left-24 size-96 bg-white rounded-full mix-blend-screen filter blur-3xl opacity-10"></div>
+                {/* Le jaune ONGO, en halo discret : l'accent de la charte. */}
+                <div aria-hidden className="absolute -bottom-32 -right-32 size-96 rounded-full bg-[#ffbd59] opacity-15 blur-3xl" />
             </div>
         </div>
     );

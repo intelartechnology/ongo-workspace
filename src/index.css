@@ -83,10 +83,12 @@
   }
 }
 
+/* Le fond du panneau de connexion : le bleu ONGO de la charte, et non le bleu
+   vif `#137fec` qu'il portait, étranger à la marque. */
 .bg-pattern {
-  background-color: #137fec;
-  background-image: radial-gradient(circle at 2px 2px, rgba(255, 255, 255, 0.15) 1px, transparent 0);
-  background-size: 32px 32px;
+  background-color: var(--color-primary);
+  background-image: radial-gradient(circle at 2px 2px, rgba(255, 255, 255, 0.12) 1px, transparent 0);
+  background-size: 28px 28px;
 }
 
 .custom-scrollbar::-webkit-scrollbar {
@@ -129,3 +131,35 @@
 .icones-en-attente .material-symbols-outlined {
   visibility: hidden;
 }
+
+/* Les services de la page de connexion, qui montent en boucle. La liste est
+   doublée : arrivée à la moitié, elle se retrouve exactement où elle a
+   commencé, et la boucle ne se voit pas. */
+@keyframes defiler-vers-le-haut {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-50%);
+  }
+}
+
+.defilement-vertical {
+  animation: defiler-vers-le-haut 18s linear infinite;
+}
+
+.defilement-vertical:hover {
+  animation-play-state: paused;
+}
+
+/* Un fondu en haut et en bas : les lignes entrent et sortent sans être coupées. */
+.fondu-vertical {
+  mask-image: linear-gradient(to bottom, transparent, black 18%, black 82%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .defilement-vertical {
+    animation: none;
+  }
+}
+
