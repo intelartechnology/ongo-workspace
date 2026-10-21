@@ -112,8 +112,10 @@ export default function Partners({ onLogout = () => {}, theme = "light", toggleT
     };
 
     const actionsPartenaire = (partner: any, isActive: boolean): ActionItem[] => [
-        { label: "Ouvrir l'espace", icon: "open_in_new", onClick: () => navigate(`/partner/${partner.uuid ?? partner.id}`) },
-        { label: "Gérer la flotte", icon: "directions_car", onClick: () => navigate(`/partners/${partner.id}/fleet`) },
+        // L'identifiant public dans les adresses, comme pour les marchands :
+        // l'`id` sequentiel se parcourt et denombre les partenaires.
+        { label: "Ouvrir l'espace", icon: "open_in_new", onClick: () => navigate(`/partner/${partner.short_id ?? partner.id}`) },
+        { label: "Gérer la flotte", icon: "directions_car", onClick: () => navigate(`/partners/${partner.short_id ?? partner.id}`) },
         {
             label: "Notifier",
             icon: "notifications",
@@ -293,7 +295,7 @@ export default function Partners({ onLogout = () => {}, theme = "light", toggleT
                                                     <td className="px-5 py-3">
                                                         <div className="flex items-center justify-end gap-1.5">
                                                             <button
-                                                                onClick={() => navigate(`/partner/${partner.uuid ?? partner.id}`)}
+                                                                onClick={() => navigate(`/partner/${partner.short_id ?? partner.id}`)}
                                                                 className="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
                                                             >
                                                                 Espace

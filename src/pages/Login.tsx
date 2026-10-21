@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CarTaxiFront, Eye, EyeOff, KeyRound, LoaderCircle, TriangleAlert, Users, UtensilsCrossed, Wallet } from 'lucide-react';
+import { CarTaxiFront, Eye, EyeOff, HandCoins, LoaderCircle, ShieldCheck, Store, TriangleAlert, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
@@ -13,35 +13,49 @@ interface LoginProps {
 }
 
 /**
- * Où conduire celui qui vient de se connecter.
+ * Où conduire celui qui vient de se connecter — calculé **avant** d'ouvrir la
+ * session.
  *
  * Le même compte sert à commander une course et à tenir une boutique : rien
  * ne distingue un marchand d'un client tant qu'on n'a pas regardé ses
  * appartenances. C'est cette requête qui décide.
  */
-async function conduireVersSonEspace(navigate: (chemin: string) => void): Promise<void> {
+interface CompteConnecte {
+    role_id?: number | string;
+    partner_short_id?: string | null;
+    transport_short_id?: string | null;
+    contributor?: boolean;
+}
+
+/** `null` : le compte n'a d'espace nulle part ici. */
+async function espaceDe(compte: CompteConnecte): Promise<string | null> {
     try {
         const { data } = await new ApiService().getData("v3/merchant/me");
 
         const espaces: { short_id: string }[] = data?.success ? (data.data ?? []) : [];
 
-        // Un marchand va dans son espace, qu'il en tienne un ou dix : le
-        // tableau de bord est réservé aux administrateurs, et l'y envoyer ne
-        // lui vaut qu'un 403. Avec plusieurs enseignes, il ouvre la première
-        // et change depuis le sélecteur de son espace.
-        if (espaces.length > 0) {
-            navigate(`/merchant/${espaces[0].short_id}`);
-
-            return;
-        }
+        // Un marchand va dans son espace, qu'il en tienne un ou dix. Avec
+        // plusieurs enseignes, il ouvre la première et change depuis son espace.
+        if (espaces.length > 0) return `/merchant/${espaces[0].short_id}`;
     } catch {
-        // Une appartenance illisible ne doit pas empêcher d'entrer : on
-        // retombe sur le tableau de bord, qui refusera de lui-même si besoin.
+        // Une appartenance illisible ne doit pas empêcher d'entrer : on passe
+        // aux autres espaces.
     }
 
-    // Les courses, et non le tableau de bord : on ouvre le poste pour voir ce
-    // qui roule, les totaux viennent apres.
-    navigate("/courses");
+    // Un proprietaire de flotte, a la meme enseigne qu'un marchand.
+    if (compte.partner_short_id) return `/partner/${compte.partner_short_id}`;
+
+    // L'équipe d'un transporteur (bus, train) : l'écran des départs.
+    if (compte.transport_short_id) return `/transport/${compte.transport_short_id}`;
+
+    // Un contributeur : les vehicules qu'il a apportes a la flotte.
+    if (compte.contributor) return "/contributor/dashboard";
+
+    // Un administrateur ouvre le poste sur les courses : ce qui roule d'abord,
+    // les totaux ensuite.
+    if (Number(compte.role_id) === 4) return "/courses";
+
+    return null;
 }
 
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
@@ -81,19 +95,42 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 if (response.data.success) {
                     const userData = response.data.data;
 
-                    localStorage.setItem('isAuthenticated', JSON.stringify(userData));
+                    /*
+                     * La destination d'abord, la session ensuite.
+                     *
+                     * La session ouverte, la route `/login` bascule aussitôt :
+                     * elle partait vers `/courses` le temps que la recherche de
+                     * l'espace aboutisse, et un marchand ou un partenaire voyait
+                     * le back-office d'Ongo — qui lançait au passage ses requêtes
+                     * d'administration. Le jeton suffit à interroger l'API sans
+                     * ouvrir la session ; on ne l'ouvre qu'une fois la
+                     * destination connue, et elle part avec l'utilisateur.
+                     */
                     localStorage.setItem('token', userData.token);
+                    const espace = await espaceDe(userData);
 
-                    dispatch(LOGIN_ACTION(userData));
+                    /*
+                     * Aucun espace : un client ou un chauffeur qui s'est trompé
+                     * de porte. Il arrivait sur le back-office, dont l'API lui
+                     * refusait chaque donnée. On le lui dit, et la session ne
+                     * s'ouvre pas.
+                     */
+                    if (espace === null) {
+                        localStorage.removeItem('token');
+                        setLoading(false);
+                        setErreur("Ce compte n'a accès à aucun espace ici. L'application Ongo reste disponible sur votre téléphone.");
+                        return;
+                    }
+
+                    const connecte = { ...userData, espace };
+
+                    localStorage.setItem('isAuthenticated', JSON.stringify(connecte));
+                    dispatch(LOGIN_ACTION(connecte));
                     onLogin();
 
                     setLoading(false);
                     toast.success("Connexion réussie");
-                    // Un marchand ne doit pas atterrir sur le tableau de bord
-                    // d'Ongo : il est conduit dans son espace. Un seul
-                    // marchand, on y va ; plusieurs, il choisira ; aucun, c'est
-                    // un administrateur.
-                    await conduireVersSonEspace(navigate);
+                    navigate(espace, { replace: true });
                 } else {
                     setLoading(false);
                     setErreur(response.data.message || "Identifiants incorrects.");
@@ -128,14 +165,18 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
      * milliers d'utilisateurs » : des phrases de modèle, en anglais. Il dit
      * désormais à quoi sert l'espace qu'on ouvre.
      */
+    /*
+     * À qui s'adresse cette porte : une seule connexion, et chacun arrive dans
+     * son espace. Les messages qui défilent le disent à chaque public — un
+     * marchand ou un propriétaire de flotte doit se reconnaître ici autant
+     * qu'un administrateur.
+     */
     const services = [
-        // Un verbe d'action, puis ce sur quoi il porte : on lit ce qu'on vient
-        // faire ici, et non l'inventaire des tables.
-        { icone: CarTaxiFront, titre: 'Courses et flotte', texte: 'Suivez les courses en direct, gérez chauffeurs et véhicules.' },
-        { icone: Users, titre: 'Covoiturage', texte: 'Validez les covoitureurs, suivez les trajets, remboursez.' },
-        { icone: UtensilsCrossed, titre: 'Ongo Eat', texte: 'Pilotez commandes, boutiques et livreurs en temps réel.' },
-        { icone: KeyRound, titre: 'Location', texte: 'Gérez les réservations et la flotte de location.' },
-        { icone: Wallet, titre: 'Finance', texte: 'Surveillez les soldes, les dettes et les reversements.' },
+        { icone: ShieldCheck, titre: 'Administration Ongo', texte: 'Pilotez les courses, le covoiturage, Ongo Eat, la location et les finances.' },
+        { icone: Store, titre: 'Marchands', texte: 'Gérez votre boutique, vos commandes, vos livreurs et vos revenus.' },
+        { icone: CarTaxiFront, titre: 'Propriétaires de flotte', texte: 'Suivez vos chauffeurs, vos véhicules et votre commission.' },
+        { icone: HandCoins, titre: 'Contributeurs', texte: "Suivez l'activité des véhicules que vous avez apportés à Ongo." },
+        { icone: Users, titre: 'Vos équipes', texte: 'Vos collaborateurs entrent avec leur propre compte, selon les droits que vous leur donnez.' },
     ];
 
     return (
@@ -145,7 +186,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
                     <h1 className="text-2xl md:text-[28px] font-bold tracking-tight text-slate-900 dark:text-white">Connexion</h1>
                     <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                        Pilotez l'activité d'Ongo, ou gérez votre boutique, depuis un seul espace.
+                        Une seule connexion pour tous : vous arrivez directement dans votre espace — administration, boutique ou flotte.
                     </p>
 
                     {erreur && (
@@ -242,9 +283,9 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                         `logo.png`, dont le fond blanc n'est pas transparent. */}
                     <img src="/logo-blanc.png" alt="Ongo 237" className="h-14 w-auto" />
                     <h2 className="mt-8 text-[32px] font-bold leading-tight tracking-tight">
-                        Toute l'activité d'Ongo,
+                        Un seul accès,
                         <br />
-                        <span className="text-[#ffbd59]">au même endroit.</span>
+                        <span className="text-[#ffbd59]">chacun son espace.</span>
                     </h2>
                     {/*
                       * Les services, qui montent en boucle.

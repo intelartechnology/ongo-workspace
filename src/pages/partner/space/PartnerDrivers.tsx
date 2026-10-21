@@ -11,6 +11,8 @@ interface Props {
     /** Un partenariat suspendu interdit l'ajout et l'activation. */
     actif: boolean;
     onChange: () => void;
+    /** Ouvre le rapport de suivi du chauffeur. */
+    onOuvrir?: (chauffeurId: number) => void;
 }
 
 const entete = "px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest text-slate-500";
@@ -32,7 +34,7 @@ const date = (v?: string | null): string => {
  * par des routes préfixées de son identifiant — le serveur doit vérifier
  * qu'il n'agit que sur les siens, le front ne peut pas le garantir.
  */
-const PartnerDrivers: React.FC<Props> = ({ partnerId, actif, onChange }) => {
+const PartnerDrivers: React.FC<Props> = ({ partnerId, actif, onChange, onOuvrir }) => {
     const api = new ApiService();
 
     const [lignes, setLignes] = useState<any[]>([]);
@@ -126,7 +128,9 @@ const PartnerDrivers: React.FC<Props> = ({ partnerId, actif, onChange }) => {
     };
 
     const actions = (c: any): ActionItem[] => [
+        ...(onOuvrir ? [{ label: "Voir son rapport", icon: "monitoring", onClick: () => onOuvrir(c.id) }] : []),
         {
+            separatorBefore: Boolean(onOuvrir),
             label: c.is_active ? "Désactiver" : "Activer",
             icon: c.is_active ? "toggle_off" : "toggle_on",
             disabled: !actif,
@@ -190,7 +194,12 @@ const PartnerDrivers: React.FC<Props> = ({ partnerId, actif, onChange }) => {
                                     </td>
                                 </tr>
                             ) : lignes.map((c: any) => (
-                                <tr key={c.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors">
+                                <tr
+                                    key={c.id}
+                                    onClick={() => onOuvrir?.(c.id)}
+                                    title="Voir son rapport d'activité"
+                                    className={`hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors ${onOuvrir ? "cursor-pointer" : ""}`}
+                                >
                                     <td className="px-4 py-2.5">
                                         <div className="flex items-center gap-3">
                                             <div className="size-9 shrink-0 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
@@ -229,7 +238,9 @@ const PartnerDrivers: React.FC<Props> = ({ partnerId, actif, onChange }) => {
                                         {francs(c.stats?.revenue_total)}
                                     </td>
                                     <td className="px-4 py-2.5 text-xs text-slate-500 whitespace-nowrap">{date(c.created_at)}</td>
-                                    <td className="px-4 py-2.5">
+                                    {/* Le menu ne doit pas ouvrir le rapport : ses clics remonteraient
+                                        jusqu'à la ligne, portail compris. */}
+                                    <td className="px-4 py-2.5" onClick={(e) => e.stopPropagation()}>
                                         <div className="flex justify-end">
                                             <ActionsMenu items={actions(c)} />
                                         </div>

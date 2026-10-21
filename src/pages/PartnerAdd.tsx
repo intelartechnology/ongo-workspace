@@ -218,7 +218,7 @@ export default function PartnerAdd({ onLogout = () => { }, theme = "light", togg
 
                 // L'espace du partenaire est l'endroit utile juste après :
                 // c'est là qu'on lui ajoute ses premiers chauffeurs.
-                const cle = data.data?.uuid ?? data.data?.id;
+                const cle = data.data?.short_id ?? data.data?.id;
                 navigate(cle ? `/partner/${cle}` : "/partners");
             } else {
                 toast.error(data.message || "Erreur lors de la création");

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import MainLayout from './MainLayout';
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import Swal from "sweetalert2";
 import ApiService from "../services/ApiService";
 
@@ -174,7 +174,6 @@ const AddDriver: React.FC<AddDriverProps> = ({ onLogout, theme, toggleTheme }) =
 
   return (
     <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
-      <ToastContainer />
       <main className="flex-1 overflow-y-auto flex flex-col bg-background-light dark:bg-background-dark">
         <header className="px-8 pt-8 pb-4">
           <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Chauffeur</h1>

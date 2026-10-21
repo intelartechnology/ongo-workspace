@@ -5,7 +5,7 @@ import GoogleMapReact from "google-map-react";
 import ApiService from "../services/ApiService";
 import { notifier } from "../services/notifier";
 
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 
 import Loading from "../components/Loading";
 import MainLayout from "./MainLayout";
@@ -415,6 +415,9 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
                 return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">{status}</span>;
             case "EN COURS":
                 return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">{status}</span>;
+            // Une demande perdue faute de chauffeur : à lire, pas une erreur.
+            case "NO DRIVER FOUND":
+                return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">Aucun chauffeur</span>;
             default:
                 return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400">{status}</span>;
         }
@@ -425,7 +428,6 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
     return (
         <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
             <div className="flex flex-col min-h-screen bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100">
-                <ToastContainer />
 
                 {/* Header */}
                 <header className="p-6">
@@ -488,6 +490,7 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
                                         <option value="ANNULEE">Annulée</option>
                                         <option value="EN COURS">En cours</option>
                                         <option value="EN ATTENTE">En attente</option>
+                                        <option value="NO DRIVER FOUND">Aucun chauffeur trouvé</option>
                                     </select>
                                 </div>
                               {/*   <div className="space-y-1.5">

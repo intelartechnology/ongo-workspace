@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import ApiService from "../services/ApiService";
 import Swal from "sweetalert2";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import Helpers from "../functions/helpers";
 import Loading from "../components/Loading";
 import MainLayout from "./MainLayout";
@@ -148,7 +148,6 @@ export default function Drivers({ onLogout = () => {}, theme = 'light', toggleTh
     return (
         <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
             <div className="flex flex-col min-h-screen bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100">
-                <ToastContainer />
                 
                 {/* Header */}
             <header className="py-6 px-8 flex items-center justify-between">

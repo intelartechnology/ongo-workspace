@@ -2,6 +2,7 @@ import {
     ArrowLeftRight,
     Banknote,
     Bike,
+    Bus,
     CalendarDays,
     Car,
     CarFront,
@@ -9,6 +10,7 @@ import {
     ChartLine,
     CreditCard,
     GalleryHorizontal,
+    Gift,
     Gavel,
     Globe,
     HandCoins,
@@ -87,6 +89,7 @@ export const GROUPES: Groupe[] = [
             { icon: UserRound, label: 'Chauffeurs', path: '/drivers' },
             { icon: CarFront, label: 'Véhicules', path: '/vehicles' },
             { icon: UserSearch, label: 'Demandes', path: '/requests' },
+            { icon: Gift, label: 'Bonus chauffeurs', path: '/driver-bonuses' },
         ],
     },
     {
@@ -97,6 +100,9 @@ export const GROUPES: Groupe[] = [
             { icon: Users, label: 'Activité', path: '/carpool' },
             { icon: UserCheck, label: 'Covoitureurs', path: '/carpoolers' },
             { icon: ArrowLeftRight, label: 'Remboursements', path: '/carpool-refunds' },
+            // Les billets de bus et de train : les agences et compagnies, et leur espace.
+            { icon: Bus, label: 'Transporteurs (bus, train)', path: '/transport-operators' },
+            { icon: Tag, label: 'Codes promo transport', path: '/transport-promo-codes' },
         ],
     },
     {

@@ -264,7 +264,7 @@ export default function PartnersActivity({ onLogout, theme, toggleTheme }: Partn
                                                             <Button
                                                                 size="sm"
                                                                 icon="open_in_new"
-                                                                onClick={() => navigate(`/partner/${p.uuid ?? p.id}`)}
+                                                                onClick={() => navigate(`/partner/${p.short_id ?? p.id}`)}
                                                             >
                                                                 Espace
                                                             </Button>

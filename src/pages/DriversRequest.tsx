@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import { useNavigate } from 'react-router-dom';
 
 import "react-toastify/dist/ReactToastify.css"; // Import toastify CSS
@@ -300,7 +300,6 @@ export default function DriversRequest({ onLogout, theme, toggleTheme }: Drivers
 
   return (
     <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
-      <ToastContainer />
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto bg-background-light dark:bg-background-dark">
         {/* Header */}

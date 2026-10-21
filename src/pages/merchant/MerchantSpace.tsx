@@ -18,6 +18,11 @@ import StoreProfile from "./StoreProfile";
 import Reviews from "./Reviews";
 import Team from "./Team";
 import Collections from "./Collections";
+import Caisse from "./Caisse";
+import Tables from "./Tables";
+import TablesAEncaisser from "./TablesAEncaisser";
+import MerchantSidebar from "./MerchantSidebar";
+import { Menu } from "lucide-react";
 import MediaGallery from "../components/MediaGallery";
 import { galerieMarchand } from "../../services/images";
 
@@ -68,7 +73,7 @@ interface Livreur {
     matricule: string | null;
 }
 
-type Onglet = "commandes" | "livraisons" | "horaires" | "boutique" | "paiement" | "catalogue" | "avis" | "promotions" | "livraison" | "livreurs" | "equipe" | "photos" | "collections" | "revenus" | "campagnes" | "audiences" | "statistiques";
+type Onglet = "caisse" | "encaisser" | "tables" | "commandes" | "livraisons" | "horaires" | "boutique" | "paiement" | "catalogue" | "avis" | "promotions" | "livraison" | "livreurs" | "equipe" | "photos" | "collections" | "revenus" | "campagnes" | "audiences" | "statistiques";
 
 interface Groupe {
     cle: string;
@@ -97,6 +102,9 @@ const GROUPES: Groupe[] = [
         icone: "receipt_long",
         onglets: [
             { cle: "commandes", libelle: "Commandes" },
+            // Les commandes de table payées en espèces : la caisse ou le
+            // serveur, depuis son téléphone, valide l'argent reçu.
+            { cle: "encaisser", libelle: "Tables à encaisser" },
             // Juste après le comptoir : c'est la suite du même geste, et la
             // personne qui s'occupe des départs n'a pas à traverser l'écran de
             // la cuisine pour la trouver.
@@ -154,6 +162,7 @@ const GROUPES: Groupe[] = [
         icone: "settings",
         onglets: [
             { cle: "boutique", libelle: "Boutique" },
+            { cle: "tables", libelle: "Tables et QR codes" },
             { cle: "equipe", libelle: "Équipe" },
         ],
     },
@@ -170,6 +179,10 @@ export default function MerchantSpace({ onLogout }: MerchantSpaceProps) {
     /** Les types de véhicule qui livrent : moto, tricycle, fourgon. */
     const [typesVehicule, setTypesVehicule] = useState<{ id: number; libelle: string }[]>([]);
     const [chargement, setChargement] = useState<boolean>(true);
+    const [menuOuvert, setMenuOuvert] = useState<boolean>(false);
+
+    /** Les tables à encaisser, pour la pastille du menu. */
+    const [aEncaisser, setAEncaisser] = useState<number>(0);
     const [refus, setRefus] = useState<string | null>(null);
 
     const api = new ApiService();
@@ -223,6 +236,23 @@ export default function MerchantSpace({ onLogout }: MerchantSpaceProps) {
     useEffect(() => {
         if (onglet === "livreurs") chargerLivreurs();
     }, [onglet]);
+
+    // Le nombre de tables à encaisser, toutes les 20 secondes : la pastille
+    // du menu prévient même quand on est sur un autre écran.
+    useEffect(() => {
+        if (!boutique) return;
+        const lire = async () => {
+            try {
+                const { data } = await new ApiService().getData(`v3/merchant/${merchantId}/stores/${boutique.id}/tables/to-settle`);
+                if (data.success) setAEncaisser(data.data.pending.length);
+            } catch {
+                // Une pastille en retard ne bloque rien.
+            }
+        };
+        lire();
+        const rythme = setInterval(lire, 20000);
+        return () => clearInterval(rythme);
+    }, [boutique?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
     /**
      * Ajouter un livreur, en deux temps.
@@ -401,106 +431,59 @@ export default function MerchantSpace({ onLogout }: MerchantSpaceProps) {
     // position, et un `slice(0, 2)` aurait silencieusement retiré les horaires.
     const visibles: Groupe[] =
         marchand.role === "staff"
-            ? [{ ...GROUPES[0], onglets: GROUPES[0].onglets.slice(0, 3) }]
+            ? [{ ...GROUPES[0], onglets: GROUPES[0].onglets.slice(0, 4) }]
             : GROUPES;
 
-    const groupeOuvert = visibles.find((g) => g.onglets.some((o) => o.cle === onglet)) ?? visibles[0];
+    const CAISSE = { cle: "caisse" as Onglet, libelle: "Caisse" };
+    const titre = onglet === "caisse" ? CAISSE.libelle : visibles.flatMap((g) => g.onglets).find((o) => o.cle === onglet)?.libelle ?? "";
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
-            <header>
-                <div className="px-6 py-5 max-w-7xl mx-auto">
-                    <div className="flex items-start justify-between gap-6">
-                        <div>
-                            <h1 className="text-xl font-bold text-slate-900 dark:text-white">{marchand.name}</h1>
-                            <p className="text-sm text-slate-500">
-                                {boutique?.name ?? "—"}
-                                {marchand.status === "suspended" && " · compte suspendu"}
-                            </p>
-                        </div>
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+            <MerchantSidebar
+                nom={marchand.name}
+                boutique={boutique?.name ?? null}
+                groupes={visibles}
+                premier={CAISSE}
+                pastilles={{ encaisser: aEncaisser, caisse: aEncaisser }}
+                onglet={onglet}
+                choisir={setOnglet}
+                isOpen={menuOuvert}
+                setIsOpen={setMenuOuvert}
+                onLogout={onLogout}
+            />
 
-                        <div className="flex items-center gap-3 shrink-0">
-                            {marchand.stores.length > 1 && (
-                                <select
-                                    value={boutique?.id ?? ""}
-                                    onChange={(e) => setBoutique(marchand.stores.find((b) => b.id === Number(e.target.value)) ?? null)}
-                                    className="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-                                >
-                                    {marchand.stores.map((b) => (
-                                        <option key={b.public_id} value={b.id}>{b.name}</option>
-                                    ))}
-                                </select>
-                            )}
+            <div className="lg:ml-[272px] min-h-screen flex flex-col min-w-0">
+                <header className="h-16 sticky top-0 z-40 flex items-center gap-3 px-4 md:px-6 bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-200 dark:border-slate-800">
+                    <button onClick={() => setMenuOuvert(true)} className="lg:hidden text-slate-500" aria-label="Ouvrir le menu">
+                        <Menu className="size-6" />
+                    </button>
+                    <h2 className="flex-1 min-w-0 truncate text-base md:text-[17px] font-bold tracking-tight">
+                        {titre}
+                        {marchand.status === "suspended" && <span className="ml-2 text-xs font-semibold text-red-600">compte suspendu</span>}
+                    </h2>
 
-                            {/*
-                                L'espace marchand n'emprunte pas la barre latérale
-                                d'administration : c'est voulu, mais la déconnexion
-                                y vivait, et un restaurateur restait connecté sans
-                                aucun moyen de sortir.
-                            */}
-                            <button
-                                onClick={onLogout}
-                                title="Se déconnecter"
-                                className="flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-300 text-sm text-slate-600 hover:text-slate-900 dark:border-slate-700 dark:text-slate-300 dark:hover:text-white"
-                            >
-                                <span className="material-symbols-outlined text-xl">logout</span>
-                                <span className="hidden sm:inline">Déconnexion</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    {/*
-                        Deux niveaux : la famille, puis l'écran.
-
-                        Ouvrir une famille mène à son premier écran — un groupe
-                        sélectionné qui n'afficherait rien serait un clic pour
-                        rien. Un seul groupe (la cuisine) et sa rangée
-                        disparaît : un onglet unique n'est pas un choix.
-                    */}
-                    {visibles.length > 1 && (
-                        <nav className="flex flex-wrap gap-2 mt-5">
-                            {visibles.map((groupe) => {
-                                const ouvert = groupe.cle === groupeOuvert.cle;
-
-                                return (
-                                    <button
-                                        key={groupe.cle}
-                                        onClick={() => setOnglet(groupe.onglets[0].cle)}
-                                        className={`flex items-center gap-2 px-3.5 py-2 rounded-full text-sm font-medium transition ${
-                                            ouvert
-                                                ? "bg-primary text-white dark:bg-primary-container"
-                                                : "bg-slate-100 text-slate-600 hover:text-slate-900 dark:bg-slate-800 dark:text-slate-300 dark:hover:text-white"
-                                        }`}
-                                    >
-                                        <span className="material-symbols-outlined text-lg">{groupe.icone}</span>
-                                        {groupe.libelle}
-                                    </button>
-                                );
-                            })}
-                        </nav>
+                    {marchand.stores.length > 1 && (
+                        <select
+                            value={boutique?.id ?? ""}
+                            onChange={(e) => setBoutique(marchand.stores.find((b) => b.id === Number(e.target.value)) ?? null)}
+                            className="h-10 max-w-[40%] sm:max-w-none px-2 sm:px-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-white"
+                        >
+                            {marchand.stores.map((b) => (
+                                <option key={b.public_id} value={b.id}>{b.name}</option>
+                            ))}
+                        </select>
                     )}
+                </header>
 
-                    <nav className="flex gap-6 mt-4 overflow-x-auto whitespace-nowrap">
-                        {groupeOuvert.onglets.map(({ cle, libelle }) => (
-                            <button
-                                key={cle}
-                                onClick={() => setOnglet(cle)}
-                                className={`pb-2 text-sm font-medium border-b-2 ${
-                                    onglet === cle
-                                        ? "border-slate-900 text-slate-900 dark:border-white dark:text-white"
-                                        : "border-transparent text-slate-500"
-                                }`}
-                            >
-                                {libelle}
-                            </button>
-                        ))}
-                    </nav>
-                </div>
-            </header>
-
-            <main className="px-6 py-8 max-w-7xl mx-auto">
+            <main className={onglet === "caisse" ? "" : "px-4 md:px-6 py-6 md:py-8 w-full max-w-7xl mx-auto"}>
                 {!boutique ? (
                     <p className="text-slate-500">Aucune boutique n'est rattachée à ce compte.</p>
+                ) : onglet === "caisse" ? (
+                    <Caisse merchantId={merchantId!} storeId={boutique.id} peutAnnuler={marchand.role !== "staff"} aEncaisser={aEncaisser} onAEncaisser={setAEncaisser} />
+                ) : onglet === "encaisser" ? (
+                    <div className="max-w-xl mx-auto"><TablesAEncaisser merchantId={merchantId!} storeId={boutique.id} onCompte={setAEncaisser} /></div>
+                ) : onglet === "tables" ? (
+                    <Tables merchantId={merchantId!} storeId={boutique.id} peutGerer={marchand.role !== "staff"} />
                 ) : onglet === "commandes" ? (
                     <OrderDesk merchantId={merchantId!} storeId={boutique.id} />
                 ) : onglet === "livraisons" ? (
@@ -584,6 +567,7 @@ export default function MerchantSpace({ onLogout }: MerchantSpaceProps) {
                     </section>
                 )}
             </main>
+            </div>
         </div>
     );
 }

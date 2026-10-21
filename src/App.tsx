@@ -1,7 +1,6 @@
-import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { useState, useEffect } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
@@ -19,6 +18,7 @@ import DriversRequest from './pages/DriversRequest'
 import Carpoolers from './pages/Carpoolers';
 import CarpoolHistory from './pages/CarpoolHistory';
 import CarpoolRefunds from './pages/CarpoolRefunds';
+import DriverBonuses from './pages/DriverBonuses';
 import Transactions from './pages/Transactions';
 import Moderation from './pages/Moderation';
 import Settings from './pages/Settings';
@@ -50,23 +50,17 @@ import DriverDetail from './pages/DriverDetail'
 import Partners from './pages/Partners'
 import PartnerAdd from './pages/PartnerAdd'
 import PartnerFleet from './pages/PartnerFleet'
-import PartnerLogin from './pages/partner/Login'
-import PartnerDashboard from './pages/partner/Dashboard'
 import PartnerSpace from './pages/partner/PartnerSpace'
+import TransportSpace from './pages/transport/TransportSpace'
+import TransportOperators from './pages/TransportOperators'
+import TransportPromoCodes from './pages/TransportPromoCodes'
 import PartnersActivity from './pages/PartnersActivity'
-import PartnerCourses from './pages/partner/Courses'
-import CourseDetail from './pages/partner/CourseDetail'
-import PartnerVehicles from './pages/partner/Vehicles'
-import PartnerVehicleDetail from './pages/partner/VehicleDetail'
-import VehicleReportPrintPage from './pages/partner/VehicleReportPrintPage'
-import PartnerCoursesPrintPage from './pages/partner/PartnerCoursesPrintPage'
 import Rentals from './pages/rentals/Rentals'
 import RentalDetail from './pages/rentals/RentalDetail'
 import RentalVehicles from './pages/rentals/RentalVehicles'
 import AddRentalVehicle from './pages/rentals/AddRentalVehicle'
 import RentalCategories from './pages/rentals/RentalCategories'
 import AddRentalCategory from './pages/rentals/AddRentalCategory'
-import ContributorLogin from './pages/contributor/Login'
 import ContributorDashboard from './pages/contributor/Dashboard'
 import ContributorRides from './pages/contributor/Rides'
 import ContributorRideDetail from './pages/contributor/RideDetail'
@@ -78,32 +72,65 @@ import ContributorCoursesPrintPage from './pages/contributor/ContributorCoursesP
 import Contributors from './pages/Contributors'
 import ContributorAdd from './pages/ContributorAdd'
 import ContributorDetails from './pages/ContributorDetails'
-// Protected Route Component
+/** L'adresse où se tient un compte qui n'est pas administrateur, s'il en a une. */
+const espaceHorsAdmin = (user: { role_id?: number | string; espace?: string | null } | null): string | null => {
+  if (!user || Number(user.role_id) === 4) return null
+  return user.espace && user.espace !== '/courses' ? user.espace : null
+}
+
+/*
+ * Garde des routes connectées.
+ *
+ * Un marchand ou un propriétaire de flotte n'affiche jamais une page du
+ * back-office : l'API lui en refusait les données, mais la page s'ouvrait —
+ * menu d'administration compris. Il est renvoyé à son espace avant le
+ * premier rendu. Les espaces eux-mêmes (`/merchant/…`, `/partner/…`) restent
+ * ouverts, pour qu'il passe d'une enseigne à l'autre.
+ */
 const ProtectedRoute = ({ children, isAuthenticated }: { children: React.ReactNode, isAuthenticated: boolean }) => {
+  const user = useSelector((state: RootState) => state.auth.user)
+  const { pathname } = useLocation()
+
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />
   }
+
+  const espace = espaceHorsAdmin(user)
+  if (espace) {
+    // La famille de son espace — `/merchant/`, `/partner/`, `/contributor/` —
+    // pour qu'il circule d'un écran à l'autre de cet espace.
+    const famille = `/${espace.split('/')[1]}/`
+    if (!pathname.startsWith(famille)) {
+      return <Navigate to={espace} replace />
+    }
+  }
+
   return <>{children}</>
 }
 
-// Partner Protected Route Component
-const PartnerProtectedRoute = ({ children, isAuthenticated, user }: { children: React.ReactNode, isAuthenticated: boolean, user: any }) => {
-  if (!isAuthenticated) {
-    return <Navigate to="/partner/login" replace />
+/*
+ * Les adresses de l'ancien espace partenaire, retire.
+ *
+ * `/partner/dashboard`, `/partner/courses`… menaient a des pages qui lisaient
+ * des routes d'API sans authentification. Elles restent declarees pour qu'un
+ * favori ne tombe pas sur `/partner/:partnerId` — « dashboard » y serait pris
+ * pour un identifiant — et conduisent a l'espace du partenaire connecte, par
+ * l'identifiant court que la connexion lui a rendu.
+ */
+const VersEspacePartenaire = ({ isAuthenticated, user }: { isAuthenticated: boolean, user: { partner_short_id?: string | null } | null }) => {
+  if (isAuthenticated && user?.partner_short_id) {
+    return <Navigate to={`/partner/${user.partner_short_id}`} replace />
   }
-  if (!user?.is_partner) {
-    return <Navigate to="/partner/login" replace />
-  }
-  return <>{children}</>
+  // Une session ouverte avant l'identifiant court ne le connait pas :
+  // se reconnecter le lui rend, par la page de connexion commune.
+  return <Navigate to="/login" replace />
 }
 
 // Contributor Protected Route Component
-const ContributorProtectedRoute = ({ children, isAuthenticated, user }: { children: React.ReactNode, isAuthenticated: boolean, user: any }) => {
-  if (!isAuthenticated) {
-    return <Navigate to="/contributor/login" replace />
-  }
-  if (!user?.contributor) {
-    return <Navigate to="/contributor/login" replace />
+// La connexion est commune (`/login`) : elle conduit un contributeur ici.
+const ContributorProtectedRoute = ({ children, isAuthenticated, user }: { children: React.ReactNode, isAuthenticated: boolean, user: { contributor?: boolean } | null }) => {
+  if (!isAuthenticated || !user?.contributor) {
+    return <Navigate to="/login" replace />
   }
   return <>{children}</>
 }
@@ -111,6 +138,7 @@ const ContributorProtectedRoute = ({ children, isAuthenticated, user }: { childr
 function App() {
   const dispatch = useDispatch()
   const { isAuthenticated } = useSelector((state: RootState) => state.auth)
+  const partenaireConnecte = useSelector((state: RootState) => state.auth.user)
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     return (localStorage.getItem('theme') as 'light' | 'dark') || 'light'
   })
@@ -134,13 +162,15 @@ function App() {
 
   return (
     <div className={`font-display min-h-screen w-full transition-colors duration-300 ${theme === 'dark' ? 'bg-background-dark' : 'bg-white'}`}>
-      <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover theme={theme} />
+      {/* Les notifications ont un seul conteneur, dans `main.tsx`. Un second ici
+          les doublait : le X fermait celle du dessus, l'autre restait. */}
       <Routes>
         {/* On entre par les courses.
             C'est ce qu'on vient regarder en ouvrant le poste le matin : ce qui
             roule maintenant. Le tableau de bord reste a sa place, on y va quand
             on veut des totaux — pas l'inverse. */}
-        <Route path="/login" element={isAuthenticated ? <Navigate to="/courses" replace /> : <Login onLogin={() => { }} />} />
+        {/* Déjà connecté : chacun retourne à son espace, pas au back-office. */}
+        <Route path="/login" element={isAuthenticated ? <Navigate to={partenaireConnecte?.espace ?? '/courses'} replace /> : <Login onLogin={() => { }} />} />
         <Route
           path="/"
           element={
@@ -465,6 +495,30 @@ function App() {
           }
         />
         <Route
+          path="/transport-promo-codes"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <TransportPromoCodes onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/transport-operators"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <TransportOperators onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/driver-bonuses"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <DriverBonuses onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/carpool-refunds"
           element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>
@@ -509,6 +563,16 @@ function App() {
           element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>
               <PartnerAdd onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        {/* La page d'un partenaire au back-office, par son identifiant public :
+            `/partners/<short_id>`. L'ancienne adresse `/fleet` reste servie. */}
+        <Route
+          path="/partners/:id"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <PartnerFleet onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
             </ProtectedRoute>
           }
         />
@@ -612,63 +676,13 @@ function App() {
         />
 
         {/* Partner Flow Routes */}
-        <Route path="/partner/login" element={isAuthenticated ? <Navigate to="/partner/dashboard" replace /> : <PartnerLogin />} />
-        <Route
-          path="/partner/dashboard"
-          element={
-            <PartnerProtectedRoute isAuthenticated={isAuthenticated} user={useSelector((state: RootState) => state.auth.user)}>
-              <PartnerDashboard onLogout={handleLogout} user={useSelector((state: RootState) => state.auth.user)} />
-            </PartnerProtectedRoute>
-          }
-        />
-        <Route
-          path="/partner/courses"
-          element={
-            <PartnerProtectedRoute isAuthenticated={isAuthenticated} user={useSelector((state: RootState) => state.auth.user)}>
-              <PartnerCourses onLogout={handleLogout} user={useSelector((state: RootState) => state.auth.user)} />
-            </PartnerProtectedRoute>
-          }
-        />
-        <Route
-          path="/partner/courses/:id"
-          element={
-            <PartnerProtectedRoute isAuthenticated={isAuthenticated} user={useSelector((state: RootState) => state.auth.user)}>
-              <CourseDetail onLogout={handleLogout} user={useSelector((state: RootState) => state.auth.user)} />
-            </PartnerProtectedRoute>
-          }
-        />
-        <Route
-          path="/partner/vehicles"
-          element={
-            <PartnerProtectedRoute isAuthenticated={isAuthenticated} user={useSelector((state: RootState) => state.auth.user)}>
-              <PartnerVehicles onLogout={handleLogout} user={useSelector((state: RootState) => state.auth.user)} />
-            </PartnerProtectedRoute>
-          }
-        />
-        <Route
-          path="/partner/vehicles/:id"
-          element={
-            <PartnerProtectedRoute isAuthenticated={isAuthenticated} user={useSelector((state: RootState) => state.auth.user)}>
-              <PartnerVehicleDetail onLogout={handleLogout} user={useSelector((state: RootState) => state.auth.user)} />
-            </PartnerProtectedRoute>
-          }
-        />
-        <Route
-          path="/partner/vehicle-report/:id"
-          element={
-            <PartnerProtectedRoute isAuthenticated={isAuthenticated} user={useSelector((state: RootState) => state.auth.user)}>
-              <VehicleReportPrintPage />
-            </PartnerProtectedRoute>
-          }
-        />
-        <Route
-          path="/partner/courses-report"
-          element={
-            <PartnerProtectedRoute isAuthenticated={isAuthenticated} user={useSelector((state: RootState) => state.auth.user)}>
-              <PartnerCoursesPrintPage user={useSelector((state: RootState) => state.auth.user)} />
-            </PartnerProtectedRoute>
-          }
-        />
+        {/* `/partner/login` n'est plus une page : la connexion est commune à
+            tous (`/login`), et conduit chacun à son espace. L'adresse reste
+            déclarée pour les liens déjà distribués — sans elle, « login »
+            serait pris pour l'identifiant d'un partenaire. */}
+        {['/partner/login', '/partner/dashboard', '/partner/courses', '/partner/courses/:id', '/partner/vehicles', '/partner/vehicles/:id', '/partner/vehicle-report/:id', '/partner/courses-report'].map((ancienne) => (
+          <Route key={ancienne} path={ancienne} element={<VersEspacePartenaire isAuthenticated={isAuthenticated} user={partenaireConnecte} />} />
+        ))}
 
         {/*
           * L'espace partenaire cadré par l'URL, sur le modèle de l'espace
@@ -685,7 +699,7 @@ function App() {
           * format.
           */}
         <Route
-          path="/partner/:partnerId"
+          path="/partner/:partnerId/:section?/:sousId?"
           element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>
               <PartnerSpace onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
@@ -693,8 +707,24 @@ function App() {
           }
         />
 
+        {/*
+          * L'espace d'un transporteur (bus, train), cadré par son identifiant
+          * court comme ceux des marchands et des partenaires. Le serveur
+          * décide de l'accès (`transport.member`).
+          */}
+        <Route
+          path="/transport/:operatorId/:section?"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <TransportSpace onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+
         {/* Contributor Flow Routes */}
-        <Route path="/contributor/login" element={isAuthenticated ? <Navigate to="/contributor/dashboard" replace /> : <ContributorLogin />} />
+        {/* Plus de page à part : la connexion est commune. L'adresse reste pour
+            les liens déjà distribués. */}
+        <Route path="/contributor/login" element={<Navigate to={isAuthenticated && partenaireConnecte?.contributor ? '/contributor/dashboard' : '/login'} replace />} />
         <Route
           path="/contributor/dashboard"
           element={

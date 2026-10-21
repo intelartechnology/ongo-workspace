@@ -111,7 +111,7 @@ Schema::table('partners', function (Blueprint $table) {
 
 Sans aucune route nouvelle, avec ce seul compte :
 
-- se connecter sur `/partner/login` avec `690000001`
+- se connecter sur `/login`, la page commune, avec `699000101` (et non `690000001`, qui est un autre compte)
 - la redirection vers l'espace
 - le rattachement d'un compte existant depuis `/partners/add` (mode dégradé)
 

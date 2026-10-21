@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import Swal from "sweetalert2";
 import ApiService from "../../services/ApiService";
+import { nomDeTable } from "./ticketDeCaisse";
 
 /**
  * Le poste de commande.
@@ -32,6 +33,8 @@ interface Commande {
     code: string;
     status: string;
     dining_mode: string;
+    /** Sur place : la table d'où le client a commandé, QR code scanné. */
+    table_number?: string | null;
     total: number;
     subtotal: number;
     discount_total: number;
@@ -60,6 +63,22 @@ interface Commande {
     customer: { nom: string | null; telephone: string | null } | null;
 }
 
+/**
+ * Une vente de la caisse envoyée en cuisine. Ni prix ni total : la cuisine
+ * prépare, elle n'encaisse pas.
+ */
+interface VenteComptoir {
+    id: number;
+    ticket_number: number;
+    dining_mode: "dine_in" | "takeaway";
+    table_number: string | null;
+    customer_name: string | null;
+    kitchen_status: "preparing" | "ready";
+    note: string | null;
+    sent_to_kitchen_at: string;
+    items: { name: string; quantity: number; options: string[]; note: string | null }[];
+}
+
 interface File {
     store: { id: number; name: string; prep_minutes: number };
     is_paused: boolean;
@@ -68,12 +87,19 @@ interface File {
     preparing: Commande[];
     ready: Commande[];
     handed: Commande[];
+    counter?: VenteComptoir[];
 }
 
 interface OrderDeskProps {
     merchantId: string;
     storeId: number;
 }
+
+/** Depuis combien de temps un ticket attend en cuisine. */
+const depuis = (iso: string) => {
+    const minutes = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
+    return minutes < 1 ? "à l'instant" : `${minutes} min`;
+};
 
 const francs = (montant: number) => `${(montant ?? 0).toLocaleString("fr-FR")} F`;
 
@@ -111,6 +137,15 @@ export default function OrderDesk({ merchantId, storeId }: OrderDeskProps) {
                 recue.new.forEach((commande) => {
                     if (!sonJoue.current.has(commande.public_id)) {
                         sonJoue.current.add(commande.public_id);
+                        avertir();
+                    }
+                });
+
+                // De même pour un ticket que la caisse vient d'envoyer.
+                (recue.counter ?? []).filter((v) => v.kitchen_status === "preparing").forEach((vente) => {
+                    const cle = `comptoir-${vente.id}`;
+                    if (!sonJoue.current.has(cle)) {
+                        sonJoue.current.add(cle);
                         avertir();
                     }
                 });
@@ -355,6 +390,70 @@ export default function OrderDesk({ merchantId, storeId }: OrderDeskProps) {
         );
     };
 
+    /**
+     * D'où vient la commande, d'un coup d'œil : en ligne (livraison, à
+     * emporter, ou sur place depuis une table) ou au comptoir.
+     */
+    const origine = (canal: "en_ligne" | "comptoir", mode: string, table?: string | null) => {
+        const lieu = mode === "delivery"
+            ? "Livraison"
+            : mode === "pickup" || mode === "takeaway"
+                ? "À emporter"
+                : table ? `Sur place · ${nomDeTable(table)}` : "Sur place";
+
+        return (
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+                <span
+                    className={`px-2 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wide ${
+                        canal === "comptoir"
+                            ? "bg-violet-100 text-violet-800 dark:bg-violet-950 dark:text-violet-300"
+                            : "bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300"
+                    }`}
+                >
+                    {canal === "comptoir" ? "Comptoir" : "En ligne"}
+                </span>
+                <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                    {lieu}
+                </span>
+            </div>
+        );
+    };
+
+    /** Un ticket de la caisse : les articles toujours dépliés, la cuisine les lit d'un coup. */
+    const carteComptoir = (vente: VenteComptoir) => {
+        return (
+            <div key={`comptoir-${vente.id}`} className="rounded-xl border border-violet-200 bg-white p-4 dark:border-violet-900 dark:bg-slate-900">
+                <div className="flex items-start justify-between gap-3">
+                    <div>
+                        <p className="font-mono text-lg font-bold text-slate-900 dark:text-white">Ticket n° {vente.ticket_number}</p>
+                        <p className="text-xs text-slate-500">
+                            {depuis(vente.sent_to_kitchen_at)}
+                            {vente.customer_name ? ` · ${vente.customer_name}` : ""}
+                        </p>
+                        {origine("comptoir", vente.dining_mode, vente.table_number)}
+                    </div>
+                </div>
+
+                <div className="mt-3 space-y-1.5">
+                    {vente.items.map((ligne, rang) => (
+                        <div key={rang} className="text-sm">
+                            <p className="text-slate-900 dark:text-white">{ligne.quantity} × {ligne.name}</p>
+                            {ligne.options.map((option, i) => <p key={i} className="text-xs text-slate-500 ml-4">+ {option}</p>)}
+                            {ligne.note && <p className="text-xs text-amber-700 dark:text-amber-400 ml-4">« {ligne.note} »</p>}
+                        </div>
+                    ))}
+                    {vente.note && <p className="text-sm text-amber-700 dark:text-amber-400">Note : {vente.note}</p>}
+                </div>
+
+                <div className="mt-4 flex gap-2">
+                    {vente.kitchen_status === "preparing"
+                        ? bouton("Prête", () => agir("counter/sales/kitchen", { sale_id: vente.id, status: "ready" }))
+                        : bouton("Servie", () => agir("counter/sales/kitchen", { sale_id: vente.id, status: "served" }))}
+                </div>
+            </div>
+        );
+    };
+
     const carte = (commande: Commande, actions: React.ReactNode) => {
         const deployee = ouverte === commande.public_id;
         const urgente = commande.status === "pending"
@@ -374,12 +473,12 @@ export default function OrderDesk({ merchantId, storeId }: OrderDeskProps) {
                         <p className="font-mono text-lg font-bold text-slate-900 dark:text-white">{commande.code}</p>
                         <p className="text-xs text-slate-500">
                             {attente(commande)}
-                            {commande.dining_mode === "pickup" ? " · à emporter" : ""}
-                            {commande.payment_method === "cash" ? " · espèces" : ""}
+                            {commande.payment_method === "cash" ? (commande.dining_mode === "dine_in" ? " · espèces, à encaisser" : " · espèces") : ""}
                         </p>
+                        {origine("en_ligne", commande.dining_mode, commande.table_number)}
                     </div>
 
-                    <p className="font-semibold text-slate-900 dark:text-white">{francs(commande.total)}</p>
+                    <p className="font-semibold text-slate-900 dark:text-white whitespace-nowrap">{francs(commande.total)}</p>
                 </div>
 
                 {reductions(commande)}
@@ -473,19 +572,21 @@ export default function OrderDesk({ merchantId, storeId }: OrderDeskProps) {
         </button>
     );
 
-    const colonne = (titre: string, commandes: Commande[], rendu: (commande: Commande) => React.ReactNode) => (
+    const colonne = (titre: string, commandes: Commande[], rendu: (commande: Commande) => React.ReactNode, comptoir: VenteComptoir[] = []) => (
         <div className="flex-1 min-w-[260px]">
             <h3 className="text-sm font-bold uppercase text-slate-500 mb-3">
-                {titre} <span className="text-slate-400">({commandes.length})</span>
+                {titre} <span className="text-slate-400">({commandes.length + comptoir.length})</span>
             </h3>
 
             <div className="space-y-3">
-                {commandes.length === 0
+                {commandes.length + comptoir.length === 0
                     ? <p className="text-sm text-slate-400">—</p>
-                    : commandes.map(rendu)}
+                    : <>{commandes.map(rendu)}{comptoir.map(carteComptoir)}</>}
             </div>
         </div>
     );
+
+    const comptoir = (statut: VenteComptoir["kitchen_status"]) => (file?.counter ?? []).filter((v) => v.kitchen_status === statut);
 
     if (chargement || !file) {
         return <p className="text-slate-500">Chargement de la file…</p>;
@@ -533,9 +634,12 @@ export default function OrderDesk({ merchantId, storeId }: OrderDeskProps) {
                             && bouton("Commencer", () => agir("orders/advance", { order_id: commande.id, to: "preparing" }), "secondaire")}
                         {bouton("Prête", () => agir("orders/advance", { order_id: commande.id, to: "ready" }))}
                     </>
-                )))}
+                )), comptoir("preparing"))}
 
-                {colonne("Prêtes", file.ready, (commande) => carte(commande, bouton("Remettre", () => remettre(commande))))}
+                {colonne("Prêtes", file.ready, (commande) => carte(commande, commande.dining_mode === "dine_in"
+                    // À table : le serveur la pose devant le client, sans code.
+                    ? bouton("Servie", () => agir("orders/serve", { order_id: commande.id }, "Commande servie"))
+                    : bouton("Remettre", () => remettre(commande))), comptoir("ready"))}
 
                 {colonne("Remises", file.handed, (commande) => carte(commande, (
                     <p className="text-sm text-slate-500">En route</p>
