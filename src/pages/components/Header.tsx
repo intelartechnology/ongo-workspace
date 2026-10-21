@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { CalendarDays, CornerDownLeft, Menu, Moon, Search, Sun } from 'lucide-react';
+import { CalendarDays, CornerDownLeft, Menu, Moon, Search, Sparkles, Sun } from 'lucide-react';
+import { useHylana } from '../assistant/HylanaContext';
 import { ACCUEIL, ASSISTANT, GROUPES, REGLAGES, trouverPage, type Entree } from './navigation';
 
 interface HeaderProps {
@@ -27,6 +28,7 @@ const normaliser = (texte: string) =>
 const Header: React.FC<HeaderProps> = ({ onToggleSidebar, onToggleTheme, theme }) => {
     const location = useLocation();
     const navigate = useNavigate();
+    const hylana = useHylana();
 
     /*
      * Le titre suit la page.
@@ -176,6 +178,25 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar, onToggleTheme, theme }
               * La cloche est partie : elle n'ouvrait rien, et sa pastille rouge
               * annonçait du nouveau à chaque visite.
               */}
+            {/* Hylana, comme le bouton « Agent » de Hostinger : une pastille et son nom.
+                Sur téléphone, la pastille seule. ⌘J ou Ctrl+J l'ouvre aussi. */}
+            {hylana && (
+                <button
+                    type="button"
+                    onClick={() => hylana.basculer()}
+                    title="Hylana, l'assistante de pilotage (⌘J)"
+                    aria-pressed={hylana.ouverte}
+                    className={`inline-flex h-9 shrink-0 items-center gap-2 rounded-full border bg-white pl-1 pr-1 text-[13.5px] font-bold text-slate-900 transition-colors hover:bg-slate-50 dark:bg-slate-900 dark:text-white dark:hover:bg-slate-800 sm:pr-3.5 ${
+                        hylana.ouverte ? 'border-[#3d5fd9] ring-[3px] ring-[#eceffd] dark:ring-[#1c2a4d]' : 'border-slate-200 dark:border-slate-700'
+                    }`}
+                >
+                    <span className="grid size-7 place-items-center rounded-full bg-gradient-to-br from-[#10377b] to-[#3d5fd9] text-white">
+                        <Sparkles className="size-[15px]" strokeWidth={2} />
+                    </span>
+                    <span className="hidden sm:inline">Hylana</span>
+                </button>
+            )}
+
             <button
                 onClick={onToggleTheme}
                 className={bouton}

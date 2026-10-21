@@ -197,8 +197,11 @@ export const GROUPES: Groupe[] = [
 /** Le tableau de bord et les réglages : hors famille, en tête et en pied du menu. */
 export const ACCUEIL: Entree = { icon: LayoutDashboard, label: 'Tableau de bord', path: '/dashboard' };
 
-/** L'assistant de pilotage : il lit l'activité, prépare des rapports et des envois, ne modifie rien. */
-export const ASSISTANT: Entree = { icon: Sparkles, label: 'Assistant', path: '/assistant' };
+/**
+ * Hylana, l'assistante de pilotage : elle s'ouvre depuis la barre du haut. L'entrée
+ * reste ici pour la recherche « Aller à une page » ; /assistant l'ouvre en grand.
+ */
+export const ASSISTANT: Entree = { icon: Sparkles, label: 'Hylana (assistante)', path: '/assistant' };
 export const REGLAGES: Entree = { icon: SlidersHorizontal, label: 'Réglages', path: '/settings' };
 
 /**

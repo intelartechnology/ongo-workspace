@@ -5,6 +5,8 @@ import { useSelector, useDispatch } from 'react-redux'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Assistant from './pages/assistant/Assistant'
+import PanneauHylana from './pages/assistant/PanneauHylana'
+import { HylanaProvider } from './pages/assistant/HylanaContext'
 import Users from './pages/Users'
 import Drivers from './pages/Drivers'
 import { type RootState } from './store'
@@ -162,7 +164,11 @@ function App() {
     dispatch(LOGOUT_ACTION())
   }
 
+  // Hylana n'existe que pour l'administration d'Ongo, pas pour les espaces partenaire ou marchand.
+  const estAdmin = isAuthenticated && (Number((partenaireConnecte as any)?.role_id) === 4 || ['/courses', '/dashboard'].includes((partenaireConnecte as any)?.espace))
+
   return (
+    <HylanaProvider actif={estAdmin}>
     <div className={`font-display min-h-screen w-full transition-colors duration-300 ${theme === 'dark' ? 'bg-background-dark' : 'bg-white'}`}>
       {/* Les notifications ont un seul conteneur, dans `main.tsx`. Un second ici
           les doublait : le X fermait celle du dessus, l'autre restait. */}
@@ -193,7 +199,7 @@ function App() {
           path="/assistant"
           element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>
-              <Assistant onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+              <Assistant />
             </ProtectedRoute>
           }
         />
@@ -808,7 +814,9 @@ function App() {
           }
         />
       </Routes>
+      {estAdmin && <PanneauHylana theme={theme} />}
     </div>
+    </HylanaProvider>
   )
 }
 

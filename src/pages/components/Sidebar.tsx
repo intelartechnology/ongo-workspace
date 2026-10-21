@@ -1,8 +1,10 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { useLocation, Link } from 'react-router-dom';
-import { ChevronUp, LogOut, X } from 'lucide-react';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
+import { ChevronUp, LogOut, PanelLeftClose, PanelLeftOpen, X } from 'lucide-react';
 import ApiService from '../../services/ApiService';
-import { ACCUEIL, ASSISTANT, GROUPES, REGLAGES, type Entree } from './navigation';
+import { ACCUEIL, GROUPES, REGLAGES, type Entree } from './navigation';
+import { useHylana } from '../assistant/HylanaContext';
+import { basculerMenu, setSurvolMenu, useMenuReduit, useSurvolMenu } from './menuReduit';
 
 interface SidebarProps {
     isOpen: boolean;
@@ -187,8 +189,76 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, user, onLogout }) 
     // La première lettre du nom, comme sur tous les avatars sans photo.
     const initiale = (user?.nom || user?.prenom || 'O').trim().charAt(0).toUpperCase();
 
+    /*
+     * Hylana ouverte en grand : le menu se réduit à une colonne d'icônes.
+     *
+     * Comme l'agent de Hostinger, l'assistant prend la place et le menu reste
+     * à portée : un clic sur une famille ferme Hylana et ouvre sa première page.
+     */
+    const hylana = useHylana();
+    const navigate = useNavigate();
+    // Réduit au choix de l'utilisateur, ou imposé par Hylana ouverte en grand.
+    const choisi = useMenuReduit();
+    const impose = Boolean(hylana?.ouverte && hylana.mode === 'grand');
+    const reduit = choisi || impose;
+
+    /*
+     * Réduit, le menu se déplie au survol et pousse la page comme un menu
+     * ouvert, puis se replie quand la souris s'en va. Un court délai évite qu'il
+     * s'ouvre au simple passage vers le bord de l'écran.
+     */
+    const survol = useSurvolMenu();
+    const setSurvol = setSurvolMenu;
+    const minuteur = useRef<number | undefined>(undefined);
+    const entrer = () => {
+        window.clearTimeout(minuteur.current);
+        minuteur.current = window.setTimeout(() => setSurvol(true), 150);
+    };
+    const sortir = () => {
+        window.clearTimeout(minuteur.current);
+        minuteur.current = window.setTimeout(() => setSurvol(false), 200);
+    };
+    useEffect(() => () => {
+        window.clearTimeout(minuteur.current);
+        setSurvolMenu(false);
+    }, []);
+    useEffect(() => {
+        if (!reduit) setSurvol(false);
+    }, [reduit]);
+    const deplie = reduit && survol;
+
+    const COURTS: Record<string, string> = { courses: 'Courses', covoiturage: 'Covoit.', eat: 'Eat', location: 'Location', comptes: 'Comptes', finance: 'Finance' };
+    const rail = [
+        { cle: 'accueil', icone: ACCUEIL.icon, libelle: 'Accueil', chemin: ACCUEIL.path, actif: location.pathname === ACCUEIL.path },
+        ...GROUPES.map((g) => ({ cle: g.cle, icone: g.icon, libelle: COURTS[g.cle] ?? g.titre, chemin: g.entrees[0]?.path ?? '/', actif: groupeCourant === g.cle })),
+        { cle: 'reglages', icone: REGLAGES.icon, libelle: 'Réglages', chemin: REGLAGES.path, actif: location.pathname === REGLAGES.path },
+    ];
+
     return (
         <>
+            {reduit && (
+                <nav aria-label="Menu réduit" onMouseEnter={entrer} onMouseLeave={sortir} className="hidden lg:flex fixed inset-y-0 left-0 z-[60] w-20 flex-col items-center gap-1 border-r border-slate-200 bg-white pt-3 dark:border-slate-800 dark:bg-slate-900">
+                    <img src="/logo.png" alt="Ongo 237" className="mb-3 h-7 w-auto object-contain" />
+                    {rail.map((r) => (
+                        <button
+                            key={r.cle}
+                            type="button"
+                            title={r.libelle}
+                            onClick={() => {
+                                hylana?.fermer();
+                                navigate(r.chemin);
+                            }}
+                            className={`flex w-[68px] flex-col items-center gap-1 rounded-xl py-2 text-[11px] font-medium transition-colors ${
+                                r.actif ? 'bg-slate-100 text-primary dark:bg-slate-800/70 dark:text-primary-fixed-dim' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-white'
+                            }`}
+                        >
+                            <r.icone className="size-5" strokeWidth={r.actif ? 2.25 : 1.75} />
+                            <span className="truncate">{r.libelle}</span>
+                        </button>
+                    ))}
+                </nav>
+            )}
+
             {/* Le voile, sur petit écran seulement. Il reste sous le menu qu'il assombrit. */}
             {isOpen && (
                 <div
@@ -202,7 +272,18 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, user, onLogout }) 
                     w-[272px] bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800
                     flex flex-col fixed h-full z-[60] transition-transform duration-300
                     ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+                    ${reduit && !deplie ? 'lg:hidden' : ''}
+                    ${deplie ? 'lg:z-[70]' : ''}
                 `}
+                onMouseEnter={deplie ? entrer : undefined}
+                onMouseLeave={deplie ? sortir : undefined}
+                onClick={(e) => {
+                    // Déplié au survol par-dessus Hylana : choisir une page la ferme.
+                    if (deplie && (e.target as HTMLElement).closest('a')) {
+                        if (impose) hylana?.fermer();
+                        setSurvol(false);
+                    }
+                }}
             >
                 <div className="px-3 pt-4 pb-3 flex items-center gap-2">
                     {/* L'identité dans une carte : elle se détache du menu qu'elle coiffe. */}
@@ -217,6 +298,20 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, user, onLogout }) 
                             <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 font-medium">Back-office</p>
                         </div>
                     </div>
+
+                    {/* Réduire le menu à ses icônes ; déplié au survol, le garder ouvert.
+                        Avec Hylana en grand, le menu reste réduit : pas de bouton. */}
+                    {!(deplie && impose) && (
+                        <button
+                            type="button"
+                            onClick={basculerMenu}
+                            title={deplie ? 'Garder le menu ouvert' : 'Réduire le menu'}
+                            aria-label={deplie ? 'Garder le menu ouvert' : 'Réduire le menu'}
+                            className="hidden lg:grid size-9 shrink-0 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-white"
+                        >
+                            {deplie ? <PanelLeftOpen className="size-[18px]" strokeWidth={1.75} /> : <PanelLeftClose className="size-[18px]" strokeWidth={1.75} />}
+                        </button>
+                    )}
 
                     <button
                         onClick={() => setIsOpen(false)}
@@ -234,7 +329,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, user, onLogout }) 
                     className="flex-1 px-3 pb-4 space-y-0.5 overflow-y-auto custom-scrollbar"
                 >
                     {lien(ACCUEIL)}
-                    {lien(ASSISTANT)}
 
                     <div className="h-2" />
 
