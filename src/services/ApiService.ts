@@ -1,4 +1,4 @@
-import axios, { type AxiosInstance, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios';
+import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios';
 
 class ApiService {
     private api: AxiosInstance;
@@ -43,13 +43,14 @@ class ApiService {
         );
     }
 
-    public async postData(url: string, data: any): Promise<AxiosResponse> {
+    public async postData(url: string, data: any, config?: AxiosRequestConfig): Promise<AxiosResponse> {
         if (data instanceof FormData) {
             return this.api.post(url, data, {
+                ...config,
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
         }
-        return this.api.post(url, data);
+        return this.api.post(url, data, config);
     }
 
     public async getData(url: string, params?: any): Promise<AxiosResponse> {

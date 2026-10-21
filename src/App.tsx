@@ -4,6 +4,7 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
+import Assistant from './pages/assistant/Assistant'
 import Users from './pages/Users'
 import Drivers from './pages/Drivers'
 import { type RootState } from './store'
@@ -185,6 +186,14 @@ function App() {
           element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>
               <Dashboard onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/assistant"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <Assistant onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
             </ProtectedRoute>
           }
         />

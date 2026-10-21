@@ -2,7 +2,7 @@ import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 're
 import { useLocation, Link } from 'react-router-dom';
 import { ChevronUp, LogOut, X } from 'lucide-react';
 import ApiService from '../../services/ApiService';
-import { ACCUEIL, GROUPES, REGLAGES, type Entree } from './navigation';
+import { ACCUEIL, ASSISTANT, GROUPES, REGLAGES, type Entree } from './navigation';
 
 interface SidebarProps {
     isOpen: boolean;
@@ -234,6 +234,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, user, onLogout }) 
                     className="flex-1 px-3 pb-4 space-y-0.5 overflow-y-auto custom-scrollbar"
                 >
                     {lien(ACCUEIL)}
+                    {lien(ASSISTANT)}
 
                     <div className="h-2" />
 

@@ -31,6 +31,7 @@ import {
     Shapes,
     ShoppingBag,
     SlidersHorizontal,
+    Sparkles,
     Soup,
     Store,
     Tag,
@@ -195,6 +196,9 @@ export const GROUPES: Groupe[] = [
 
 /** Le tableau de bord et les réglages : hors famille, en tête et en pied du menu. */
 export const ACCUEIL: Entree = { icon: LayoutDashboard, label: 'Tableau de bord', path: '/dashboard' };
+
+/** L'assistant de pilotage : il lit l'activité, prépare des rapports et des envois, ne modifie rien. */
+export const ASSISTANT: Entree = { icon: Sparkles, label: 'Assistant', path: '/assistant' };
 export const REGLAGES: Entree = { icon: SlidersHorizontal, label: 'Réglages', path: '/settings' };
 
 /**
@@ -207,6 +211,7 @@ export const REGLAGES: Entree = { icon: SlidersHorizontal, label: 'Réglages', p
 export const trouverPage = (chemin: string): { entree: Entree; groupe?: Groupe } | undefined => {
     const candidats = [
         { entree: ACCUEIL },
+        { entree: ASSISTANT },
         { entree: REGLAGES },
         ...GROUPES.flatMap((groupe) => groupe.entrees.map((entree) => ({ entree, groupe }))),
     ];
