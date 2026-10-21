@@ -19,6 +19,7 @@ import Carpoolers from './pages/Carpoolers';
 import CarpoolHistory from './pages/CarpoolHistory';
 import CarpoolRefunds from './pages/CarpoolRefunds';
 import DriverBonuses from './pages/DriverBonuses';
+import Boosts from './pages/Boosts';
 import Transactions from './pages/Transactions';
 import Moderation from './pages/Moderation';
 import Settings from './pages/Settings';
@@ -515,6 +516,14 @@ function App() {
           element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>
               <DriverBonuses onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/boosts"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <Boosts onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
             </ProtectedRoute>
           }
         />

@@ -63,6 +63,8 @@ interface Course {
     date_depart: string;
     heure_depart: string;
     montant: number;
+    /** Ce qu'Ongo ajoute au gain du chauffeur ; zéro sans boost. */
+    boost_amount?: number;
     is_paid: boolean;
     transaction_type: string;
     statut: string;
@@ -235,6 +237,7 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
                 const normalized = (data.data.data as any[]).map((c: any) => ({
                     ...c,
                     montant: Number(c.montant),
+                    boost_amount: Number(c.boost_amount ?? 0),
                 }));
                 setCourses(normalized as Course[]);
                 setPagination(data.data.links as PaginationLink[]);
@@ -279,6 +282,7 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
                 const normalized = (data.data.data as any[]).map((c: any) => ({
                     ...c,
                     montant: Number(c.montant),
+                    boost_amount: Number(c.boost_amount ?? 0),
                 }));
                 setCourses(normalized as Course[]);
                 setPagination(data.data.links as PaginationLink[]);
@@ -560,7 +564,15 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
                                                             <div className="text-sm">{course.date_depart}</div>
                                                             <div className="text-xs text-slate-500">{course.heure_depart}</div>
                                                         </td>
-                                                        <td className="px-4 py-4 text-sm font-bold">{course.montant} FCFA</td>
+                                                        <td className="px-4 py-4 text-sm font-bold whitespace-nowrap">
+                                                            {course.montant} FCFA
+                                                            {/* Le boost à part : le client ne le paie pas, Ongo le verse au chauffeur. */}
+                                                            {(course.boost_amount ?? 0) > 0 && (
+                                                                <span className="block mt-1 w-fit px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                                                                    Boost +{course.boost_amount} F
+                                                                </span>
+                                                            )}
+                                                        </td>
                                                         <td className="px-4 py-4 whitespace-nowrap">
                                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${course.is_paid ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
                                                                 {course.transaction_type || "CASH"}

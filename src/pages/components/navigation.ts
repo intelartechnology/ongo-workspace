@@ -11,6 +11,7 @@ import {
     CreditCard,
     GalleryHorizontal,
     Gift,
+    Rocket,
     Gavel,
     Globe,
     HandCoins,
@@ -90,6 +91,7 @@ export const GROUPES: Groupe[] = [
             { icon: CarFront, label: 'Véhicules', path: '/vehicles' },
             { icon: UserSearch, label: 'Demandes', path: '/requests' },
             { icon: Gift, label: 'Bonus chauffeurs', path: '/driver-bonuses' },
+            { icon: Rocket, label: 'Boosts', path: '/boosts' },
         ],
     },
     {

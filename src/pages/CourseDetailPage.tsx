@@ -246,6 +246,16 @@ export default function CourseDetailPage({
                                                             <p className="text-2xl font-black text-primary">
                                                                 {course.montant} Fcfa
                                                             </p>
+                                                            {/* Ce que paie le client reste `montant` ; le boost
+                                                                vient d'Ongo, en plus, pour le chauffeur. */}
+                                                            {Number(course.boost_amount ?? 0) > 0 && (
+                                                                <p className="mt-1 text-sm font-bold text-amber-600 dark:text-amber-400">
+                                                                    + {course.boost_amount} Fcfa de boost Ongo
+                                                                    <span className="block text-xs font-medium text-slate-500">
+                                                                        Payé par Ongo, versé au chauffeur, sans commission
+                                                                    </span>
+                                                                </p>
+                                                            )}
                                                         </div>
                                                         <span
                                                             className={`px-3 py-1 text-xs font-bold rounded-full ${course.is_paid
