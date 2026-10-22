@@ -20,6 +20,27 @@ const entete = "px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest text
 const francs = (v: number | null | undefined): string =>
     v == null ? "—" : `${Number(v).toLocaleString("fr-FR")} FCFA`;
 
+/** « il y a 12 min », « hier à 18:40 », « le 12/10 » : la dernière activité, lisible d'un coup d'œil. */
+const ilYa = (iso?: string | null): string => {
+    if (!iso) return "Jamais vu";
+    const d = new Date(iso);
+    const minutes = Math.round((Date.now() - d.getTime()) / 60000);
+    if (minutes < 1) return "À l'instant";
+    if (minutes < 60) return `Il y a ${minutes} min`;
+    if (minutes < 24 * 60) return `Il y a ${Math.round(minutes / 60)} h`;
+    const hier = new Date(); hier.setDate(hier.getDate() - 1);
+    const heure = d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+    if (d.toDateString() === hier.toDateString()) return `Hier à ${heure}`;
+    return `Le ${d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: d.getFullYear() === new Date().getFullYear() ? undefined : "2-digit" })}`;
+};
+
+/** En service ou non, tel que le serveur le déduit de l'application du chauffeur. */
+const SERVICE: Record<string, { libelle: string; classe: string; point: string; aide: string }> = {
+    en_course: { libelle: "En course", classe: "bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300", point: "bg-sky-500", aide: "En ligne et en train de faire une course." },
+    en_service: { libelle: "En service", classe: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400", point: "bg-emerald-500 animate-pulse", aide: "En ligne et disponible pour des courses." },
+    hors_service: { libelle: "Hors service", classe: "bg-slate-100 text-slate-500 dark:bg-slate-800", point: "bg-slate-400", aide: "Hors ligne dans l'application." },
+};
+
 const date = (v?: string | null): string => {
     if (!v) return "—";
     const d = new Date(v);
@@ -172,12 +193,13 @@ const PartnerDrivers: React.FC<Props> = ({ partnerId, actif, onChange, onOuvrir 
 
             <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse min-w-[860px]">
+                    <table className="w-full text-left border-collapse min-w-[980px]">
                         <thead>
                             <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
                                 <th className={entete}>Chauffeur</th>
                                 <th className={entete}>Véhicule</th>
-                                <th className={entete}>Statut</th>
+                                <th className={entete}>En service</th>
+                                <th className={entete}>Rattachement</th>
                                 <th className={`${entete} text-right`}>Courses</th>
                                 <th className={`${entete} text-right`}>Chiffre d'affaires</th>
                                 <th className={entete}>Rattaché le</th>
@@ -186,10 +208,10 @@ const PartnerDrivers: React.FC<Props> = ({ partnerId, actif, onChange, onOuvrir 
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                             {chargement ? (
-                                <tr><td colSpan={7} className="py-10"><Loading /></td></tr>
+                                <tr><td colSpan={8} className="py-10"><Loading /></td></tr>
                             ) : lignes.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} className="py-12 text-center text-sm text-slate-500">
+                                    <td colSpan={8} className="py-12 text-center text-sm text-slate-500">
                                         {recherche || filtre ? "Aucun chauffeur ne correspond." : "Aucun chauffeur rattaché pour l'instant."}
                                     </td>
                                 </tr>
@@ -222,6 +244,17 @@ const PartnerDrivers: React.FC<Props> = ({ partnerId, actif, onChange, onOuvrir 
                                                 </span>
                                             </div>
                                         ) : <span className="text-xs text-slate-400 italic">Aucun</span>}
+                                    </td>
+                                    <td className="px-4 py-2.5" title={(SERVICE[c.service] ?? SERVICE.hors_service).aide}>
+                                        <div className="flex flex-col gap-0.5">
+                                            <span className={`inline-flex w-fit items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${(SERVICE[c.service] ?? SERVICE.hors_service).classe}`}>
+                                                <span className={`size-1.5 rounded-full ${(SERVICE[c.service] ?? SERVICE.hors_service).point}`} />
+                                                {(SERVICE[c.service] ?? SERVICE.hors_service).libelle}
+                                            </span>
+                                            <span className="text-[11px] text-slate-500 whitespace-nowrap" title={c.derniere_activite ? new Date(c.derniere_activite).toLocaleString("fr-FR") : undefined}>
+                                                {ilYa(c.derniere_activite)}
+                                            </span>
+                                        </div>
                                     </td>
                                     <td className="px-4 py-2.5">
                                         <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${c.is_active
