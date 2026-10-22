@@ -229,8 +229,9 @@ export default function Pilotage({ theme }: { theme: 'light' | 'dark' }) {
     const [grilleMesure, setGrilleMesure] = useState<'requests' | 'lost'>('lost');
     const [caseSurvolee, setCaseSurvolee] = useState<Case | null>(null);
 
-    const teintes = TEINTES[theme];
-    const rampe = RAMPES[theme];
+    // Un thème inattendu prend les couleurs claires plutôt que de faire planter la page.
+    const teintes = TEINTES[theme] ?? TEINTES.light;
+    const rampe = RAMPES[theme] ?? RAMPES.light;
 
     useEffect(() => {
         const fin = new Date();
@@ -464,7 +465,7 @@ export default function Pilotage({ theme }: { theme: 'light' | 'dark' }) {
                                             libelle={etape.libelle}
                                             valeur={etape.valeur}
                                             total={f.requested}
-                                            teinte={ETAPES[theme][i]}
+                                            teinte={(ETAPES[theme] ?? ETAPES.light)[i]}
                                         />
                                     ))}
                                 </div>

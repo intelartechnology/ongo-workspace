@@ -14,8 +14,15 @@ interface Props {
 type Resultat =
     | { etat: "vierge" }
     | { etat: "recherche" }
-    | { etat: "trouve"; user: any; already: boolean; taken: boolean }
+    | { etat: "trouve"; user: any; already: boolean; taken: boolean; vehicule: VehiculeConnu | null }
     | { etat: "absent"; telephone: string };
+
+interface VehiculeConnu {
+    id: number;
+    matricule: string;
+    modele: string | null;
+    categorie: string | null;
+}
 
 const TEL = /^[0-9+\s]{8,15}$/;
 
@@ -42,12 +49,16 @@ const AddDriverModal: React.FC<Props> = ({ partnerId, open, onClose, onAdded }) 
     const [modele, setModele] = useState("");
     const [categorie, setCategorie] = useState("1");
     const [envoi, setEnvoi] = useState(false);
+    // Un chauffeur qui a déjà un véhicule le garde ; ce choix permet d'en enregistrer un autre.
+    const [autreVehicule, setAutreVehicule] = useState(false);
+    // Le partenaire décide : le véhicule entre dans sa flotte, ou le chauffeur garde le sien.
+    const [dansLaFlotte, setDansLaFlotte] = useState(true);
     const [categories, setCategories] = useState<CategorieVehicule[]>([]);
 
     useEffect(() => {
         if (!open) return;
         setTelephone(""); setResultat({ etat: "vierge" });
-        setNom(""); setPrenom(""); setMatricule(""); setModele(""); setCategorie("1");
+        setNom(""); setPrenom(""); setMatricule(""); setModele(""); setCategorie("1"); setAutreVehicule(false); setDansLaFlotte(true);
     }, [open]);
 
     useEffect(() => { chargerCategories().then(setCategories); }, []);
@@ -77,7 +88,11 @@ const AddDriverModal: React.FC<Props> = ({ partnerId, open, onClose, onAdded }) 
                     user: data.data.user,
                     already: Boolean(data.data.already),
                     taken: Boolean(data.data.taken),
+                    vehicule: data.data.vehicule ?? null,
                 });
+                setAutreVehicule(false);
+                // Un chauffeur qui vient avec son véhicule le garde, sauf choix contraire.
+                setDansLaFlotte(!data.data.vehicule);
             } else {
                 setResultat({ etat: "absent", telephone: tel });
             }
@@ -89,9 +104,13 @@ const AddDriverModal: React.FC<Props> = ({ partnerId, open, onClose, onAdded }) 
 
     const ajouter = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!matricule.trim()) { toast.error("Le matricule du véhicule est obligatoire"); return; }
+        // Le véhicule qu'il conduit déjà est repris par le serveur : rien à saisir.
+        const reprendVehicule = resultat.etat === "trouve" && resultat.vehicule !== null && !autreVehicule;
 
-        let corps: Record<string, unknown> = {
+        if (!reprendVehicule && !matricule.trim()) { toast.error("Le matricule du véhicule est obligatoire"); return; }
+
+        let corps: Record<string, unknown> = reprendVehicule ? { ajouter_flotte: dansLaFlotte } : {
+            ajouter_flotte: dansLaFlotte,
             vehicule: {
                 matricule: matricule.trim().toUpperCase(),
                 modele: modele.trim() || undefined,
@@ -135,6 +154,8 @@ const AddDriverModal: React.FC<Props> = ({ partnerId, open, onClose, onAdded }) 
     if (!open) return null;
 
     const bloque = resultat.etat === "trouve" && (resultat.already || resultat.taken);
+    const vehiculeConnu = resultat.etat === "trouve" ? resultat.vehicule : null;
+    const saisirVehicule = !vehiculeConnu || autreVehicule;
     const peutAjouter = (resultat.etat === "trouve" && !bloque) || resultat.etat === "absent";
 
     return (
@@ -208,8 +229,36 @@ const AddDriverModal: React.FC<Props> = ({ partnerId, open, onClose, onAdded }) 
                         </div>
                     )}
 
+                    {/* Son véhicule est déjà enregistré : il sera associé tel quel. */}
+                    {vehiculeConnu && !bloque && (
+                        <div className="flex flex-col gap-2 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Son véhicule</span>
+                            {!autreVehicule ? (
+                                <>
+                                    <div className="flex items-center gap-3">
+                                        <span className="material-symbols-outlined text-slate-400">directions_car</span>
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-bold font-mono text-slate-900 dark:text-white">{vehiculeConnu.matricule}</p>
+                                            <p className="text-xs text-slate-500">
+                                                {[vehiculeConnu.modele, vehiculeConnu.categorie].filter(Boolean).join(" · ") || "Véhicule enregistré"}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <button type="button" onClick={() => setAutreVehicule(true)} className="self-start text-xs font-semibold text-primary hover:underline">
+                                        Enregistrer un autre véhicule
+                                    </button>
+                                </>
+                            ) : (
+                                <button type="button" onClick={() => setAutreVehicule(false)} className="self-start text-xs font-semibold text-primary hover:underline">
+                                    Garder {vehiculeConnu.matricule}
+                                </button>
+                            )}
+                        </div>
+                    )}
+
+                    {saisirVehicule && (
                     <div className={`flex flex-col gap-3 transition-opacity ${peutAjouter ? "" : "opacity-50 pointer-events-none"}`}>
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Son véhicule</span>
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">{vehiculeConnu ? "Autre véhicule" : "Son véhicule"}</span>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <Input value={matricule} onChange={(e) => setMatricule(e.target.value)} placeholder="Matricule *" />
                             <Input value={modele} onChange={(e) => setModele(e.target.value)} placeholder="Modèle" />
@@ -233,7 +282,21 @@ const AddDriverModal: React.FC<Props> = ({ partnerId, open, onClose, onAdded }) 
                             </div>
                         )}
                     </div>
+                    )}
                 </div>
+
+                {/* Ajouter le véhicule à la flotte, ou rattacher le chauffeur seul. */}
+                {peutAjouter && (
+                    <label className="mx-6 mb-1 flex items-start gap-3 p-3 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer">
+                        <input type="checkbox" checked={dansLaFlotte} onChange={(e) => setDansLaFlotte(e.target.checked)} className="mt-0.5 size-4 accent-primary" />
+                        <span className="text-xs leading-relaxed text-slate-600 dark:text-slate-300">
+                            <strong className="block text-sm text-slate-900 dark:text-white">Ajouter ce véhicule à ma flotte</strong>
+                            {dansLaFlotte
+                                ? "Le véhicule apparaîtra dans votre flotte, avec le chauffeur."
+                                : "Seul le chauffeur est rattaché : il travaille avec son propre véhicule, qui reste hors de votre flotte."}
+                        </span>
+                    </label>
+                )}
 
                 <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-2">
                     <Button type="button" variant="ghost" onClick={onClose} disabled={envoi}>Annuler</Button>

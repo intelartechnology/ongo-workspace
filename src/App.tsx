@@ -144,7 +144,14 @@ function App() {
   const { isAuthenticated } = useSelector((state: RootState) => state.auth)
   const partenaireConnecte = useSelector((state: RootState) => state.auth.user)
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-    return (localStorage.getItem('theme') as 'light' | 'dark') || 'light'
+    // Seulement « light » ou « dark » : une autre valeur gardée par le navigateur
+    // (« system », un reste d'une ancienne version) privait les graphiques de
+    // leurs couleurs et faisait planter le tableau de bord.
+    try {
+      return localStorage.getItem('theme') === 'dark' ? 'dark' : 'light'
+    } catch {
+      return 'light'
+    }
   })
 
   useEffect(() => {
@@ -722,6 +729,12 @@ function App() {
           * à un admin d'entrer pour dépanner, ce qui est tout l'intérêt du
           * format.
           */}
+        {/* L'ancienne connexion des partenaires, gardée en favori ou envoyée par
+            message : sans elle, « login » était pris pour l'identifiant d'un
+            espace partenaire, et la page restait blanche. */}
+        <Route path="/partner/login" element={<Navigate to="/login" replace />} />
+        <Route path="/partner" element={<Navigate to="/login" replace />} />
+
         <Route
           path="/partner/:partnerId/:section?/:sousId?"
           element={
