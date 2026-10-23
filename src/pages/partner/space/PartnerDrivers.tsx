@@ -13,6 +13,8 @@ interface Props {
     onChange: () => void;
     /** Ouvre le rapport de suivi du chauffeur. */
     onOuvrir?: (chauffeurId: number) => void;
+    /** Le solde des chauffeurs est réservé au propriétaire ; le serveur ne l'envoie pas au personnel. */
+    proprietaire?: boolean;
 }
 
 const entete = "px-4 py-2.5 text-[10px] font-bold uppercase tracking-widest text-slate-500";
@@ -55,7 +57,7 @@ const date = (v?: string | null): string => {
  * par des routes préfixées de son identifiant — le serveur doit vérifier
  * qu'il n'agit que sur les siens, le front ne peut pas le garantir.
  */
-const PartnerDrivers: React.FC<Props> = ({ partnerId, actif, onChange, onOuvrir }) => {
+const PartnerDrivers: React.FC<Props> = ({ partnerId, actif, onChange, onOuvrir, proprietaire = false }) => {
     const api = new ApiService();
 
     const [lignes, setLignes] = useState<any[]>([]);
@@ -202,16 +204,17 @@ const PartnerDrivers: React.FC<Props> = ({ partnerId, actif, onChange, onOuvrir 
                                 <th className={entete}>Dernière activité</th>
                                 <th className={`${entete} text-right`}>Courses</th>
                                 <th className={`${entete} text-right`}>Chiffre d'affaires</th>
+                                {proprietaire && <th className={`${entete} text-right`}>Solde</th>}
                                 <th className={entete}>Rattaché le</th>
                                 <th className={`${entete} text-right`}>Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                             {chargement ? (
-                                <tr><td colSpan={8} className="py-10"><Loading /></td></tr>
+                                <tr><td colSpan={proprietaire ? 9 : 8} className="py-10"><Loading /></td></tr>
                             ) : lignes.length === 0 ? (
                                 <tr>
-                                    <td colSpan={8} className="py-12 text-center text-sm text-slate-500">
+                                    <td colSpan={proprietaire ? 9 : 8} className="py-12 text-center text-sm text-slate-500">
                                         {recherche || filtre ? "Aucun chauffeur ne correspond." : "Aucun chauffeur rattaché pour l'instant."}
                                     </td>
                                 </tr>
@@ -267,6 +270,12 @@ const PartnerDrivers: React.FC<Props> = ({ partnerId, actif, onChange, onOuvrir 
                                     <td className="px-4 py-2.5 text-right text-sm font-bold tabular-nums text-slate-900 dark:text-white whitespace-nowrap">
                                         {francs(c.stats?.revenue_total)}
                                     </td>
+                                    {/* Son wallet. En rouge s'il doit à Ongo (espèces encaissées). */}
+                                    {proprietaire && (
+                                        <td className={`px-4 py-2.5 text-right text-sm tabular-nums whitespace-nowrap ${(c.solde ?? 0) < 0 ? "font-semibold text-rose-700 dark:text-rose-400" : "text-slate-700 dark:text-slate-300"}`}>
+                                            {francs(c.solde)}
+                                        </td>
+                                    )}
                                     <td className="px-4 py-2.5 text-xs text-slate-500 whitespace-nowrap">{date(c.created_at)}</td>
                                     {/* Le menu ne doit pas ouvrir le rapport : ses clics remonteraient
                                         jusqu'à la ligne, portail compris. */}

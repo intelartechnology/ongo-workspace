@@ -186,7 +186,7 @@ export default function PartnerSpace({ onLogout, theme, toggleTheme }: PartnerSp
 
                     {rubrique === "" && <PartnerDashboard partnerId={id} theme={theme} />}
                     {rubrique === "chauffeurs" && !sousId && (
-                        <PartnerDrivers partnerId={id} actif={partenaire.is_active} onChange={charger} onOuvrir={(chauffeur) => navigate(`${base}/chauffeurs/${chauffeur}`)} />
+                        <PartnerDrivers partnerId={id} actif={partenaire.is_active} onChange={charger} onOuvrir={(chauffeur) => navigate(`${base}/chauffeurs/${chauffeur}`)} proprietaire={proprietaire} />
                     )}
                     {rubrique === "chauffeurs" && sousId && <PartnerDriverReport partnerId={id} driverId={sousId} theme={theme} />}
                     {rubrique === "flotte" && <PartnerFleet partnerId={id} actif={partenaire.is_active} />}
