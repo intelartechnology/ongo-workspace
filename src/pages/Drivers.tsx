@@ -269,14 +269,20 @@ export default function Drivers({ onLogout = () => {}, theme = 'light', toggleTh
                                                     <td className="px-6 py-4">
                                                         <p className="text-sm font-bold text-slate-800 dark:text-white">{item.balance ? item.balance.toFixed(2) : "0.00"} XAF</p>
                                                     </td>
-                                                    {/* Comme sur les véhicules : la dernière position reçue, qui
-                                                        dit aussi quand il passera hors ligne faute de nouvelles. */}
-                                                    <td
-                                                        className="px-6 py-4 text-xs text-slate-500 whitespace-nowrap"
-                                                        title={vehicule?.updated_at ? `${moment(vehicule.updated_at).format("MMMM DD, YYYY")} à ${moment(vehicule.updated_at).format("HH:mm")}` : undefined}
-                                                    >
-                                                        {vehicule?.updated_at ? moment(vehicule.updated_at).fromNow() : "—"}
-                                                    </td>
+                                                    {/* La valeur qui ordonne la liste : la plus récente de sa dernière
+                                                        position, de la dernière course proposée et de la dernière ouverture
+                                                        de l'application. La position seule, à défaut (ancienne API). */}
+                                                    {(() => {
+                                                        const activite = item.derniere_activite ?? vehicule?.updated_at;
+                                                        return (
+                                                            <td
+                                                                className="px-6 py-4 text-xs text-slate-500 whitespace-nowrap"
+                                                                title={activite ? `${moment(activite).format("MMMM DD, YYYY")} à ${moment(activite).format("HH:mm")}` : undefined}
+                                                            >
+                                                                {activite ? moment(activite).fromNow() : "Jamais vu"}
+                                                            </td>
+                                                        );
+                                                    })()}
                                                     <td className="px-6 py-4 text-right">
                                                         <div className="flex justify-end gap-2">
                                                             {vehicule.statut === "INACTIF" && (
