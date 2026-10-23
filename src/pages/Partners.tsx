@@ -238,6 +238,7 @@ export default function Partners({ onLogout = () => {}, theme = "light", toggleT
                                         <th className="px-5 py-3 font-semibold">Contact</th>
                                         <th className="px-5 py-3 font-semibold text-right">Flotte</th>
                                         <th className="px-5 py-3 font-semibold text-right">Solde</th>
+                                        <th className="px-5 py-3 font-semibold text-right">Solde chauffeurs</th>
                                         <th className="px-5 py-3 font-semibold text-right">Commission</th>
                                         <th className="px-5 py-3 font-semibold">Statut</th>
                                         <th className="px-5 py-3" />
@@ -263,7 +264,17 @@ export default function Partners({ onLogout = () => {}, theme = "light", toggleT
                                                         {flotte} véhicule{flotte > 1 ? "s" : ""}
                                                     </td>
                                                     <td className="px-5 py-3 text-right tabular-nums font-semibold text-slate-900 dark:text-white whitespace-nowrap">
-                                                        {(partner.total_balance || 0).toLocaleString("fr-FR")} <span className="text-xs font-normal text-slate-500">FCFA</span>
+                                                        {/* Le compte du partenaire, celui de son portefeuille. */}
+                                                        {(partner.solde ?? partner.user?.balance ?? 0).toLocaleString("fr-FR")} <span className="text-xs font-normal text-slate-500">FCFA</span>
+                                                    </td>
+                                                    <td className="px-5 py-3 text-right tabular-nums whitespace-nowrap">
+                                                        {/* La somme des soldes de ses chauffeurs. */}
+                                                        <p className={(partner.total_balance || 0) < 0 ? "font-semibold text-rose-700 dark:text-rose-400" : "text-slate-700 dark:text-slate-300"}>
+                                                            {(partner.total_balance || 0).toLocaleString("fr-FR")} <span className="text-xs font-normal text-slate-500">FCFA</span>
+                                                        </p>
+                                                        <p className="text-xs text-slate-500">
+                                                            {partner.drivers_count || 0} chauffeur{(partner.drivers_count || 0) > 1 ? "s" : ""}
+                                                        </p>
                                                     </td>
                                                     <td className="px-5 py-3 text-right">
                                                         {/* En ambre quand le taux dépasse la commission plateforme : il n'est alors pas appliqué. */}
@@ -308,7 +319,7 @@ export default function Partners({ onLogout = () => {}, theme = "light", toggleT
                                         })
                                     ) : (
                                         <tr>
-                                            <td colSpan={7} className="px-5 py-12 text-center text-slate-500">
+                                            <td colSpan={8} className="px-5 py-12 text-center text-slate-500">
                                                 Aucun partenaire trouvé.
                                             </td>
                                         </tr>

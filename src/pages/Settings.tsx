@@ -6,6 +6,7 @@ import { envoyerSiBesoin } from "../services/images";
 import MainLayout from "./MainLayout";
 import ApiService from "../services/ApiService";
 import Loading from "../components/Loading";
+import TarifsCourses from "./components/TarifsCourses";
 
 /**
  * Les réglages de la plateforme.
@@ -155,6 +156,9 @@ export default function Settings({ onLogout, theme, toggleTheme }: SettingsProps
             </header>
 
             <div className="px-8 py-8 max-w-7xl mx-auto">
+                {/* Les tarifs des courses en tête : c'est le réglage qui pèse le plus sur chaque course. */}
+                <TarifsCourses />
+
                 {chargement ? (
                     <Loading />
                 ) : (

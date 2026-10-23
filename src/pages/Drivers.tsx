@@ -197,9 +197,10 @@ export default function Drivers({ onLogout = () => {}, theme = 'light', toggleTh
                                         <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Téléphone</th>
                                         <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Ville</th>
                                         <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Véhicule</th>
+                                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">En service</th>
                                         <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Statut</th>
                                         <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Solde</th>
-                                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Mise à jour</th>
+                                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Dernière activité</th>
                                         <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Action</th>
                                     </tr>
                                 </thead>
@@ -231,6 +232,24 @@ export default function Drivers({ onLogout = () => {}, theme = 'light', toggleTh
                                                             <p className="font-medium text-slate-800 dark:text-white">{vehicule.modele}</p>
                                                             <p className="text-[11px] text-slate-500 font-bold uppercase">{vehicule.matricule}</p>
                                                         </div>
+                                                    </td>
+                                                    {/* En service : l'interrupteur du chauffeur dans l'application
+                                                        (`vehicules.is_online`), comme dans l'espace partenaire. */}
+                                                    <td className="px-6 py-4">
+                                                        {(() => {
+                                                            const enLigne = Boolean(Number(vehicule.is_online));
+                                                            const etat = enLigne && vehicule.statut === "OCCUPE"
+                                                                ? { libelle: "En course", classe: "bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300", point: "bg-sky-500" }
+                                                                : enLigne
+                                                                    ? { libelle: "En service", classe: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400", point: "bg-emerald-500 animate-pulse" }
+                                                                    : { libelle: "Hors service", classe: "bg-slate-100 text-slate-500 dark:bg-slate-800", point: "bg-slate-400" };
+                                                            return (
+                                                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider whitespace-nowrap ${etat.classe}`}>
+                                                                    <span className={`size-1.5 rounded-full ${etat.point}`} />
+                                                                    {etat.libelle}
+                                                                </span>
+                                                            );
+                                                        })()}
                                                     </td>
                                                     <td className="px-6 py-4">
                                                         {vehicule.statut === "LIBRE" ? (
@@ -282,7 +301,7 @@ export default function Drivers({ onLogout = () => {}, theme = 'light', toggleTh
                                         })
                                     ) : (
                                         <tr>
-                                            <td colSpan={9} className="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
+                                            <td colSpan={10} className="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
                                                 <div className="flex flex-col items-center gap-3">
                                                     <span className="material-symbols-outlined text-4xl text-slate-300">search_off</span>
                                                     <p>Aucun chauffeur trouvé</p>

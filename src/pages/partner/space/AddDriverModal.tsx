@@ -24,6 +24,15 @@ interface VehiculeConnu {
     categorie: string | null;
 }
 
+/** Un véhicule de la flotte du partenaire, tel que `v3/partner/{id}/vehicles` le rend. */
+interface VehiculeFlotte {
+    id: number;
+    matricule: string | null;
+    modele: string | null;
+    categorie: string | null;
+    chauffeur: { id: number; nom: string } | null;
+}
+
 const TEL = /^[0-9+\s]{8,15}$/;
 
 /**
@@ -54,6 +63,9 @@ const AddDriverModal: React.FC<Props> = ({ partnerId, open, onClose, onAdded }) 
     // Le partenaire décide : le véhicule entre dans sa flotte, ou le chauffeur garde le sien.
     const [dansLaFlotte, setDansLaFlotte] = useState(true);
     const [categories, setCategories] = useState<CategorieVehicule[]>([]);
+    // Les véhicules de sa flotte, et celui choisi : un id, ou « nouveau » pour en créer un.
+    const [flotte, setFlotte] = useState<VehiculeFlotte[]>([]);
+    const [choix, setChoix] = useState<number | "nouveau">("nouveau");
 
     useEffect(() => {
         if (!open) return;
@@ -62,6 +74,18 @@ const AddDriverModal: React.FC<Props> = ({ partnerId, open, onClose, onAdded }) 
     }, [open]);
 
     useEffect(() => { chargerCategories().then(setCategories); }, []);
+
+    // La flotte, relue à chaque ouverture : un véhicule ajouté entre-temps doit y être.
+    useEffect(() => {
+        if (!open) return;
+        api.getData(`v3/partner/${partnerId}/vehicles`)
+            .then(({ data }) => setFlotte(data?.success ? (data.data?.data ?? []) : []))
+            .catch(() => setFlotte([]));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [open, partnerId]);
+
+    /** Par défaut : le premier véhicule libre de la flotte, sinon en créer un. */
+    const choixParDefaut = (): number | "nouveau" => flotte.find((v) => !v.chauffeur)?.id ?? (flotte[0]?.id ?? "nouveau");
 
     useEffect(() => {
         if (!open) return;
@@ -91,10 +115,13 @@ const AddDriverModal: React.FC<Props> = ({ partnerId, open, onClose, onAdded }) 
                     vehicule: data.data.vehicule ?? null,
                 });
                 setAutreVehicule(false);
+                setChoix(choixParDefaut());
                 // Un chauffeur qui vient avec son véhicule le garde, sauf choix contraire.
                 setDansLaFlotte(!data.data.vehicule);
             } else {
                 setResultat({ etat: "absent", telephone: tel });
+                setChoix(choixParDefaut());
+                setDansLaFlotte(true);
             }
         } catch (e: any) {
             toast.error(e?.response?.status === 403 ? "Accès refusé" : "Connexion au serveur impossible");
@@ -107,16 +134,23 @@ const AddDriverModal: React.FC<Props> = ({ partnerId, open, onClose, onAdded }) 
         // Le véhicule qu'il conduit déjà est repris par le serveur : rien à saisir.
         const reprendVehicule = resultat.etat === "trouve" && resultat.vehicule !== null && !autreVehicule;
 
-        if (!reprendVehicule && !matricule.trim()) { toast.error("Le matricule du véhicule est obligatoire"); return; }
+        const deLaFlotte = !reprendVehicule && choix !== "nouveau";
 
-        let corps: Record<string, unknown> = reprendVehicule ? { ajouter_flotte: dansLaFlotte } : {
-            ajouter_flotte: dansLaFlotte,
-            vehicule: {
-                matricule: matricule.trim().toUpperCase(),
-                modele: modele.trim() || undefined,
-                categorie_id: Number(categorie),
-            },
-        };
+        if (!reprendVehicule && !deLaFlotte && !matricule.trim()) { toast.error("Le matricule du véhicule est obligatoire"); return; }
+
+        let corps: Record<string, unknown> = reprendVehicule
+            ? { ajouter_flotte: dansLaFlotte }
+            : deLaFlotte
+                // Un véhicule de sa flotte : le chauffeur en prend le volant.
+                ? { vehicule_id: choix }
+                : {
+                    ajouter_flotte: dansLaFlotte,
+                    vehicule: {
+                        matricule: matricule.trim().toUpperCase(),
+                        modele: modele.trim() || undefined,
+                        categorie_id: Number(categorie),
+                    },
+                };
 
         if (resultat.etat === "trouve") {
             corps.user_id = resultat.user.id;
@@ -156,6 +190,9 @@ const AddDriverModal: React.FC<Props> = ({ partnerId, open, onClose, onAdded }) 
     const bloque = resultat.etat === "trouve" && (resultat.already || resultat.taken);
     const vehiculeConnu = resultat.etat === "trouve" ? resultat.vehicule : null;
     const saisirVehicule = !vehiculeConnu || autreVehicule;
+    const creerVehicule = saisirVehicule && (choix === "nouveau" || flotte.length === 0);
+    // La case « ajouter à ma flotte » n'a de sens que pour son propre véhicule ou un nouveau.
+    const montrerCaseFlotte = (Boolean(vehiculeConnu) && !autreVehicule) || creerVehicule;
     const peutAjouter = (resultat.etat === "trouve" && !bloque) || resultat.etat === "absent";
 
     return (
@@ -256,9 +293,43 @@ const AddDriverModal: React.FC<Props> = ({ partnerId, open, onClose, onAdded }) 
                         </div>
                     )}
 
-                    {saisirVehicule && (
+                    {/* Pas de véhicule (ou un autre) : il en prend un de la flotte, ou on en crée un. */}
+                    {saisirVehicule && peutAjouter && (
+                        <div className="flex flex-col gap-2">
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                                {vehiculeConnu ? "Autre véhicule" : "Son véhicule"}
+                            </span>
+                            {flotte.length === 0 ? (
+                                <p className="text-xs text-slate-500">Vous n'avez encore aucun véhicule dans votre flotte : créez-en un ci-dessous.</p>
+                            ) : (
+                                <div className="flex flex-col gap-1.5 max-h-56 overflow-y-auto">
+                                    {flotte.map((v) => (
+                                        <label key={v.id} className={`flex items-center gap-3 p-2.5 rounded-xl border cursor-pointer ${choix === v.id ? "border-primary bg-primary/5" : "border-slate-200 dark:border-slate-700"}`}>
+                                            <input type="radio" name="vehicule-flotte" checked={choix === v.id} onChange={() => setChoix(v.id)} className="accent-primary" />
+                                            <span className="material-symbols-outlined text-slate-400 text-[20px]">directions_car</span>
+                                            <span className="min-w-0 flex-1">
+                                                <span className="block text-sm font-bold font-mono text-slate-900 dark:text-white">{v.matricule ?? "Sans matricule"}</span>
+                                                <span className="block text-[11px] text-slate-500 truncate">
+                                                    {[v.modele, v.categorie].filter(Boolean).join(" · ") || "Véhicule"}
+                                                    {" · "}
+                                                    {v.chauffeur ? <span className="text-amber-600 dark:text-amber-400">conduit par {v.chauffeur.nom || "un chauffeur"}, qui le laissera</span> : <span className="text-emerald-600 dark:text-emerald-400">libre</span>}
+                                                </span>
+                                            </span>
+                                        </label>
+                                    ))}
+                                    <label className={`flex items-center gap-3 p-2.5 rounded-xl border cursor-pointer ${choix === "nouveau" ? "border-primary bg-primary/5" : "border-slate-200 dark:border-slate-700"}`}>
+                                        <input type="radio" name="vehicule-flotte" checked={choix === "nouveau"} onChange={() => setChoix("nouveau")} className="accent-primary" />
+                                        <span className="material-symbols-outlined text-slate-400 text-[20px]">add_circle</span>
+                                        <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">Créer un nouveau véhicule</span>
+                                    </label>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {creerVehicule && (
                     <div className={`flex flex-col gap-3 transition-opacity ${peutAjouter ? "" : "opacity-50 pointer-events-none"}`}>
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">{vehiculeConnu ? "Autre véhicule" : "Son véhicule"}</span>
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Nouveau véhicule</span>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <Input value={matricule} onChange={(e) => setMatricule(e.target.value)} placeholder="Matricule *" />
                             <Input value={modele} onChange={(e) => setModele(e.target.value)} placeholder="Modèle" />
@@ -286,7 +357,7 @@ const AddDriverModal: React.FC<Props> = ({ partnerId, open, onClose, onAdded }) 
                 </div>
 
                 {/* Ajouter le véhicule à la flotte, ou rattacher le chauffeur seul. */}
-                {peutAjouter && (
+                {peutAjouter && montrerCaseFlotte && (
                     <label className="mx-6 mb-1 flex items-start gap-3 p-3 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer">
                         <input type="checkbox" checked={dansLaFlotte} onChange={(e) => setDansLaFlotte(e.target.checked)} className="mt-0.5 size-4 accent-primary" />
                         <span className="text-xs leading-relaxed text-slate-600 dark:text-slate-300">
