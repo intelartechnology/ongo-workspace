@@ -164,6 +164,7 @@ export const GROUPES: Groupe[] = [
             { icon: CalendarDays, label: 'Réservations', path: '/rentals' },
             { icon: CarFront, label: 'Véhicules', path: '/rental-vehicles' },
             { icon: Shapes, label: 'Catégories', path: '/rental-categories' },
+            { icon: Store, label: 'Agences', path: '/rental-agencies' },
         ],
     },
     {

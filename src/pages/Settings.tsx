@@ -46,6 +46,7 @@ interface SettingsProps {
 /** Ce que valent les groupes techniques, en français. */
 const TITRES: Record<string, string> = {
     commission: "Partage des recettes",
+    courses: "Attribution des courses",
     eat: "Ongo Eat",
     transport: "Transport",
     general: "Général",
@@ -56,6 +57,7 @@ const EXPLICATIONS: Record<string, string> = {
         "Le pourcentage indiqué est ce que garde le prestataire. La plateforme prend le reste — les deux ne peuvent pas diverger.",
     eat: "Les règles de la commande en ligne. Elles s'appliquent à tous les marchands, sauf réglage propre à une boutique.",
     transport: "Les frais de service du bus et du train, fixes et non remboursables.",
+    courses: "Qui reçoit une course : jusqu'où on cherche un chauffeur, et lesquels sont tenus pour joignables.",
 };
 
 /**
@@ -86,7 +88,10 @@ const sousParties = (groupe: string, lignes: Reglage[]): { titre: string | null;
     return parties.filter((p) => p.lignes.length > 0);
 };
 
-/** Le premier onglet, avant les groupes envoyés par le serveur. */
+/**
+ * Le premier onglet, avant les groupes envoyés par le serveur. Il porte les
+ * tarifs, puis le groupe de réglages du même nom : le rayon d'attribution.
+ */
 const COURSES = "courses";
 
 export default function Settings({ onLogout, theme, toggleTheme }: SettingsProps) {
@@ -201,9 +206,9 @@ export default function Settings({ onLogout, theme, toggleTheme }: SettingsProps
                     réglage qui pèse le plus sur chaque course. Les autres suivent les
                     groupes du serveur : un groupe nouveau fait un onglet de plus. */}
                 <nav className="mb-6 flex gap-1 overflow-x-auto border-b border-slate-200 dark:border-slate-800" aria-label="Domaines de réglages">
-                    {[COURSES, ...Object.keys(groupes)].map((cle) => {
+                    {[COURSES, ...Object.keys(groupes).filter((g) => g !== COURSES)].map((cle) => {
                         const actif = cle === onglet;
-                        const nombre = groupes[cle]?.length;
+                        const nombre = cle === COURSES ? undefined : groupes[cle]?.length;
                         return (
                             <button
                                 key={cle}
@@ -227,9 +232,9 @@ export default function Settings({ onLogout, theme, toggleTheme }: SettingsProps
                     })}
                 </nav>
 
-                {onglet === COURSES ? (
-                    <TarifsCourses />
-                ) : chargement ? (
+                {onglet === COURSES && <TarifsCourses />}
+
+                {chargement ? (
                     <Loading />
                 ) : (
                     groupes[onglet] && (

@@ -64,6 +64,7 @@ import RentalDetail from './pages/rentals/RentalDetail'
 import RentalVehicles from './pages/rentals/RentalVehicles'
 import AddRentalVehicle from './pages/rentals/AddRentalVehicle'
 import RentalCategories from './pages/rentals/RentalCategories'
+import RentalAgencies from './pages/rentals/RentalAgencies'
 import AddRentalCategory from './pages/rentals/AddRentalCategory'
 import ContributorDashboard from './pages/contributor/Dashboard'
 import ContributorRides from './pages/contributor/Rides'
@@ -654,6 +655,14 @@ function App() {
           element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>
               <RentalDetail onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/rental-agencies"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <RentalAgencies onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
             </ProtectedRoute>
           }
         />

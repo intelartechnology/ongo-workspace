@@ -23,6 +23,35 @@ const AddRentalVehicle: React.FC<AddRentalVehicleProps> = ({ onLogout, theme, to
     const [categories, setCategories] = useState<any[]>([]);
     const [agencies, setAgencies] = useState<any[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [confirmerSuppression, setConfirmerSuppression] = useState<boolean>(false);
+    const [suppression, setSuppression] = useState<boolean>(false);
+
+    useEffect(() => {
+        if (!confirmerSuppression) return;
+        const auClavier = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && !suppression) setConfirmerSuppression(false);
+        };
+        window.addEventListener('keydown', auClavier);
+        return () => window.removeEventListener('keydown', auClavier);
+    }, [confirmerSuppression, suppression]);
+
+    const supprimer = async () => {
+        if (!id) return;
+        setSuppression(true);
+        try {
+            const response = await api.postData(`location/vehicule/delete/${id}`, {});
+            if (response.data.success) {
+                toast.success("Véhicule retiré de la flotte");
+                navigate('/rental-vehicles');
+            } else {
+                toast.error(response.data.message || "Suppression refusée");
+            }
+        } catch (error: any) {
+            toast.error(error?.response?.data?.message || "Erreur lors de la suppression");
+        } finally {
+            setSuppression(false);
+        }
+    };
 
     const [initialValues, setInitialValues] = useState({
         libelle: '',
@@ -373,10 +402,85 @@ const AddRentalVehicle: React.FC<AddRentalVehicleProps> = ({ onLogout, theme, to
                                     {id ? 'Mettre à jour le véhicule' : 'Enregistrer dans la flotte'}
                                 </button>
                             </div>
+
+                            {/* Suppression, à l'écart des boutons d'enregistrement : en
+                                modification seulement, après confirmation. */}
+                            {id && (
+                                <div className="pt-6 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                    <div>
+                                        <p className="text-sm font-bold text-slate-900 dark:text-white">Supprimer ce véhicule</p>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400">Il ne sera plus proposé à la location. Ses réservations passées restent consultables.</p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setConfirmerSuppression(true)}
+                                        className="px-5 py-3 rounded-xl border border-rose-200 dark:border-rose-500/30 text-rose-600 dark:text-rose-400 font-bold text-sm hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-colors flex items-center justify-center gap-2 shrink-0"
+                                    >
+                                        <span className="material-symbols-outlined text-[18px]">delete</span>
+                                        Supprimer le véhicule
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </form>
             </div>
+
+            {confirmerSuppression && (
+                <div
+                    className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4"
+                    onClick={() => !suppression && setConfirmerSuppression(false)}
+                >
+                    <div
+                        role="dialog"
+                        aria-modal="true"
+                        onClick={(e) => e.stopPropagation()}
+                        className="w-full max-w-md bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-7 flex flex-col gap-5"
+                    >
+                        <div className="flex items-start gap-4">
+                            <div className="size-12 rounded-xl bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center shrink-0">
+                                <span className="material-symbols-outlined text-rose-500 text-2xl">delete</span>
+                            </div>
+                            <div className="flex flex-col gap-1.5">
+                                <h3 className="text-lg font-black tracking-tight text-slate-900 dark:text-white leading-tight">
+                                    Retirer ce véhicule de la flotte ?
+                                </h3>
+                                <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                                    «&nbsp;<span className="font-bold text-slate-700 dark:text-slate-200">{formik.values.modele || formik.values.libelle}</span>&nbsp;»
+                                    {formik.values.matricule ? ` (${formik.values.matricule})` : ''} ne sera plus proposé à la location.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-start gap-2.5 p-3.5 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400">
+                            <span className="material-symbols-outlined text-[20px] shrink-0">info</span>
+                            <p className="text-xs font-semibold leading-relaxed">
+                                Les réservations passées restent consultables. Son image est effacée du stockage seulement s'il n'a jamais été réservé.
+                            </p>
+                        </div>
+
+                        <div className="flex gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setConfirmerSuppression(false)}
+                                disabled={suppression}
+                                className="flex-1 px-5 py-3 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold hover:bg-slate-200 dark:hover:bg-slate-700 disabled:opacity-50 transition-all text-sm"
+                            >
+                                Annuler
+                            </button>
+                            <button
+                                type="button"
+                                onClick={supprimer}
+                                disabled={suppression}
+                                className="flex-1 px-4 py-3 rounded-xl text-sm font-bold bg-red-600 text-white hover:bg-red-700 transition-colors disabled:opacity-40 flex items-center justify-center gap-2"
+                            >
+                                {suppression && <span className="material-symbols-outlined animate-spin text-[16px]">progress_activity</span>}
+                                {suppression ? 'Suppression…' : 'Supprimer'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </MainLayout>
     );
 };

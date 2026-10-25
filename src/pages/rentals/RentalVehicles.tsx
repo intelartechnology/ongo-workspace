@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import MainLayout from '../MainLayout';
 import ApiService from '../../services/ApiService';
 import { toast } from 'react-toastify';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { SearchBar } from '../../components/ui';
 
 interface RentalVehiclesProps {
     onLogout: () => void;
@@ -10,19 +11,50 @@ interface RentalVehiclesProps {
     toggleTheme: () => void;
 }
 
+const entete = "px-5 py-3 text-[10px] font-bold text-slate-500 uppercase tracking-widest whitespace-nowrap";
+
+const francs = (v: unknown) => (v == null || v === '' ? '—' : `${Number(v).toLocaleString('fr-FR')} F`);
+
+/**
+ * La flotte de location, en tableau.
+ *
+ * Vingt véhicules par page : chaque ligne charge une photo. La recherche part
+ * au serveur, pour couvrir toute la flotte et pas seulement la page affichée.
+ * `?category=` vient du bouton « Véhicules » de la page Catégories : la liste
+ * l'ignorait et montrait toute la flotte.
+ */
 const RentalVehicles: React.FC<RentalVehiclesProps> = ({ onLogout, theme, toggleTheme }) => {
     const api = new ApiService();
+    const navigate = useNavigate();
+    const [parametres, setParametres] = useSearchParams();
+    const categorie = parametres.get('category');
+
     const [vehicles, setVehicles] = useState<any[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [pagination, setPagination] = useState<any>(null);
+    const [recherche, setRecherche] = useState<string>('');
+    // Le haut de la liste, où revenir en changeant de page.
+    const haut = useRef<HTMLDivElement>(null);
 
-    const fetchVehicles = async (url: string = "location/vehicule/all") => {
+    const premierePage = (q: string) => {
+        const base = categorie ? `location/vehicule/cat/${categorie}` : 'location/vehicule/all';
+        const suite = new URLSearchParams({ per_page: '20' });
+        // La liste par catégorie ne cherche pas côté serveur : la recherche
+        // vaut pour toute la flotte.
+        if (q.trim() && !categorie) suite.set('q', q.trim());
+        return `${base}?${suite.toString()}`;
+    };
+
+    const fetchVehicles = async (url: string, remonter = false) => {
         setLoading(true);
         try {
             const response = await api.getData(url);
             if (response.data.success) {
                 setVehicles(response.data.data.data);
                 setPagination(response.data.data);
+                // Le défilement se fait dans la mise en page, pas la fenêtre :
+                // on vise l'élément plutôt que `window.scrollTo`.
+                if (remonter) haut.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
             } else {
                 toast.error("Erreur lors du chargement de la flotte");
             }
@@ -34,24 +66,36 @@ const RentalVehicles: React.FC<RentalVehiclesProps> = ({ onLogout, theme, toggle
         }
     };
 
+    // Une recherche part une fois la frappe posée, pas à chaque lettre.
     useEffect(() => {
-        fetchVehicles();
-    }, []);
+        const minuteur = setTimeout(() => fetchVehicles(premierePage(recherche)), recherche ? 350 : 0);
+        return () => clearTimeout(minuteur);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [recherche, categorie]);
+
+    const nomCategorie = vehicles[0]?.categorie?.libelle;
 
     return (
         <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
-            <div className="px-4 md:px-8 py-6 flex flex-col gap-4">
+            <div ref={haut} className="px-4 md:px-8 py-6 flex flex-col gap-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Gestion de la Flotte</h1>
+                    <div className="flex items-center gap-3">
+                        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Véhicules de location</h1>
+                        {pagination && (
+                            <span className="bg-primary/10 text-primary dark:text-primary-fixed-dim px-2.5 py-1 rounded-lg text-xs font-black tabular-nums">
+                                {pagination.total}
+                            </span>
+                        )}
+                    </div>
                     <div className="flex gap-2 w-full sm:w-auto">
-                        <Link 
+                        <Link
                             to="/rental-categories"
                             className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-4 py-2.5 rounded-xl font-bold text-sm hover:bg-slate-200 transition-all flex items-center justify-center gap-2"
                         >
                             <span className="material-symbols-outlined text-[20px]">category</span>
                             Catégories
                         </Link>
-                        <Link 
+                        <Link
                             to="/rental-vehicles/add"
                             className="px-4 py-2 rounded-lg text-sm font-medium bg-primary text-white hover:bg-primary/90 dark:bg-primary-container dark:hover:bg-primary-container/90 transition-colors disabled:opacity-40 flex items-center gap-2 w-full sm:w-auto justify-center"
                         >
@@ -60,111 +104,162 @@ const RentalVehicles: React.FC<RentalVehiclesProps> = ({ onLogout, theme, toggle
                         </Link>
                     </div>
                 </div>
-            </div>
 
-            <div className="p-4 md:p-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {loading ? (
-                        Array(8).fill(0).map((_, i) => (
-                            <div key={i} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 h-80 animate-pulse"></div>
-                        ))
-                    ) : vehicles.length === 0 ? (
-                        <div className="col-span-full py-20 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 text-center text-slate-400">
-                             <span className="material-symbols-outlined text-6xl block mb-4 opacity-20">no_crash</span>
-                             <p className="font-bold text-lg uppercase tracking-widest">Aucun véhicule disponible</p>
-                        </div>
+                <div className="flex flex-wrap items-center gap-3">
+                    {categorie ? (
+                        <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 text-primary dark:text-blue-300 px-3 py-1.5 text-sm font-semibold">
+                            Catégorie : {nomCategorie ?? `#${categorie}`}
+                            <button
+                                type="button"
+                                aria-label="Retirer le filtre de catégorie"
+                                onClick={() => setParametres({})}
+                                className="material-symbols-outlined text-[18px] hover:opacity-70"
+                            >
+                                close
+                            </button>
+                        </span>
                     ) : (
-                        vehicles.map((v: any) => (
-                            <div key={v.id} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden hover:-translate-y-1 transition-all duration-300 flex flex-col group">
-                                <div className="aspect-[4/3] bg-slate-50 dark:bg-slate-800/50 relative overflow-hidden">
-                                    {v.image ? (
-                                        <img src={v.image} alt={v.modele} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center opacity-10">
-                                            <span className="material-symbols-outlined text-8xl">local_taxi</span>
-                                        </div>
-                                    )}
-                                    <div className="absolute top-3 left-3 flex gap-2">
-                                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
- v.status === 'LIBRE' ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'
- }`}>
-                                            {v.status}
-                                        </span>
-                                        <span className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest text-[#00327d] dark:text-primary-container border border-slate-200 dark:border-slate-700">
-                                            {v.categorie?.libelle || 'Standard'}
-                                        </span>
-                                    </div>
-                                    <div className="absolute bottom-3 right-3 flex gap-1">
-                                         <Link 
-                                            to={`/rental-vehicles/edit/${v.id}`}
-                                            className="size-8 rounded-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm flex items-center justify-center text-slate-600 hover:text-primary transition-colors"
-                                        >
-                                            <span className="material-symbols-outlined text-[18px]">edit</span>
-                                        </Link>
-                                    </div>
-                                </div>
-                                <div className="p-5 flex flex-col gap-4 flex-1">
-                                    <div className="flex justify-between items-start gap-4">
-                                        <div>
-                                            <h3 className="font-black text-slate-900 dark:text-white text-lg tracking-tight uppercase leading-none">{v.modele || 'Modèle Inconnu'}</h3>
-                                            <p className="text-[10px] text-primary font-black mt-2 uppercase tracking-widest bg-primary/5 px-2 py-0.5 rounded inline-block">
-                                                {v.matricule || 'SANS PLAQUE'}
-                                            </p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest">A partir de</p>
-                                            <p className="font-black text-[#00327d] dark:text-primary-container text-lg leading-none mt-1">
-                                                {v.montant?.toLocaleString()} <span className="text-[10px] opacity-60">XAF</span>
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    <div className="grid grid-cols-3 gap-2 py-3 border-y border-slate-100 dark:border-slate-800">
-                                        <div className="text-center">
-                                            <span className="material-symbols-outlined text-slate-400 text-[18px]">group</span>
-                                            <p className="text-[10px] font-bold text-slate-600 dark:text-slate-400 mt-1">{v.nb_place || 4} Places</p>
-                                        </div>
-                                        <div className="text-center">
-                                            <span className={`material-symbols-outlined ${v.is_clim ? 'text-blue-400 animate-pulse' : 'text-slate-300'} text-[18px]`}>ac_unit</span>
-                                            <p className="text-[10px] font-bold text-slate-600 dark:text-slate-400 mt-1">{v.is_clim ? 'Climatisé' : 'Non-Clim'}</p>
-                                        </div>
-                                        <div className="text-center">
-                                            <span className="material-symbols-outlined text-slate-400 text-[18px]">settings</span>
-                                            <p className="text-[10px] font-bold text-slate-600 dark:text-slate-400 mt-1">{v.is_auto ? 'Auto' : 'Manuel'}</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center gap-3 mt-auto">
-                                        <div className="size-8 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500">
-                                            <span className="material-symbols-outlined text-xl">corporate_fare</span>
-                                        </div>
-                                        <div className="flex-1 overflow-hidden">
-                                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest truncate">Agence / Propriétaire</p>
-                                            <p className="text-xs font-black text-slate-700 dark:text-slate-300 truncate">{v.agence?.libelle || 'Ongo Fleet'}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        ))
+                        <SearchBar
+                            value={recherche}
+                            onChange={setRecherche}
+                            placeholder="Rechercher un modèle, une plaque, une agence…"
+                            className="max-w-md flex-1 min-w-[240px]"
+                        />
                     )}
                 </div>
-                
-                {/* Pagination (if applicable) */}
-                {pagination && pagination.last_page > 1 && (
-                    <div className="mt-8 flex justify-end gap-1.5">
-                        {pagination.links.map((link: any, i: number) => (
-                            <button
-                                key={i}
-                                onClick={() => link.url && fetchVehicles(link.url)}
-                                disabled={!link.url || link.active}
-                                className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${
- link.active
- ? 'bg-[#00327d] text-white '
- : 'bg-white dark:bg-slate-900 text-slate-500 border border-slate-200 dark:border-slate-800'
- } ${!link.url ? 'opacity-30 cursor-not-allowed' : ''}`}
-                                dangerouslySetInnerHTML={{ __html: link.label }}
-                            />
+            </div>
+
+            <div className="p-4 md:p-8 pt-0 md:pt-0">
+                {loading && vehicles.length === 0 ? (
+                    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 divide-y divide-slate-100 dark:divide-slate-800">
+                        {Array(6).fill(0).map((_, i) => (
+                            <div key={i} className="flex items-center gap-4 px-5 py-3">
+                                <div className="w-16 h-11 rounded-lg bg-slate-100 dark:bg-slate-800 animate-pulse shrink-0" />
+                                <div className="h-3 w-40 rounded bg-slate-100 dark:bg-slate-800 animate-pulse" />
+                                <div className="h-3 flex-1 rounded bg-slate-100 dark:bg-slate-800 animate-pulse" />
+                            </div>
                         ))}
+                    </div>
+                ) : vehicles.length === 0 ? (
+                    <div className="py-16 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 text-center text-slate-400 flex flex-col items-center gap-2">
+                        <span className="material-symbols-outlined text-5xl opacity-30">no_crash</span>
+                        <p className="font-bold text-slate-700 dark:text-slate-200">
+                            {recherche ? `Aucun véhicule ne correspond à « ${recherche} »` : 'Aucun véhicule'}
+                        </p>
+                        {recherche && (
+                            <button type="button" onClick={() => setRecherche('')} className="text-xs font-bold text-primary hover:underline">
+                                Réinitialiser la recherche
+                            </button>
+                        )}
+                    </div>
+                ) : (
+                    <div className={`bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden transition-opacity ${loading ? 'opacity-60' : ''}`}>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse min-w-[940px]">
+                                <thead>
+                                    <tr className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
+                                        <th className={entete}>Véhicule</th>
+                                        <th className={entete}>Catégorie</th>
+                                        <th className={entete}>Agence</th>
+                                        <th className={entete}>Caractéristiques</th>
+                                        <th className={`${entete} text-right`}>Prix / jour</th>
+                                        <th className={entete}>Statut</th>
+                                        <th className={`${entete} text-right`}>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                                    {vehicles.map((v: any) => {
+                                        const libre = v.status === 'LIBRE';
+                                        return (
+                                            <tr
+                                                key={v.id}
+                                                onClick={() => navigate(`/rental-vehicles/edit/${v.id}`)}
+                                                className="cursor-pointer hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition-colors"
+                                            >
+                                                <td className="px-5 py-2.5">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-16 h-11 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 shrink-0 flex items-center justify-center">
+                                                            {v.image ? (
+                                                                <img src={v.image} alt="" loading="lazy" className="w-full h-full object-cover" />
+                                                            ) : (
+                                                                <span className="material-symbols-outlined text-xl text-slate-300 dark:text-slate-600">local_taxi</span>
+                                                            )}
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <p className="text-sm font-bold text-slate-900 dark:text-white leading-tight truncate">{v.modele || v.libelle || 'Modèle inconnu'}</p>
+                                                            <span className="mt-1 inline-block rounded border border-slate-200 dark:border-slate-700 px-1.5 text-[11px] font-bold tracking-wider text-slate-500">
+                                                                {v.matricule || 'Sans plaque'}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="px-5 py-2.5 text-sm text-slate-700 dark:text-slate-300">{v.categorie?.libelle || '—'}</td>
+                                                <td className="px-5 py-2.5">
+                                                    <p className="text-sm text-slate-700 dark:text-slate-300">{v.agence?.libelle || '—'}</p>
+                                                    <p className="text-xs text-slate-500">{v.agence?.ville || ''}</p>
+                                                </td>
+                                                <td className="px-5 py-2.5 text-[13px] text-slate-500 whitespace-nowrap">
+                                                    {v.nb_place || 4} places · {Number(v.is_clim) ? 'Clim' : 'Non clim'} · {Number(v.is_auto) ? 'Auto' : 'Manuelle'}
+                                                </td>
+                                                <td className="px-5 py-2.5 text-right whitespace-nowrap tabular-nums">
+                                                    <p className="text-sm font-bold text-slate-900 dark:text-white">{francs(v.montant)}</p>
+                                                    {v.montant_hors_ville ? (
+                                                        <p className="text-xs text-slate-500">hors ville {francs(v.montant_hors_ville)}</p>
+                                                    ) : null}
+                                                </td>
+                                                <td className="px-5 py-2.5">
+                                                    <span
+                                                        className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                                                            libre
+                                                                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300'
+                                                                : 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300'
+                                                        }`}
+                                                    >
+                                                        {libre ? 'Libre' : v.status === 'OCCUPE' ? 'Occupé' : v.status || '—'}
+                                                    </span>
+                                                </td>
+                                                <td className="px-5 py-2.5 text-right" onClick={(e) => e.stopPropagation()}>
+                                                    <Link
+                                                        to={`/rental-vehicles/edit/${v.id}`}
+                                                        className="inline-flex items-center gap-1 rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-[13px] font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
+                                                    >
+                                                        <span className="material-symbols-outlined text-[16px]">edit</span>
+                                                        Modifier
+                                                    </Link>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+
+                {/* Pagination : le total toujours, les pages dès qu'il y en a plusieurs */}
+                {pagination && pagination.total > 0 && (
+                    <div className="mt-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <p className="text-sm text-slate-500 dark:text-slate-400 tabular-nums">
+                            {pagination.from} à {pagination.to} sur {pagination.total} véhicule{pagination.total > 1 ? 's' : ''}
+                        </p>
+                        {pagination.last_page > 1 && (
+                            <div className="flex flex-wrap justify-end gap-1.5">
+                                {pagination.links.map((link: any, i: number) => (
+                                    <button
+                                        key={i}
+                                        type="button"
+                                        onClick={() => link.url && fetchVehicles(link.url, true)}
+                                        disabled={!link.url || link.active}
+                                        className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                            link.active
+                                                ? 'bg-primary text-white'
+                                                : 'bg-white dark:bg-slate-900 text-slate-500 border border-slate-200 dark:border-slate-800'
+                                        } ${!link.url ? 'opacity-30 cursor-not-allowed' : ''}`}
+                                        dangerouslySetInnerHTML={{ __html: link.label }}
+                                    />
+                                ))}
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
