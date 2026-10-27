@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import MainLayout from "./MainLayout";
 import ApiService from "../services/ApiService";
@@ -76,6 +77,7 @@ export default function Transactions({ onLogout, theme, toggleTheme }: Transacti
     const [au, setAu] = useState<string>("");
 
     const api = new ApiService();
+    const navigate = useNavigate();
 
     const criteres = () => ({
         ...(sens ? { sens } : {}),
@@ -242,7 +244,7 @@ export default function Transactions({ onLogout, theme, toggleTheme }: Transacti
                             <table className="w-full text-left border-collapse">
                                 <thead>
                                     <tr className="bg-slate-50 dark:bg-white/5 border-b border-slate-200 dark:border-slate-800">
-                                        {["Date", "Compte", "Libellé", "Source", "État", "Montant"].map((titre) => (
+                                        {["Date", "Compte", "Libellé", "Source", "État", "Montant", ""].map((titre) => (
                                             <th
                                                 key={titre}
                                                 className={`px-6 py-4 text-[11px] font-bold text-slate-500 uppercase tracking-wider ${
@@ -303,12 +305,26 @@ export default function Transactions({ onLogout, theme, toggleTheme }: Transacti
                                                     >
                                                         {sortie ? "−" : "+"} {montant(e.amount)}
                                                     </td>
+                                                    {/* L'historique complet du compte, avec son solde. */}
+                                                    <td className="px-6 py-4 text-right">
+                                                        {e.owner_id && (
+                                                            <button
+                                                                type="button"
+                                                                title="Voir l'historique de ce compte"
+                                                                onClick={() => navigate(`/finance/accounts/${e.owner_id}`)}
+                                                                className="inline-flex items-center gap-1 rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 whitespace-nowrap"
+                                                            >
+                                                                Détails
+                                                                <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+                                                            </button>
+                                                        )}
+                                                    </td>
                                                 </tr>
                                             );
                                         })
                                     ) : (
                                         <tr>
-                                            <td colSpan={6} className="px-6 py-12 text-center text-sm text-slate-500">
+                                            <td colSpan={7} className="px-6 py-12 text-center text-sm text-slate-500">
                                                 Aucune écriture pour ce filtre.
                                             </td>
                                         </tr>

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import Trajet from "../../components/Trajet";
 import { toast } from "react-toastify";
 import ApiService from "../../../services/ApiService";
 import Loading from "../../../components/Loading";
@@ -135,8 +136,8 @@ const PartnerRides: React.FC<Props> = ({ partnerId }) => {
                                     <td className="px-4 py-2.5 text-sm text-slate-700 dark:text-slate-300">
                                         {c.chauffeur ? [c.chauffeur.prenom, c.chauffeur.nom].filter(Boolean).join(" ") : "—"}
                                     </td>
-                                    <td className="px-4 py-2.5 text-xs text-slate-500 max-w-xs">
-                                        <span className="line-clamp-1">{c.lieu_depart} → {c.lieu_arrive}</span>
+                                    <td className="px-4 py-2.5">
+                                        <Trajet depart={c.lieu_depart} arrivee={c.lieu_arrive} largeur="max-w-[280px]" />
                                     </td>
                                     <td className="px-4 py-2.5">
                                         <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${STATUTS[c.statut] ?? "bg-slate-100 dark:bg-slate-800 text-slate-500"}`}>

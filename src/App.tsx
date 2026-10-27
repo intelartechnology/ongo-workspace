@@ -15,6 +15,7 @@ import './App.css'
 import Rase from './pages/Rase'
 import Vehicle from './pages/Vehicle'
 import CourseDetailPage from './pages/CourseDetailPage'
+import CoursesARegulariser from './pages/CoursesARegulariser'
 import CoursePrintPage from './pages/CoursePrintPage'
 import VehicleEditPage from './pages/VehicleEditPage'
 import DriversRequest from './pages/DriversRequest'
@@ -240,6 +241,14 @@ function App() {
           element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>
               <Vehicle onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/courses/a-regulariser"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <CoursesARegulariser onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
             </ProtectedRoute>
           }
         />

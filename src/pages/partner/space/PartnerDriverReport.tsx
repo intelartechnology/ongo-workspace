@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import Trajet from "../../components/Trajet";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Banknote, CalendarCheck, CircleCheck, CircleX, Coins, Hand, HandCoins, Star, TriangleAlert, Wallet } from "lucide-react";
 import ApiService from "../../../services/ApiService";
@@ -233,9 +234,8 @@ export default function PartnerDriverReport({ partnerId, driverId, theme }: Prop
                                 ) : rapport.courses.map((c) => (
                                     <tr key={`${c.id}-${c.date}`}>
                                         <td className="whitespace-nowrap px-5 py-3 text-slate-700 dark:text-slate-300">{quand(c.date)}</td>
-                                        <td className="px-5 py-3 text-slate-600 dark:text-slate-400">
-                                            <p className="max-w-[360px] truncate">{c.from ?? "—"}</p>
-                                            <p className="max-w-[360px] truncate text-xs">→ {c.to ?? "—"}</p>
+                                        <td className="px-5 py-3">
+                                            <Trajet depart={c.from} arrivee={c.to} largeur="max-w-[360px]" />
                                         </td>
                                         <td className="whitespace-nowrap px-5 py-3 text-right tabular-nums text-slate-900 dark:text-white">{francs(c.amount)}</td>
                                         {proprietaire && <td className="whitespace-nowrap px-5 py-3 text-right tabular-nums text-slate-700 dark:text-slate-300">{c.commission === null ? "—" : francs(c.commission)}</td>}
@@ -270,9 +270,8 @@ export default function PartnerDriverReport({ partnerId, driverId, theme }: Prop
                                                 {RAISONS[m.reason]}
                                             </span>
                                         </td>
-                                        <td className="px-5 py-3 text-slate-600 dark:text-slate-400">
-                                            <p className="max-w-[340px] truncate">{m.from ?? "—"}</p>
-                                            <p className="max-w-[340px] truncate text-xs">→ {m.to ?? "—"}</p>
+                                        <td className="px-5 py-3">
+                                            <Trajet depart={m.from} arrivee={m.to} largeur="max-w-[340px]" />
                                         </td>
                                         <td className="whitespace-nowrap px-5 py-3 text-right tabular-nums text-slate-900 dark:text-white">{m.amount ? francs(m.amount) : "—"}</td>
                                         {/* Prise par un autre, ou perdue pour tout le monde. */}

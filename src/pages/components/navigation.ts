@@ -1,4 +1,5 @@
 import {
+    ClipboardCheck,
     ArrowLeftRight,
     Banknote,
     Bike,
@@ -88,6 +89,7 @@ export const GROUPES: Groupe[] = [
         icon: CarTaxiFront,
         entrees: [
             { icon: Car, label: 'Courses', path: '/courses' },
+            { icon: ClipboardCheck, label: 'À régulariser', path: '/courses/a-regulariser' },
             { icon: UserRound, label: 'Chauffeurs', path: '/drivers' },
             { icon: CarFront, label: 'Véhicules', path: '/vehicles' },
             { icon: UserSearch, label: 'Demandes', path: '/requests' },
