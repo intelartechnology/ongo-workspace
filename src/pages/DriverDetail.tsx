@@ -400,7 +400,7 @@ export default function DriverDetail({ onLogout = () => {}, theme = 'light', tog
                                                                 <td className="py-3 pr-4 text-slate-500">{t.provider || t.service || '—'}</td>
                                                                 <td className="py-3 pr-4">
                                                                     <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${t.counts ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300'}`}>
-                                                                        {t.counts ? 'Vérifiée' : t.status === 'pending' ? 'En attente' : t.status}
+                                                                        {t.counts ? 'Vérifiée' : t.status === 'pending' ? 'En attente' : t.status === 'cancelled' || t.status === 'canceled' ? 'Annulée' : t.status}
                                                                     </span>
                                                                 </td>
                                                                 <td className={`py-3 text-right font-bold whitespace-nowrap tabular-nums ${sortie ? 'text-red-500' : 'text-emerald-600'}`}>

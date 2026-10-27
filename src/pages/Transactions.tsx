@@ -4,7 +4,8 @@ import Swal from "sweetalert2";
 import MainLayout from "./MainLayout";
 import ApiService from "../services/ApiService";
 import Loading from "../components/Loading";
-import { StatCard } from "../components/ui";
+import { StatCard, ActionsMenu, type ActionItem } from "../components/ui";
+import { toast } from "react-toastify";
 import { ArrowDownLeft, ArrowUpRight, Landmark, ReceiptText, type LucideIcon } from "lucide-react";
 import { notifier } from "../services/notifier";
 
@@ -31,7 +32,41 @@ interface Ecriture {
     owner_nom: string | null;
     owner_prenom: string | null;
     owner_telephone: string | null;
+    /** Le dernier geste de l'administration sur cette écriture, s'il y en a un. */
+    correction?: { action: string; motif: string; le: string } | null;
+    /** Dévalidée par un administrateur : elle peut retrouver son état. */
+    revalidable?: boolean;
+    /** Une moitié de transfert entre comptes : l'autre se corrige avec elle. */
+    transfert?: boolean;
 }
+
+/** Les états d'une écriture, en clair. Seules les vérifiées comptent dans un solde. */
+const ETATS: Record<string, { libelle: string; classe: string }> = {
+    verified: { libelle: "Vérifiée", classe: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+    pending: { libelle: "En attente", classe: "bg-amber-50 text-amber-700 border-amber-200" },
+    cancelled: { libelle: "Annulée", classe: "bg-rose-50 text-rose-700 border-rose-200" },
+};
+
+const ACTIONS = {
+    devalider: {
+        titre: "Dévalider la transaction ?",
+        texte: "Elle redevient « en attente » et sort du solde du compte. Elle pourra être revalidée.",
+        bouton: "Dévalider",
+        couleur: "#d97706",
+    },
+    annuler: {
+        titre: "Annuler la transaction ?",
+        texte: "Elle passe « annulée », définitivement, et sort du solde du compte. Elle n'est pas supprimée : elle reste visible.",
+        bouton: "Annuler la transaction",
+        couleur: "#dc2626",
+    },
+    revalider: {
+        titre: "Revalider la transaction ?",
+        texte: "Elle retrouve son état vérifié et sa date de validation d'origine, et compte de nouveau dans le solde.",
+        bouton: "Revalider",
+        couleur: "#10377b",
+    },
+} as const;
 
 interface LienPagination {
     url: string | null;
@@ -62,6 +97,7 @@ const STATUTS = [
     { valeur: "", libelle: "Tous les états" },
     { valeur: "verified", libelle: "Vérifiées" },
     { valeur: "pending", libelle: "En attente" },
+    { valeur: "cancelled", libelle: "Annulées" },
 ];
 
 export default function Transactions({ onLogout, theme, toggleTheme }: TransactionsProps) {
@@ -78,6 +114,52 @@ export default function Transactions({ onLogout, theme, toggleTheme }: Transacti
 
     const api = new ApiService();
     const navigate = useNavigate();
+
+    /**
+     * Corriger une écriture : dévalider, annuler ou revalider.
+     *
+     * Le motif est obligatoire — c'est la seule explication, plus tard, d'un
+     * solde qui a bougé. Une moitié de transfert entraîne l'autre : on le dit
+     * avant de confirmer.
+     */
+    const corriger = async (e: Ecriture, action: keyof typeof ACTIONS) => {
+        const a = ACTIONS[action];
+        const montant = `${e.amount < 0 ? "−" : "+"} ${Math.abs(e.amount).toLocaleString("fr-FR")} F`;
+        const { value: motif, isConfirmed } = await Swal.fire({
+            title: a.titre,
+            html: `<b>${montant}</b> · ${proprietaire(e)}<br><br>${a.texte}${e.transfert ? "<br><br><b>C'est un transfert entre deux comptes : l'autre écriture sera corrigée aussi.</b>" : ""}`,
+            input: "textarea",
+            inputLabel: "Motif (obligatoire)",
+            inputPlaceholder: "Ex. Paiement en double, contestation du client…",
+            inputValidator: (v) => (!v || v.trim().length < 5 ? "Indiquez un motif d'au moins 5 caractères" : undefined),
+            icon: action === "revalider" ? "question" : "warning",
+            showCancelButton: true,
+            confirmButtonText: a.bouton,
+            cancelButtonText: "Fermer",
+            confirmButtonColor: a.couleur,
+        });
+        if (!isConfirmed || !motif) return;
+
+        try {
+            const { data } = await api.postData(`v3/admin/transactions/${e.transaction_id}/correction`, { action, motif: String(motif).trim() });
+            if (data.success) {
+                toast.success(data.message);
+                charger();
+                chargerTotaux();
+            } else {
+                toast.error(data.message || "Correction refusée");
+            }
+        } catch (err: any) {
+            toast.error(err?.response?.data?.message || "Connexion au serveur impossible");
+        }
+    };
+
+    const actions = (e: Ecriture): ActionItem[] => [
+        ...(e.owner_id ? [{ label: "Historique du compte", icon: "account_balance_wallet", onClick: () => navigate(`/finance/accounts/${e.owner_id}`) }] : []),
+        ...(e.status === "verified" ? [{ label: "Dévalider", icon: "undo", separatorBefore: Boolean(e.owner_id), onClick: () => corriger(e, "devalider") }] : []),
+        ...(e.revalidable ? [{ label: "Revalider", icon: "task_alt", separatorBefore: Boolean(e.owner_id), onClick: () => corriger(e, "revalider") }] : []),
+        ...(e.status !== "cancelled" ? [{ label: "Annuler la transaction", icon: "block", danger: true, onClick: () => corriger(e, "annuler") }] : []),
+    ];
 
     const criteres = () => ({
         ...(sens ? { sens } : {}),
@@ -289,14 +371,16 @@ export default function Transactions({ onLogout, theme, toggleTheme }: Transacti
                                                     <td className="px-6 py-4 text-sm text-slate-500">{e.provider ?? "—"}</td>
                                                     <td className="px-6 py-4">
                                                         <span
-                                                            className={`px-2 py-1 rounded-lg border text-[11px] font-bold ${
- e.status === "verified"
-                                                                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                                                    : "bg-amber-50 text-amber-700 border-amber-200"
-                                                            }`}
+                                                            className={`px-2 py-1 rounded-lg border text-[11px] font-bold ${ETATS[e.status]?.classe ?? "bg-slate-50 text-slate-600 border-slate-200"}`}
                                                         >
-                                                            {e.status === "verified" ? "Vérifiée" : e.status}
+                                                            {ETATS[e.status]?.libelle ?? e.status}
                                                         </span>
+                                                        {/* Corrigée par l'administration : on dit quoi et pourquoi. */}
+                                                        {e.correction && (
+                                                            <div className="mt-1 text-[11px] text-slate-400 max-w-[180px] truncate" title={e.correction.motif}>
+                                                                {e.correction.action === "devalider" ? "Dévalidée" : e.correction.action === "annuler" ? "Annulée" : "Revalidée"} : {e.correction.motif}
+                                                            </div>
+                                                        )}
                                                     </td>
                                                     <td
                                                         className={`px-6 py-4 text-sm font-bold text-right whitespace-nowrap ${
@@ -305,19 +389,11 @@ export default function Transactions({ onLogout, theme, toggleTheme }: Transacti
                                                     >
                                                         {sortie ? "−" : "+"} {montant(e.amount)}
                                                     </td>
-                                                    {/* L'historique complet du compte, avec son solde. */}
+                                                    {/* L'historique du compte, et les corrections de l'écriture. */}
                                                     <td className="px-6 py-4 text-right">
-                                                        {e.owner_id && (
-                                                            <button
-                                                                type="button"
-                                                                title="Voir l'historique de ce compte"
-                                                                onClick={() => navigate(`/finance/accounts/${e.owner_id}`)}
-                                                                className="inline-flex items-center gap-1 rounded-lg border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 whitespace-nowrap"
-                                                            >
-                                                                Détails
-                                                                <span className="material-symbols-outlined text-[16px]">chevron_right</span>
-                                                            </button>
-                                                        )}
+                                                        <div className="flex justify-end">
+                                                            <ActionsMenu items={actions(e)} />
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             );

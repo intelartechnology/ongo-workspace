@@ -45,6 +45,8 @@ const STATUTS: Record<string, { texte: string; ton: string }> = {
     verified: { texte: "Vérifiée", ton: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300" },
     pending: { texte: "En attente", ton: "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300" },
     canceled: { texte: "Annulée", ton: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400" },
+    // L'orthographe qu'écrit l'annulation par l'administration.
+    cancelled: { texte: "Annulée", ton: "bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300" },
 };
 
 const quand = (iso: string) =>
