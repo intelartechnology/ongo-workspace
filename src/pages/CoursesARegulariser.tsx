@@ -220,7 +220,7 @@ const CoursesARegulariser: React.FC<Props> = ({ onLogout, theme, toggleTheme }) 
                                     disabled={!lien.url || lien.active}
                                     onClick={() => lien.url && charger(lien.url)}
                                     className={`px-3.5 py-1.5 rounded-lg text-xs font-bold ${lien.active ? 'bg-primary text-white' : 'bg-white dark:bg-slate-900 text-slate-500 border border-slate-200 dark:border-slate-800'} ${!lien.url ? 'opacity-30' : ''}`}
-                                    dangerouslySetInnerHTML={{ __html: lien.label }}
+                                    dangerouslySetInnerHTML={{ __html: lien.label.includes('Previous') ? '‹ Précédent' : lien.label.includes('Next') ? 'Suivant ›' : lien.label }}
                                 />
                             ))}
                         </div>

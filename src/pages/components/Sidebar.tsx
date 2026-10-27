@@ -2,7 +2,7 @@ import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 're
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { ChevronUp, LogOut, PanelLeftClose, PanelLeftOpen, X } from 'lucide-react';
 import ApiService from '../../services/ApiService';
-import { ACCUEIL, GROUPES, REGLAGES, type Entree } from './navigation';
+import { ACCUEIL, ANNONCES, GROUPES, REGLAGES, type Entree } from './navigation';
 import { useHylana } from '../assistant/HylanaContext';
 import { basculerMenu, setSurvolMenu, useMenuReduit, useSurvolMenu } from './menuReduit';
 
@@ -231,6 +231,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, user, onLogout }) 
     const rail = [
         { cle: 'accueil', icone: ACCUEIL.icon, libelle: 'Accueil', chemin: ACCUEIL.path, actif: location.pathname === ACCUEIL.path },
         ...GROUPES.map((g) => ({ cle: g.cle, icone: g.icon, libelle: COURTS[g.cle] ?? g.titre, chemin: g.entrees[0]?.path ?? '/', actif: groupeCourant === g.cle })),
+        { cle: 'annonces', icone: ANNONCES.icon, libelle: 'Annonces', chemin: ANNONCES.path, actif: location.pathname === ANNONCES.path },
         { cle: 'reglages', icone: REGLAGES.icon, libelle: 'Réglages', chemin: REGLAGES.path, actif: location.pathname === REGLAGES.path },
     ];
 
@@ -371,7 +372,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, user, onLogout }) 
 
                     <div className="h-4" />
 
-                    {/* Les réglages de la plateforme entière : ni Eat, ni courses. */}
+                    {/* Ce qui vaut pour toute la plateforme : ni Eat, ni courses. */}
+                    {lien(ANNONCES)}
                     {lien(REGLAGES)}
                 </nav>
 

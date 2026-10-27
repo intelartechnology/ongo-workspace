@@ -27,6 +27,7 @@ import Boosts from './pages/Boosts';
 import Transactions from './pages/Transactions';
 import Moderation from './pages/Moderation';
 import Settings from './pages/Settings';
+import Annonces from './pages/Annonces';
 import Merchants from './pages/Merchants';
 import EatDashboard from './pages/EatDashboard';
 import EatPayouts from './pages/EatPayouts';
@@ -508,6 +509,14 @@ function App() {
           element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>
               <Merchants onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/annonces"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <Annonces onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
             </ProtectedRoute>
           }
         />

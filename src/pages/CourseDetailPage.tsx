@@ -1,9 +1,8 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import MainLayout from "./MainLayout";
 import ApiService from "../services/ApiService";
-import Swal from "sweetalert2";
-import { toast } from "react-toastify";
+import { cloturerCourse, peutEtreCloturee } from "../services/cloturerCourse";
 
 interface CourseDetailPageProps {
     onLogout?: () => void;
@@ -44,7 +43,10 @@ export default function CourseDetailPage({
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const [course, setCourse] = useState<any>(null);
-    const [activeTab, setActiveTab] = useState<Tab>("course");
+    // `?onglet=ressources` : le menu de la liste des courses ouvre
+    // directement les ressources consommées.
+    const [parametres] = useSearchParams();
+    const [activeTab, setActiveTab] = useState<Tab>(parametres.get("onglet") === "ressources" ? "ressources" : "course");
 
     const [ressources, setRessources] = useState<RessourcesTotal | null>(null);
     const [phases, setPhases] = useState<RessourcesPhase[]>([]);
@@ -85,41 +87,15 @@ export default function CourseDetailPage({
 
     const [cloture, setCloture] = useState(false);
 
-    /**
-     * Clore une course que le chauffeur n'a pas close, sans attendre la
-     * clôture automatique. Terminer règle la course comme d'habitude ;
-     * annuler ne règle rien. Dans les deux cas, le véhicule redevient libre.
-     */
+    /** Clore la course sans attendre la clôture automatique (voir `cloturerCourse`). */
     const cloturer = async () => {
-        const choix = await Swal.fire({
-            title: `Clôturer la course #${course.id} ?`,
-            html: "<b>Terminer et régler</b> : la fin de course habituelle, part du chauffeur et commission comprises.<br><br><b>Annuler sans régler</b> : aucun mouvement d'argent ; si le client avait payé en ligne, le support est prévenu pour le rembourser.<br><br>Dans les deux cas, le véhicule du chauffeur redevient libre et les deux sont notifiés.",
-            icon: "question",
-            showCancelButton: true,
-            showDenyButton: true,
-            confirmButtonText: "Terminer et régler",
-            denyButtonText: "Annuler sans régler",
-            cancelButtonText: "Fermer",
-            confirmButtonColor: "#10377b",
-        });
-        if (!choix.isConfirmed && !choix.isDenied) return;
-
-        const decision = choix.isConfirmed ? "TERMINEE" : "ANNULEE";
         setCloture(true);
-        try {
-            const { data } = await new ApiService().postData(`v3/admin/courses/${course.id}/cloturer`, { decision });
-            if (data.success) {
-                toast.success(data.message);
-                const suite = { ...course, statut: decision };
-                setCourse(suite);
-                sessionStorage.setItem(`course_detail_${id}`, JSON.stringify(suite));
-            } else {
-                toast.error(data.message || "Clôture refusée");
-            }
-        } catch (e: any) {
-            toast.error(e?.response?.data?.message || "Connexion au serveur impossible");
-        } finally {
-            setCloture(false);
+        const statut = await cloturerCourse(course);
+        setCloture(false);
+        if (statut) {
+            const suite = { ...course, statut };
+            setCourse(suite);
+            sessionStorage.setItem(`course_detail_${id}`, JSON.stringify(suite));
         }
     };
 
@@ -218,7 +194,7 @@ export default function CourseDetailPage({
                                     Détails complets de la course du {course.date_depart} à {course.heure_depart}
                                 </p>
                             </div>
-                            {["EN COURS", "TRANSPORTEE"].includes(course.statut) && (
+                            {peutEtreCloturee(course.statut) && (
                                 <button
                                     type="button"
                                     onClick={cloturer}

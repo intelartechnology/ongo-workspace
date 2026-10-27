@@ -374,6 +374,7 @@ export default function Settings({ onLogout, theme, toggleTheme }: SettingsProps
                                                             ) : ligne.type === "texte" ? (
                                                                 <textarea
                                                                     rows={4}
+                                                                    maxLength={255}
                                                                     value={brouillon[ligne.cle] ?? ""}
                                                                     onChange={(evenement) =>
                                                                         setBrouillon((precedent) => ({

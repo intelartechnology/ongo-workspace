@@ -221,11 +221,15 @@ const CourseDetailsModal: React.FC<CourseDetailsModalProps> = ({ selectedCourse,
               <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 flex flex-col justify-center items-center">
                 <p className="text-[10px] font-bold text-slate-500 uppercase mb-2">État Actuel</p>
                 <span className="px-4 py-1.5 rounded-lg bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-black uppercase tracking-tighter">
-                  {selectedCourse.statut}
+                  {STATUTS_FR[selectedCourse.statut] ?? selectedCourse.statut}
                 </span>
               </div>
 
             </div>
+
+            {/* Les écarts entre la course commandée et la course faite, et ce
+                qu'ils coûtent ou auraient coûté. */}
+            <Supplements course={selectedCourse} />
           </section>
         </div>
 
@@ -248,3 +252,85 @@ const CourseDetailsModal: React.FC<CourseDetailsModalProps> = ({ selectedCourse,
 };
 
 export default CourseDetailsModal;
+
+const francs = (n: unknown) => `${Number(n ?? 0).toLocaleString("fr-FR")} FCFA`;
+const metres = (n: number) => (n >= 1000 ? `${(n / 1000).toLocaleString("fr-FR", { maximumFractionDigits: 1 })} km` : `${n} m`);
+
+/**
+ * Les suppléments d'une course : changement de destination, dépassement à la
+ * dépose.
+ *
+ * Le dépassement est **mesuré** à chaque fin de course (`debordement_metres`)
+ * et son prix **calculé** au tarif kilométrique de la catégorie
+ * (`debordement_supplement`), mais il n'est facturé que si la facturation des
+ * dépassements est activée sur le serveur. On dit donc lequel des deux : un
+ * montant calculé n'est pas un montant payé.
+ */
+function Supplements({ course }: { course: any }) {
+  const ecart: number | null = course.debordement_metres ?? null;
+  const supplement: number | null = course.debordement_supplement ?? null;
+  const arrivee = Boolean(course.arrivee_detectee_a);
+  const changement = Boolean(course.lieu_arrive_origine || course.destination_modifiee_le);
+  const origine = course.montant_origine != null ? Number(course.montant_origine) : null;
+
+  // Facturé : le montant a monté exactement du supplément depuis le prix d'origine.
+  const facture = supplement != null && supplement > 0 && origine != null && Number(course.montant) - origine === supplement;
+
+  let depassement: { texte: string; detail: string; ton: string };
+  if (ecart === null) {
+    depassement = { texte: "Non mesuré", detail: "Course non terminée, ou application chauffeur antérieure à la mesure.", ton: "text-slate-500" };
+  } else if (!arrivee) {
+    depassement = { texte: "Aucun supplément", detail: `Dépose à ${metres(ecart)} du point prévu, mais l'arrivée n'a pas été détectée : le client est descendu avant.`, ton: "text-slate-500" };
+  } else if (supplement === null) {
+    depassement = { texte: "Hors barème", detail: `Écart de ${metres(ecart)} : trop grand pour un dépassement (course poursuivie ailleurs ou GPS aberrant). Jamais facturé.`, ton: "text-amber-600 dark:text-amber-400" };
+  } else if (supplement === 0) {
+    depassement = { texte: "Aucun supplément", detail: `Dépose à ${metres(ecart)} du point prévu, dans la tolérance.`, ton: "text-emerald-600 dark:text-emerald-400" };
+  } else {
+    depassement = {
+      texte: `${francs(supplement)}${facture ? " facturé" : " calculé"}`,
+      detail: facture
+        ? `Dépose à ${metres(ecart)} au-delà du point prévu : ajouté au prix de la course.`
+        : `Dépose à ${metres(ecart)} au-delà du point prévu. Non facturé : la facturation des dépassements est désactivée.`,
+      ton: facture ? "text-red-500" : "text-amber-600 dark:text-amber-400",
+    };
+  }
+
+  return (
+    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+        <p className="text-[10px] font-bold text-slate-500 uppercase mb-2">Dépassement à la dépose</p>
+        <p className={`text-lg font-black ${depassement.ton}`}>{depassement.texte}</p>
+        <p className="text-xs text-slate-500 mt-1 leading-snug">{depassement.detail}</p>
+      </div>
+
+      <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+        <p className="text-[10px] font-bold text-slate-500 uppercase mb-2">Changement de destination</p>
+        {changement ? (
+          <>
+            <p className="text-lg font-black text-slate-800 dark:text-slate-100">
+              {origine != null ? `${francs(origine)} → ${francs(course.montant)}` : "Oui"}
+            </p>
+            <p className="text-xs text-slate-500 mt-1 leading-snug">
+              Destination commandée : {course.lieu_arrive_origine || "—"}. Nouveau prix accepté par le client.
+            </p>
+          </>
+        ) : (
+          <p className="text-lg font-black text-slate-500">Aucun</p>
+        )}
+      </div>
+
+    </div>
+  );
+}
+
+/** Les statuts tels que la base les écrit, en français. */
+const STATUTS_FR: Record<string, string> = {
+  "EN ATTENTE": "En attente",
+  "RESERVEE": "Réservée",
+  "EN COURS": "En cours",
+  "TRANSPORTEE": "Client à bord",
+  "TERMINEE": "Terminée",
+  "ANNULEE": "Annulée",
+  "ANNULEE AUTO": "Annulée (auto)",
+  "NO DRIVER FOUND": "Aucun chauffeur",
+};

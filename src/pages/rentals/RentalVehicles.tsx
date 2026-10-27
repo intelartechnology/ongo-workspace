@@ -255,7 +255,7 @@ const RentalVehicles: React.FC<RentalVehiclesProps> = ({ onLogout, theme, toggle
                                                 ? 'bg-primary text-white'
                                                 : 'bg-white dark:bg-slate-900 text-slate-500 border border-slate-200 dark:border-slate-800'
                                         } ${!link.url ? 'opacity-30 cursor-not-allowed' : ''}`}
-                                        dangerouslySetInnerHTML={{ __html: link.label }}
+                                        dangerouslySetInnerHTML={{ __html: link.label.includes('Previous') ? '‹ Précédent' : link.label.includes('Next') ? 'Suivant ›' : link.label }}
                                     />
                                 ))}
                             </div>

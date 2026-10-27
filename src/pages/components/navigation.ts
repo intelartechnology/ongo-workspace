@@ -89,12 +89,12 @@ export const GROUPES: Groupe[] = [
         icon: CarTaxiFront,
         entrees: [
             { icon: Car, label: 'Courses', path: '/courses' },
-            { icon: ClipboardCheck, label: 'À régulariser', path: '/courses/a-regulariser' },
             { icon: UserRound, label: 'Chauffeurs', path: '/drivers' },
             { icon: CarFront, label: 'Véhicules', path: '/vehicles' },
             { icon: UserSearch, label: 'Demandes', path: '/requests' },
             { icon: Gift, label: 'Bonus chauffeurs', path: '/driver-bonuses' },
             { icon: Rocket, label: 'Boosts', path: '/boosts' },
+            { icon: ClipboardCheck, label: 'À régulariser', path: '/courses/a-regulariser' },
         ],
     },
     {
@@ -207,6 +207,9 @@ export const ACCUEIL: Entree = { icon: LayoutDashboard, label: 'Tableau de bord'
 export const ASSISTANT: Entree = { icon: Sparkles, label: 'Hylana (assistante)', path: '/assistant' };
 export const REGLAGES: Entree = { icon: SlidersHorizontal, label: 'Réglages', path: '/settings' };
 
+/** Les messages que voient tous les utilisateurs de l'application (table `annonce_ongo`). */
+export const ANNONCES: Entree = { icon: Megaphone, label: 'Annonces', path: '/annonces' };
+
 /**
  * La page ouverte, et sa famille.
  *
@@ -219,6 +222,7 @@ export const trouverPage = (chemin: string): { entree: Entree; groupe?: Groupe }
         { entree: ACCUEIL },
         { entree: ASSISTANT },
         { entree: REGLAGES },
+        { entree: ANNONCES },
         ...GROUPES.flatMap((groupe) => groupe.entrees.map((entree) => ({ entree, groupe }))),
     ];
 

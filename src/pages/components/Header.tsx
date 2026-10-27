@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { CalendarDays, CornerDownLeft, Menu, Moon, Search, Sparkles, Sun } from 'lucide-react';
 import { useHylana } from '../assistant/HylanaContext';
-import { ACCUEIL, ASSISTANT, GROUPES, REGLAGES, trouverPage, type Entree } from './navigation';
+import { ACCUEIL, ANNONCES, ASSISTANT, GROUPES, REGLAGES, trouverPage, type Entree } from './navigation';
 
 interface HeaderProps {
     onToggleSidebar: () => void;
@@ -15,6 +15,7 @@ const PAGES: { entree: Entree; famille?: string }[] = [
     { entree: ACCUEIL },
     { entree: ASSISTANT },
     ...GROUPES.flatMap((groupe) => groupe.entrees.map((entree) => ({ entree, famille: groupe.titre }))),
+    { entree: ANNONCES },
     { entree: REGLAGES },
 ];
 

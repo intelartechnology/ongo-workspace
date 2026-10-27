@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import Trajet from './components/Trajet';
+import { useNavigate } from "react-router-dom";
 import GoogleMapReact from "google-map-react";
 
 import ApiService from "../services/ApiService";
@@ -92,6 +93,7 @@ interface RaseProps {
 }
 
 const ActionDropdown = ({ course, openDetails, openMap, openReattributionModal }: any) => {
+    const navigate = useNavigate();
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -128,6 +130,19 @@ const ActionDropdown = ({ course, openDetails, openMap, openReattributionModal }
                         >
                             <span className="material-symbols-outlined text-[18px] text-blue-500">info</span>
                             Détails
+                        </button>
+                        {/* Ce que la course a consommé (données, GPS, application) : l'onglet
+                            Ressources de sa page, ouvert directement. */}
+                        <button
+                            className="w-full px-4 py-2.5 text-left text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-3 text-slate-700 dark:text-slate-200 transition-colors"
+                            onClick={() => {
+                                setIsOpen(false);
+                                sessionStorage.setItem(`course_detail_${course.id}`, JSON.stringify(course));
+                                navigate(`/courses/${course.id}?onglet=ressources`);
+                            }}
+                        >
+                            <span className="material-symbols-outlined text-[18px] text-teal-500">data_usage</span>
+                            Ressources
                         </button>
                         <button
                             className="w-full px-4 py-2.5 text-left text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-3 text-slate-700 dark:text-slate-200 transition-colors"
