@@ -104,6 +104,9 @@ export default function Transactions({ onLogout, theme, toggleTheme }: Transacti
     const [ecritures, setEcritures] = useState<Ecriture[]>([]);
     const [pagination, setPagination] = useState<LienPagination[]>([]);
     const [totaux, setTotaux] = useState<Totaux | null>(null);
+    // Le serveur dit si ce compte peut corriger une écriture : sinon le menu
+    // ne propose que l'historique du compte.
+    const [peutCorriger, setPeutCorriger] = useState<boolean>(false);
     const [chargement, setChargement] = useState<boolean>(true);
 
     const [sens, setSens] = useState<string>("");
@@ -156,9 +159,9 @@ export default function Transactions({ onLogout, theme, toggleTheme }: Transacti
 
     const actions = (e: Ecriture): ActionItem[] => [
         ...(e.owner_id ? [{ label: "Historique du compte", icon: "account_balance_wallet", onClick: () => navigate(`/finance/accounts/${e.owner_id}`) }] : []),
-        ...(e.status === "verified" ? [{ label: "Dévalider", icon: "undo", separatorBefore: Boolean(e.owner_id), onClick: () => corriger(e, "devalider") }] : []),
-        ...(e.revalidable ? [{ label: "Revalider", icon: "task_alt", separatorBefore: Boolean(e.owner_id), onClick: () => corriger(e, "revalider") }] : []),
-        ...(e.status !== "cancelled" ? [{ label: "Annuler la transaction", icon: "block", danger: true, onClick: () => corriger(e, "annuler") }] : []),
+        ...(peutCorriger && e.status === "verified" ? [{ label: "Dévalider", icon: "undo", separatorBefore: Boolean(e.owner_id), onClick: () => corriger(e, "devalider") }] : []),
+        ...(peutCorriger && e.revalidable ? [{ label: "Revalider", icon: "task_alt", separatorBefore: Boolean(e.owner_id), onClick: () => corriger(e, "revalider") }] : []),
+        ...(peutCorriger && e.status !== "cancelled" ? [{ label: "Annuler la transaction", icon: "block", danger: true, onClick: () => corriger(e, "annuler") }] : []),
     ];
 
     const criteres = () => ({
@@ -181,6 +184,7 @@ export default function Transactions({ onLogout, theme, toggleTheme }: Transacti
 
             if (data.success) {
                 setEcritures(data.data?.data ?? []);
+                setPeutCorriger(Boolean(data.data?.peut_corriger));
                 setPagination(data.data?.links ?? []);
             } else {
                 Swal.fire({ icon: "warning", title: "Erreur", text: data.message });
