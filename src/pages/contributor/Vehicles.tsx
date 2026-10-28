@@ -128,7 +128,7 @@ const ContributorVehicles: React.FC<ContributorVehiclesProps> = ({ onLogout, use
                                         <td className="px-6 py-5">
                                             {v.driver ? (
                                                 <div className="flex items-center gap-2">
-                                                    <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 text-xs font-bold overflow-hidden">
+                                                    <div className="w-8 h-8 shrink-0 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 text-xs font-bold overflow-hidden">
                                                         <Avatar photo={v.driver?.photo} nom={v.driver?.nom || v.driver?.prenom} alt="Driver" />
                                                     </div>
                                                     <div>

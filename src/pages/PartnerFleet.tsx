@@ -247,7 +247,7 @@ export default function PartnerFleet({ onLogout = () => {}, theme = "light", tog
                                                         <td className="px-6 py-5">
                                                             {driver ? (
                                                                 <div className="flex items-center gap-2">
-                                                                    <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center overflow-hidden">
+                                                                    <div className="w-6 h-6 shrink-0 rounded-full bg-slate-200 flex items-center justify-center overflow-hidden">
                                                                         <Avatar photo={driver?.photo} nom={driver?.nom || driver?.prenom} alt="Driver" className="text-xs" />
                                                                     </div>
                                                                     <p className="text-sm font-semibold">{driver.nom} {driver.prenom || ""}</p>

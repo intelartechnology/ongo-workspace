@@ -180,7 +180,7 @@ export default function EatTags({ onLogout, theme, toggleTheme }: EatTagsProps) 
                                 <button onClick={() => deplacer(rang, -1)} disabled={rang === 0} className="disabled:opacity-20"><span className="material-symbols-outlined text-[18px]">arrow_upward</span></button>
                                 <button onClick={() => deplacer(rang, 1)} disabled={rang === cuisines.length - 1} className="disabled:opacity-20"><span className="material-symbols-outlined text-[18px]">arrow_downward</span></button>
                             </div>
-                            <div className="w-12 h-12 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800">{c.image && <img src={c.image} alt="" className="w-full h-full object-cover" />}</div>
+                            <div className="w-12 h-12 shrink-0 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800">{c.image && <img src={c.image} alt="" className="w-full h-full object-cover" />}</div>
                             <div className="flex-1">
                                 <p className="font-semibold text-slate-900 dark:text-white">{c.name}</p>
                                 <p className="text-xs text-slate-500"><span className="font-mono">{c.slug}</span> · {c.stores_count} boutique(s)</p>

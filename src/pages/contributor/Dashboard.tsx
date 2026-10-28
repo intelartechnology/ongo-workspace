@@ -216,7 +216,7 @@ const ContributorDashboard: React.FC<ContributorDashboardProps> = ({ onLogout, u
                     ) : latestCourse ? (
                         <div className="bg-slate-50 p-5 rounded-xl space-y-5">
                             <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center border border-slate-100 overflow-hidden text-slate-400">
+                                <div className="w-12 h-12 shrink-0 rounded-full bg-white flex items-center justify-center border border-slate-100 overflow-hidden text-slate-400">
                                     <Avatar photo={latestCourse.courses?.client?.photo} nom={latestCourse.courses?.client?.nom || latestCourse.courses?.client?.prenom} alt="Client" className="text-xl" />
                                 </div>
                                 <div>
@@ -318,7 +318,7 @@ const ContributorDashboard: React.FC<ContributorDashboardProps> = ({ onLogout, u
                                         <td className="px-6 py-4">
                                             {v.driver ? (
                                                 <div className="flex items-center gap-2">
-                                                    <div className="w-7 h-7 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 text-xs font-bold overflow-hidden">
+                                                    <div className="w-7 h-7 shrink-0 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 text-xs font-bold overflow-hidden">
                                                         <Avatar photo={v.driver?.photo} nom={v.driver?.nom || v.driver?.prenom} />
                                                     </div>
                                                     <div>
