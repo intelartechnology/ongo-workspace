@@ -10,6 +10,8 @@ import { Avatar } from "../components/ui";
 import { notifier } from "../services/notifier";
 import DriverStats from "./components/DriverStats";
 import Trajet from "./components/Trajet";
+import Swal from "sweetalert2";
+import { toast } from "react-toastify";
 
 /** Les statuts d'une course, tels que la base les écrit, en clair et en couleur. */
 const STATUTS: Record<string, { libelle: string; classe: string }> = {
@@ -120,6 +122,36 @@ export default function DriverDetail({ onLogout = () => {}, theme = 'light', tog
     const vehicules: any[] = driver.vehicules ?? [];
     const enService = vehicules.some((v) => Number(v.is_online));
 
+    // Le même interrupteur que celui de son application : la base et le
+    // suivi Firestore changent ensemble, côté serveur.
+    const basculerService = async () => {
+        const choix = await Swal.fire({
+            title: enService ? "Mettre hors service ?" : "Mettre en service ?",
+            text: enService
+                ? "Il ne recevra plus de courses tant qu'il ne se remet pas en service. Il est prévenu par notification."
+                : "Il recevra des courses à sa dernière position connue, même si son application est fermée. Il est prévenu par notification.",
+            icon: "question",
+            showCancelButton: true,
+            confirmButtonText: enService ? "Mettre hors service" : "Mettre en service",
+            cancelButtonText: "Annuler",
+            confirmButtonColor: "#10377b",
+        });
+        if (!choix.isConfirmed) return;
+
+        try {
+            const { data: reponse } = await Api.postData(`v3/admin/drivers/${driver.id}/service`, { en_service: !enService });
+            if (!reponse.success) {
+                toast.error(reponse.message || "Changement refusé");
+                return;
+            }
+            toast.success(reponse.message);
+            const etat = reponse.data?.en_service ? 1 : 0;
+            setData({ ...data, driver: { ...driver, vehicules: vehicules.map((v) => ({ ...v, is_online: etat })) } });
+        } catch (e: any) {
+            toast.error(e?.response?.data?.message || "Connexion au serveur impossible");
+        }
+    };
+
     return (
         <MainLayout onLogout={onLogout} theme={theme} toggleTheme={toggleTheme}>
             <div className="p-8 max-w-7xl mx-auto w-full font-display">
@@ -148,6 +180,15 @@ export default function DriverDetail({ onLogout = () => {}, theme = 'light', tog
                                 />
                                 <h3 className="text-2xl font-bold">{helpers.capitalizeFirstLetter(driver.nom + " " + driver.prenom)}</h3>
                                 <button type="button" onClick={() => notifier({ destinataires: [{ id: driver.id, nom: [driver.nom, driver.prenom].filter(Boolean).join(" ") }] })} className="px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 whitespace-nowrap">Notifier</button>
+                                {vehicules.length > 0 && (
+                                    <button
+                                        type="button"
+                                        onClick={basculerService}
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border whitespace-nowrap ${enService ? "border-rose-300 text-rose-700 hover:bg-rose-50 dark:border-rose-800 dark:text-rose-400 dark:hover:bg-rose-900/20" : "border-emerald-300 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-900/20"}`}
+                                    >
+                                        {enService ? "Mettre hors service" : "Mettre en service"}
+                                    </button>
+                                )}
                             </div>
                             <p className="text-slate-500 text-sm">ID Chauffeur: #{driver.id} • Inscrit depuis le {new Date(driver.created_at).toLocaleDateString()}</p>
                             <div className="flex gap-4 mt-3">
