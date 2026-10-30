@@ -3,12 +3,19 @@ import Swal from "sweetalert2";
 import { toast } from "react-toastify";
 import ApiService from "../../services/ApiService";
 
-/** Les quatre paramètres du prix d'une course, tels que l'API les rend. */
+/**
+ * Les paramètres du prix d'une course, tels que l'API les rend.
+ *
+ * `distance_au_prorata` est un interrupteur, porté ici en 0 / 1 : il voyage
+ * dans le même brouillon que les montants.
+ */
 const CHAMPS = [
     { cle: "base_price", libelle: "Prise en charge", unite: "F" },
     { cle: "included_km", libelle: "Km inclus", unite: "km" },
+    { cle: "included_minutes", libelle: "Min incluses", unite: "min" },
     { cle: "km_price", libelle: "Prix par km", unite: "F" },
     { cle: "minute_price", libelle: "Prix par minute", unite: "F" },
+    { cle: "distance_au_prorata", libelle: "Km au prorata", unite: "" },
 ] as const;
 
 type Cle = (typeof CHAMPS)[number]["cle"];
@@ -20,8 +27,10 @@ interface Categorie {
     is_delivery: boolean | number;
     base_price: number | string | null;
     included_km: number | string | null;
+    included_minutes: number | string | null;
     km_price: number | string | null;
     minute_price: number | string | null;
+    distance_au_prorata: boolean | number | null;
 }
 
 interface Regles {
@@ -40,11 +49,16 @@ interface Changement {
     par: string | null;
 }
 
-/* La course type de l'aperçu : assez longue pour que le prix au km pèse. */
-const KM = 10;
-const MINUTES = 20;
+/*
+ * La course type de l'aperçu : un trajet relevé à Yaoundé à l'heure de pointe.
+ * Des kilomètres non ronds, pour que le prorata se voie.
+ */
+const KM = 6.4;
+const MINUTES = 34;
+const COURSE_TYPE = `${KM.toLocaleString("fr-FR")} km · ${MINUTES} min`;
 
 const nombre = (v: unknown): number => {
+    if (typeof v === "boolean") return Number(v);
     const n = Number(String(v ?? "").replace(/\s/g, "").replace(",", "."));
     return Number.isFinite(n) ? n : 0;
 };
@@ -52,13 +66,16 @@ const francs = (n: number) => `${Math.round(n).toLocaleString("fr-FR")} F`;
 
 /**
  * Le prix d'une course type, avec la même formule que `FareCalculator` :
- * prise en charge, kilomètres au-delà du forfait, minutes, arrondi supérieur.
+ * prise en charge, kilomètres et minutes au-delà du forfait, arrondi supérieur.
  */
 const prixType = (t: Record<Cle, unknown>, regles: Regles): number => {
     const inclus = t.included_km === null || t.included_km === "" || t.included_km === undefined ? regles.km_inclus_par_defaut : nombre(t.included_km);
-    const brut = nombre(t.base_price) + Math.max(0, KM - inclus) * nombre(t.km_price) + MINUTES * nombre(t.minute_price);
+    const km = nombre(t.distance_au_prorata) ? KM : Math.ceil(KM);
+    const minutes = Math.max(0, MINUTES - nombre(t.included_minutes));
+    const brut = nombre(t.base_price) + Math.max(0, km - inclus) * nombre(t.km_price) + minutes * nombre(t.minute_price);
     const pas = regles.arrondi > 1 ? regles.arrondi : 1;
-    return Math.ceil(brut / pas) * pas;
+    // Au centime, comme le serveur : 4,4 x 150 ne doit pas passer au pas suivant.
+    return Math.ceil(Math.round(brut * 100) / 100 / pas) * pas;
 };
 
 /**
@@ -108,7 +125,7 @@ export default function TarifsCourses() {
 
         const ok = await Swal.fire({
             title: `Changer le tarif ${c.libelle} ?`,
-            html: `Une course de ${KM} km et ${MINUTES} min passera de <b>${francs(avant)}</b> à <b>${francs(apres)}</b>${avant > 0 ? ` (${ecart > 0 ? "+" : ""}${ecart} %)` : ""}.<br><small>Le changement vaut pour les prochaines estimations, pas pour les courses déjà commandées.</small>`,
+            html: `Une course de ${COURSE_TYPE} passera de <b>${francs(avant)}</b> à <b>${francs(apres)}</b>${avant > 0 ? ` (${ecart > 0 ? "+" : ""}${ecart} %)` : ""}.<br><small>Le changement vaut pour les prochaines estimations, pas pour les courses déjà commandées.</small>`,
             icon: Math.abs(ecart) >= 30 ? "warning" : "question",
             showCancelButton: true,
             confirmButtonText: "Enregistrer",
@@ -149,7 +166,8 @@ export default function TarifsCourses() {
             </p>
             {regles && (
                 <p className="mt-2 text-[13px] text-slate-500">
-                    Prix = prise en charge + prix par km × km au-delà des km inclus + prix par minute × minutes, arrondi aux {regles.arrondi} F supérieurs.
+                    Prix = prise en charge + prix par km × km au-delà des km inclus + prix par minute × minutes au-delà des minutes incluses, arrondi aux {regles.arrondi} F supérieurs.
+                    Sans « km au prorata », la distance est arrondie au km supérieur (6,4 km comptent pour 7). La durée est celle de l'itinéraire Google à l'estimation.
                     Supplément aéroport : +{regles.supplement_aeroport.toLocaleString("fr-FR")} F, minimum {regles.minimum_aeroport.toLocaleString("fr-FR")} F.
                 </p>
             )}
@@ -157,12 +175,12 @@ export default function TarifsCourses() {
             {erreur && <p className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{erreur}</p>}
 
             <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-                <table className="w-full min-w-[860px] text-left text-sm">
+                <table className="w-full min-w-[1120px] text-left text-sm">
                     <thead className="border-b border-slate-200 bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-800/50">
                         <tr>
                             <th className="px-4 py-3 font-semibold">Catégorie</th>
                             {CHAMPS.map((f) => <th key={f.cle} className="px-4 py-3 font-semibold">{f.libelle}</th>)}
-                            <th className="px-4 py-3 font-semibold">Course de {KM} km · {MINUTES} min</th>
+                            <th className="px-4 py-3 font-semibold">Course de {COURSE_TYPE}</th>
                             <th className="px-4 py-3" />
                         </tr>
                     </thead>
@@ -179,6 +197,22 @@ export default function TarifsCourses() {
                                     </td>
                                     {CHAMPS.map((f) => {
                                         const touche = brouillon[c.id]?.[f.cle] !== undefined && nombre(brouillon[c.id]?.[f.cle]) !== nombre(c[f.cle]);
+                                        if (f.cle === "distance_au_prorata") {
+                                            const coche = nombre(valeur(c, f.cle)) === 1;
+                                            return (
+                                                <td key={f.cle} className="px-4 py-3">
+                                                    <label className={`inline-flex items-center gap-2 rounded-lg border px-2 py-1.5 text-[13px] ${touche ? "border-primary bg-white dark:bg-slate-900" : "border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/60"}`}>
+                                                        <input
+                                                            id={`tarif-${c.id}-${f.cle}`}
+                                                            type="checkbox"
+                                                            checked={coche}
+                                                            onChange={(e) => setBrouillon((b) => ({ ...b, [c.id]: { ...b[c.id], [f.cle]: e.target.checked ? "1" : "0" } }))}
+                                                        />
+                                                        <span className="text-slate-700 dark:text-slate-200">{coche ? "Oui" : "Non"}</span>
+                                                    </label>
+                                                </td>
+                                            );
+                                        }
                                         return (
                                             <td key={f.cle} className="px-4 py-3">
                                                 <label className={`inline-flex items-center gap-1 rounded-lg border px-2 py-1.5 ${touche ? "border-primary bg-white dark:bg-slate-900" : "border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/60"}`}>
