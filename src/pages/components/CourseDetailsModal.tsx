@@ -32,6 +32,7 @@ interface Attribution {
   distance?: string | number | null;
   unite?: string | null;
   duree?: string | number | null;
+  source_distance?: string | null;
 }
 
 /**
@@ -52,6 +53,9 @@ const priseEnCharge = (a: Attribution): { metres: number; sure: boolean } | null
 
 const formaterDistance = ({ metres, sure }: { metres: number; sure: boolean }) =>
   `${sure ? "" : "≈ "}${metres < 1000 ? `${Math.round(metres)} m` : `${(metres / 1000).toLocaleString("fr-FR", { maximumFractionDigits: 1 })} km`}`;
+
+/** Par la route si Google l'a donnée, à vol d'oiseau sinon. */
+const sourceDistance = (a: Attribution) => (a.source_distance === "route" ? "par la route" : "à vol d'oiseau");
 
 /** Le délai estimé, en secondes, que seule la recherche actuelle écrit. */
 const formaterDelai = (a: Attribution) => {
@@ -198,7 +202,7 @@ const CourseDetailsModal: React.FC<CourseDetailsModalProps> = ({ selectedCourse,
                                 return distance ? (
                                   <div className="flex items-center gap-1 mt-1">
                                     <span className="material-symbols-outlined text-sm">near_me</span>
-                                    {formaterDistance(distance)} du client{delai ? ` · ${delai}` : ""}
+                                    {formaterDistance(distance)} du client, {sourceDistance(attribution)}{delai ? ` · ${delai}` : ""}
                                   </div>
                                 ) : (
                                   <div className="mt-1 opacity-70">Distance non enregistrée</div>

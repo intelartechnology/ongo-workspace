@@ -5,6 +5,7 @@ import GoogleMapReact from "google-map-react";
 
 import ApiService from "../services/ApiService";
 import { notifier } from "../services/notifier";
+import { cloturerCourse, peutEtreCloturee } from "../services/cloturerCourse";
 
 import { toast } from "react-toastify";
 
@@ -95,7 +96,7 @@ interface RaseProps {
     toggleTheme?: () => void;
 }
 
-const ActionDropdown = ({ course, openDetails, openMap, openReattributionModal }: any) => {
+const ActionDropdown = ({ course, openDetails, openMap, openReattributionModal, onCloture }: any) => {
     const navigate = useNavigate();
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
@@ -209,6 +210,20 @@ const ActionDropdown = ({ course, openDetails, openMap, openReattributionModal }
                             <span className="material-symbols-outlined text-[18px] text-yellow-500">swap_horiz</span>
                             Réattribuer
                         </button>
+                        {/* Comme le bouton de la fiche : terminer client à bord, sinon annuler. */}
+                        {peutEtreCloturee(course.statut) && (
+                            <button
+                                className="w-full px-4 py-2.5 text-left text-sm font-medium hover:bg-rose-50 dark:hover:bg-rose-500/10 flex items-center gap-3 text-rose-600 dark:text-rose-400 transition-colors"
+                                onClick={async () => {
+                                    setIsOpen(false);
+                                    const statut = await cloturerCourse(course);
+                                    if (statut) onCloture(course.id, statut);
+                                }}
+                            >
+                                <span className="material-symbols-outlined text-[18px]">cancel</span>
+                                {course.statut === "TRANSPORTEE" ? "Clôturer…" : "Annuler la course…"}
+                            </button>
+                        )}
                     </div>
                 </div>
             )}
@@ -650,7 +665,10 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
                                                                     course={course} 
                                                                     openDetails={openDetails} 
                                                                     openMap={openMap} 
-                                                                    openReattributionModal={openReattributionModal} 
+                                                                    openReattributionModal={openReattributionModal}
+                                                                    onCloture={(id: number, nouveau: string) =>
+                                                                        setCourses((liste) => liste.map((c) => (c.id === id ? { ...c, statut: nouveau } : c)))
+                                                                    }
                                                                 />
                                                             </div>
                                                         </td>

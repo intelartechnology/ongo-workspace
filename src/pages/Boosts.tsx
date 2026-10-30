@@ -23,11 +23,30 @@ interface Versement {
     course: any | null;
 }
 
+/** La distance d'approche : par la route (Google) ou à vol d'oiseau, et le compteur du mois. */
+interface EtatGoogle {
+    actif: boolean;
+    cle: boolean;
+    mois: string;
+    utilises: number;
+    plafond: number;
+    atteint: boolean;
+}
+
 interface EtatDesBoosts {
     total: number;
     nombre: number;
     versements: Versement[];
+    google?: EtatGoogle;
 }
+
+/** Ce que vaut la distance d'approche en ce moment, en une phrase. */
+const modeDeDistance = (g: EtatGoogle) => {
+    if (!g.actif) return { titre: "À vol d'oiseau", note: "Google désactivé : aucun appel, aucun coût.", alerte: false };
+    if (!g.cle) return { titre: "À vol d'oiseau", note: "Google activé, mais la clé GOOGLE_ROUTES_KEY n'est pas posée sur le serveur.", alerte: true };
+    if (g.atteint) return { titre: "À vol d'oiseau", note: "Plafond du mois atteint : Google reprendra le 1er du mois.", alerte: true };
+    return { titre: "Par la route (Google)", note: "Repli à vol d'oiseau si Google ne répond pas.", alerte: false };
+};
 
 interface BoostsProps {
     onLogout: () => void;
@@ -126,6 +145,29 @@ export default function Boosts({ onLogout, theme, toggleTheme }: BoostsProps) {
                             <StatCard label="Courses boostées" value={etat.nombre} note="Terminées, boost versé" />
                             <StatCard label="Boost moyen" value={francs(moyenne)} note="Par course" />
                         </div>
+
+                        {etat.google && (() => {
+                            const g = etat.google;
+                            const mode = modeDeDistance(g);
+                            return (
+                                <div className={`rounded-xl border p-4 flex flex-wrap items-center justify-between gap-4 ${mode.alerte ? "border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/20" : "border-slate-200 dark:border-slate-800"}`}>
+                                    <div>
+                                        <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Distance d'approche</p>
+                                        <p className="text-lg font-bold text-slate-900 dark:text-white mt-1">{mode.titre}</p>
+                                        <p className="text-sm text-slate-500 mt-0.5">{mode.note}</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Calculs Google ce mois</p>
+                                        <p className="text-lg font-bold text-slate-900 dark:text-white mt-1">
+                                            {g.utilises.toLocaleString("fr-FR")} / {g.plafond.toLocaleString("fr-FR")}
+                                        </p>
+                                        <button onClick={() => navigate("/settings?onglet=boost")} className="text-sm text-primary underline mt-0.5">
+                                            Activer ou désactiver
+                                        </button>
+                                    </div>
+                                </div>
+                            );
+                        })()}
 
                         {etat.versements.length === 0 ? (
                             <p className="text-sm text-slate-500 text-center py-12">Aucun boost versé sur cette période.</p>

@@ -72,6 +72,7 @@ const EXPLICATIONS: Record<string, string> = {
 const SOUS_PARTIES: Record<string, { titre: string; cles: RegExp }[]> = {
     boost: [
         { titre: "Approche longue", cles: /^boost\.approche_/ },
+        { titre: "Distance d'approche", cles: /^distance\./ },
     ],
     eat: [
         { titre: "Commandes et zone de service", cles: /^eat\.(acceptance_delay_minutes|search_radius_km)$/ },
@@ -376,6 +377,21 @@ export default function Settings({ onLogout, theme, toggleTheme }: SettingsProps
                                                                         className="w-28 px-3 py-2 text-left font-mono text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
                                                                     />
                                                                 </div>
+                                                            ) : ligne.type === "interrupteur" ? (
+                                                                // Deux états, pas un nombre à taper : 1 allume, 0 éteint.
+                                                                <select
+                                                                    value={brouillon[ligne.cle] === "1" ? "1" : "0"}
+                                                                    onChange={(evenement) =>
+                                                                        setBrouillon((precedent) => ({
+                                                                            ...precedent,
+                                                                            [ligne.cle]: evenement.target.value,
+                                                                        }))
+                                                                    }
+                                                                    className="w-40 px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+                                                                >
+                                                                    <option value="1">Activé</option>
+                                                                    <option value="0">Désactivé</option>
+                                                                </select>
                                                             ) : ligne.type === "texte" ? (
                                                                 <textarea
                                                                     rows={4}
@@ -403,7 +419,7 @@ export default function Settings({ onLogout, theme, toggleTheme }: SettingsProps
                                                                 />
                                                             )}
 
-                                                            {(ligne.minimum !== null || ligne.maximum !== null) && (
+                                                            {ligne.type !== "interrupteur" && (ligne.minimum !== null || ligne.maximum !== null) && (
                                                                 <p className="text-xs text-slate-400 mt-1">
                                                                     entre {Number(ligne.minimum)} et {Number(ligne.maximum)}
                                                                 </p>
