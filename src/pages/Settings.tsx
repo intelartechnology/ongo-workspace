@@ -47,6 +47,7 @@ interface SettingsProps {
 const TITRES: Record<string, string> = {
     commission: "Partage des recettes",
     courses: "Attribution des courses",
+    boost: "Boost des chauffeurs",
     eat: "Ongo Eat",
     transport: "Transport",
     general: "Général",
@@ -58,6 +59,7 @@ const EXPLICATIONS: Record<string, string> = {
     eat: "Les règles de la commande en ligne. Elles s'appliquent à tous les marchands, sauf réglage propre à une boutique.",
     transport: "Les frais de service du bus et du train, fixes et non remboursables.",
     courses: "Qui reçoit une course : jusqu'où on cherche un chauffeur, et lesquels sont tenus pour joignables.",
+    boost: "La prime qu'Ongo ajoute à une course difficile à prendre, payée par Ongo et sans commission. Chaque part s'ajoute aux autres ; le total reste plafonné.",
 };
 
 /**
@@ -68,6 +70,9 @@ const EXPLICATIONS: Record<string, string> = {
  * pour qu'un réglage nouveau reste visible sans toucher à ce fichier.
  */
 const SOUS_PARTIES: Record<string, { titre: string; cles: RegExp }[]> = {
+    boost: [
+        { titre: "Approche longue", cles: /^boost\.approche_/ },
+    ],
     eat: [
         { titre: "Commandes et zone de service", cles: /^eat\.(acceptance_delay_minutes|search_radius_km)$/ },
         { titre: "Frais de livraison et de service", cles: /^eat\.(delivery\.|service_fee|small_order_)/ },

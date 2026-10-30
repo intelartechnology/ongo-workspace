@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
+import Swal from "sweetalert2";
 import { ArrowLeft, ReceiptText, Wallet } from "lucide-react";
 import ApiService from "../services/ApiService";
 import MainLayout from "./MainLayout";
 import Loading from "../components/Loading";
-import { StatCard, cx } from "../components/ui";
+import { StatCard, ActionsMenu, cx, type ActionItem } from "../components/ui";
 import { notifier } from "../services/notifier";
+import { confirmerParNumero } from "../services/confirmerParNumero";
 
 interface Props {
     onLogout: () => void;
@@ -25,9 +27,39 @@ interface Transaction {
     created_at: string;
     /** Vérifiée : elle fait le solde. Les autres s'affichent, sans compter. */
     counts: boolean;
+    /** La dernière correction faite par l'administration, s'il y en a une. */
+    correction?: { action: string; motif: string; le: string } | null;
+    /** Dévalidée par un administrateur : elle peut être revalidée. */
+    revalidable?: boolean;
+    /** Moitié d'un transfert entre comptes : l'autre moitié suit. */
+    transfert?: boolean;
 }
 
+/** Les mêmes gestes, et les mêmes mots, que la liste des transactions. */
+const ACTIONS = {
+    devalider: {
+        titre: "Dévalider la transaction ?",
+        texte: "Elle redevient « en attente » et sort du solde du compte. Elle pourra être revalidée.",
+        bouton: "Dévalider",
+        couleur: "#d97706",
+    },
+    annuler: {
+        titre: "Annuler la transaction ?",
+        texte: "Elle passe « annulée », définitivement, et sort du solde du compte. Elle n'est pas supprimée : elle reste visible.",
+        bouton: "Annuler la transaction",
+        couleur: "#dc2626",
+    },
+    revalider: {
+        titre: "Revalider la transaction ?",
+        texte: "Elle retrouve son état vérifié et sa date de validation d'origine, et compte de nouveau dans le solde.",
+        bouton: "Revalider",
+        couleur: "#10377b",
+    },
+} as const;
+
 interface Donnees {
+    /** Le compte connecté peut-il corriger ? Sinon, l'écran ne propose rien. */
+    peut_corriger?: boolean;
     account: { id: number; nom: string | null; prenom: string | null; telephone: string | null; email: string | null; role_id: number; balance: number };
     transactions: {
         data: Transaction[];
@@ -61,10 +93,13 @@ export default function FinanceAccount({ onLogout, theme, toggleTheme }: Props) 
     const [donnees, setDonnees] = useState<Donnees | null>(null);
     const [introuvable, setIntrouvable] = useState(false);
     const [chargement, setChargement] = useState(true);
+    // La page affichée : une correction la relit, sans revenir à la première.
+    const [page, setPage] = useState<string | undefined>(undefined);
 
     const charger = useCallback(
         async (adresse?: string) => {
             setChargement(true);
+            setPage(adresse);
             try {
                 const { data } = await new ApiService().getData(adresse ?? `v3/admin/finance/accounts/${id}/transactions`);
                 if (data.success) setDonnees(data.data);
@@ -81,6 +116,61 @@ export default function FinanceAccount({ onLogout, theme, toggleTheme }: Props) 
     useEffect(() => {
         charger();
     }, [charger]);
+
+    /**
+     * Corriger une écriture du compte : dévalider, annuler ou revalider.
+     *
+     * La même porte que la liste des transactions — le serveur applique les
+     * mêmes règles et tient le même journal. Le motif est obligatoire : c'est la
+     * seule explication, plus tard, d'un solde qui a bougé.
+     */
+    const corriger = async (tr: Transaction, action: keyof typeof ACTIONS) => {
+        const a = ACTIONS[action];
+        const montant = `${tr.amount < 0 ? "−" : "+"} ${Math.abs(tr.amount).toLocaleString("fr-FR")} F`;
+        const { value: motif, isConfirmed } = await Swal.fire({
+            title: a.titre,
+            html: `<b>${montant}</b> · ${tr.description ?? ""}<br><br>${a.texte}${tr.transfert ? "<br><br><b>C'est un transfert entre deux comptes : l'autre écriture sera corrigée aussi.</b>" : ""}`,
+            input: "textarea",
+            inputLabel: "Motif (obligatoire)",
+            inputPlaceholder: "Ex. Retrait annulé par Dohone resté débité, paiement en double…",
+            inputValidator: (v) => (!v || v.trim().length < 5 ? "Indiquez un motif d'au moins 5 caractères" : undefined),
+            icon: action === "revalider" ? "question" : "warning",
+            showCancelButton: true,
+            confirmButtonText: a.bouton,
+            cancelButtonText: "Fermer",
+            confirmButtonColor: a.couleur,
+        });
+        if (!isConfirmed || !motif) return;
+
+        // Une annulation se confirme par le numéro de la transaction.
+        const confirmation = action === "annuler" ? await confirmerParNumero(tr.transaction_id) : undefined;
+        if (confirmation === null) return;
+
+        try {
+            const { data } = await new ApiService().postData(`v3/admin/transactions/${tr.transaction_id}/correction`, { action, motif: String(motif).trim(), ...(confirmation ? { confirmation } : {}) });
+            if (data.success) {
+                toast.success(data.message);
+                charger(page);
+            } else {
+                toast.error(data.message || "Correction refusée");
+            }
+        } catch (err) {
+            const reponse = (err as { response?: { data?: { message?: string } } })?.response;
+            toast.error(reponse?.data?.message || "Connexion au serveur impossible");
+        }
+    };
+
+    const actions = (tr: Transaction): ActionItem[] => {
+        if (!donnees?.peut_corriger) return [];
+
+        const annulee = tr.status === "cancelled" || tr.status === "canceled";
+
+        return [
+            ...(tr.status === "verified" ? [{ label: "Dévalider", icon: "undo", onClick: () => corriger(tr, "devalider") }] : []),
+            ...(tr.revalidable ? [{ label: "Revalider", icon: "task_alt", onClick: () => corriger(tr, "revalider") }] : []),
+            ...(!annulee ? [{ label: "Annuler la transaction", icon: "block", danger: true, onClick: () => corriger(tr, "annuler") }] : []),
+        ];
+    };
 
     if (introuvable) {
         return (
@@ -147,12 +237,13 @@ export default function FinanceAccount({ onLogout, theme, toggleTheme }: Props) 
                                     <th className="px-5 py-3 font-semibold">Service</th>
                                     <th className="px-5 py-3 font-semibold text-right">Montant</th>
                                     <th className="px-5 py-3 font-semibold">État</th>
+                                    {donnees.peut_corriger && <th className="px-5 py-3 font-semibold text-right">Actions</th>}
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
                                 {t.data.length === 0 ? (
                                     <tr>
-                                        <td colSpan={5} className="px-5 py-12 text-center text-slate-500">Aucune transaction.</td>
+                                        <td colSpan={donnees.peut_corriger ? 6 : 5} className="px-5 py-12 text-center text-slate-500">Aucune transaction.</td>
                                     </tr>
                                 ) : (
                                     t.data.map((tr) => (
@@ -176,7 +267,20 @@ export default function FinanceAccount({ onLogout, theme, toggleTheme }: Props) 
                                                 <span className={cx("px-2 py-0.5 rounded-full text-xs font-medium", STATUTS[tr.status]?.ton ?? STATUTS.canceled.ton)}>
                                                     {STATUTS[tr.status]?.texte ?? tr.status}
                                                 </span>
+                                                {/* Pourquoi elle a bougé : la dernière correction et son motif. */}
+                                                {tr.correction && (
+                                                    <p className="mt-1 text-[11px] text-slate-400 max-w-[200px] truncate" title={tr.correction.motif}>
+                                                        {tr.correction.action === "devalider" ? "Dévalidée" : tr.correction.action === "annuler" ? "Annulée" : "Revalidée"} : {tr.correction.motif}
+                                                    </p>
+                                                )}
                                             </td>
+                                            {donnees.peut_corriger && (
+                                                <td className="px-5 py-3 text-right">
+                                                    <div className="flex justify-end">
+                                                        {actions(tr).length > 0 && <ActionsMenu items={actions(tr)} />}
+                                                    </div>
+                                                </td>
+                                            )}
                                         </tr>
                                     ))
                                 )}

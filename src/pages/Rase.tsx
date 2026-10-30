@@ -69,6 +69,9 @@ interface Course {
     is_paid: boolean;
     transaction_type: string;
     statut: string;
+    /** Commandée pour plus tard : `type` vaut « COURSE » dans les deux cas. */
+    is_reservation?: number | boolean;
+    order_id?: number | null;
     attributions: any[];
 }
 
@@ -213,6 +216,36 @@ const ActionDropdown = ({ course, openDetails, openMap, openReattributionModal }
     );
 };
 
+/**
+ * Immédiate, réservation ou livraison : ce que la colonne « Type » doit dire.
+ *
+ * Elle affichait `type`, qui vaut « COURSE » pour toutes — réservations
+ * comprises. C'est `is_reservation` qui les distingue ; une réservation porte
+ * en plus son rendez-vous, et une livraison Ongo Eat son `order_id`.
+ */
+const typeDeCourse = (course: Course) => {
+    if (course.order_id) {
+        return <span className="px-2 py-1 rounded-full text-xs font-semibold bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300">Livraison</span>;
+    }
+
+    if (Number(course.is_reservation) === 1 || course.is_reservation === true) {
+        const jour = course.date_depart ? new Date(`${String(course.date_depart).slice(0, 10)}T00:00:00`) : null;
+        const rendezVous = [
+            jour && !Number.isNaN(jour.getTime()) ? jour.toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) : null,
+            course.heure_depart ? `à ${String(course.heure_depart).slice(0, 5)}` : null,
+        ].filter(Boolean).join(" ");
+
+        return (
+            <span className="inline-flex flex-col">
+                <span className="w-fit px-2 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300">Réservation</span>
+                {rendezVous && <span className="mt-1 text-xs text-slate-500">{rendezVous}</span>}
+            </span>
+        );
+    }
+
+    return <span className="px-2 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">Immédiate</span>;
+};
+
 export default function Rase({ onLogout = () => { }, theme = 'light', toggleTheme = () => { } }: RaseProps) {
     const [courses, setCourses] = useState<Course[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
@@ -223,6 +256,8 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
     const [dateDebut, setDateDebut] = useState<string>("");
     const [dateFin, setDateFin] = useState<string>("");
     const [statut, setStatut] = useState<string>("Tous les statuts");
+    // Immédiates ou réservations : vide, les deux.
+    const [typeCourse, setTypeCourse] = useState<string>("");
     const [search, setSearch] = useState<string>("");
 
     const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
@@ -276,11 +311,12 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
 
     const handleFilter = useCallback(async (pageUrl?: string | React.MouseEvent) => {
         setLoading(true);
-        const postData: { debut?: string; fin?: string; statut?: string; search?: string } = {};
+        const postData: { debut?: string; fin?: string; statut?: string; search?: string; type?: string } = {};
 
         if (dateDebut) postData.debut = dateDebut;
         if (dateFin) postData.fin = dateFin;
         if (statut !== "Tous les statuts") postData.statut = statut;
+        if (typeCourse) postData.type = typeCourse;
         if (search) postData.search = search;
 
         let endpoint = "filter-course";
@@ -317,7 +353,7 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
         } finally {
             setLoading(false);
         }
-    }, [Api, dateDebut, dateFin, statut, search, notify]);
+    }, [Api, dateDebut, dateFin, statut, typeCourse, search, notify]);
 
     useEffect(() => {
         fetchCourses();
@@ -512,6 +548,18 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
                                         <option value="NO DRIVER FOUND">Aucun chauffeur trouvé</option>
                                     </select>
                                 </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Type de course</label>
+                                    <select
+                                        className="w-full px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 focus:ring-primary focus:border-primary text-sm"
+                                        onChange={(e) => setTypeCourse(e.target.value)}
+                                        value={typeCourse}
+                                    >
+                                        <option value="">Tous les types</option>
+                                        <option value="immediate">Immédiates</option>
+                                        <option value="reservation">Réservations</option>
+                                    </select>
+                                </div>
                               {/*   <div className="space-y-1.5">
                                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Recherche</label>
                                     <div className="relative">
@@ -564,7 +612,7 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
                                                     <tr key={course.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                                                         <td className="px-4 py-4 text-sm font-medium text-slate-900 dark:text-slate-100">#{course.id}</td>
                                                         <td className="px-4 py-4 text-sm text-primary font-bold">{course.code}</td>
-                                                        <td className="px-4 py-4 text-sm">{course.type || "Course Simple"}</td>
+                                                        <td className="px-4 py-4 text-sm whitespace-nowrap">{typeDeCourse(course)}</td>
                                                         <td className="px-4 py-4 whitespace-nowrap">
                                                             <div className="flex flex-col">
                                                                 <span className="text-sm font-semibold">{course.client ? `${course.client.prenom} ${course.client.nom}` : "Inconnu"}</span>
@@ -583,8 +631,8 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
                                                             {course.montant} FCFA
                                                             {/* Le boost à part : le client ne le paie pas, Ongo le verse au chauffeur. */}
                                                             {(course.boost_amount ?? 0) > 0 && (
-                                                                <span className="block mt-1 w-fit px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                                                                    Boost +{course.boost_amount} F
+                                                                <span className="block -mt-1 w-fit px-2 py-0.5 rounded-full text-[8px] font-bold text-green-700 dark:bg-amber-900/30 dark:text-amber-400">
+                                                                    Boost +{course.boost_amount} Frs
                                                                 </span>
                                                             )}
                                                         </td>

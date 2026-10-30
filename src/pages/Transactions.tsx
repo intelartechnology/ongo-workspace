@@ -8,6 +8,7 @@ import { StatCard, ActionsMenu, type ActionItem } from "../components/ui";
 import { toast } from "react-toastify";
 import { ArrowDownLeft, ArrowUpRight, Landmark, ReceiptText, type LucideIcon } from "lucide-react";
 import { notifier } from "../services/notifier";
+import { confirmerParNumero } from "../services/confirmerParNumero";
 
 /**
  * Le registre financier de la plateforme.
@@ -143,8 +144,12 @@ export default function Transactions({ onLogout, theme, toggleTheme }: Transacti
         });
         if (!isConfirmed || !motif) return;
 
+        // Une annulation se confirme par le numéro de la transaction.
+        const confirmation = action === "annuler" ? await confirmerParNumero(e.transaction_id) : undefined;
+        if (confirmation === null) return;
+
         try {
-            const { data } = await api.postData(`v3/admin/transactions/${e.transaction_id}/correction`, { action, motif: String(motif).trim() });
+            const { data } = await api.postData(`v3/admin/transactions/${e.transaction_id}/correction`, { action, motif: String(motif).trim(), ...(confirmation ? { confirmation } : {}) });
             if (data.success) {
                 toast.success(data.message);
                 charger();
