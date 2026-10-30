@@ -28,7 +28,36 @@ interface Attribution {
   id: number;
   statut: string;
   chauffeurs: Chauffeur;
+  created_at?: string | null;
+  distance?: string | number | null;
+  unite?: string | null;
+  duree?: string | number | null;
 }
+
+/**
+ * La distance entre le chauffeur et le client au moment où la course lui a été
+ * proposée, en mètres — et si elle est sûre.
+ *
+ * La recherche actuelle l'écrit en mètres (`unite` « m ») : elle est fiable.
+ * Les anciens chemins écrivaient « km » sans s'y tenir — 1.00 ou 4.20 en
+ * kilomètres, mais aussi 5200 ou 13873 qui sont des mètres. On les lit au
+ * mieux, et on le dit (« ≈ »). Zéro ou vide : inconnue.
+ */
+const priseEnCharge = (a: Attribution): { metres: number; sure: boolean } | null => {
+  const valeur = Number(a.distance);
+  if (!Number.isFinite(valeur) || valeur <= 0) return null;
+  if (a.unite === "m") return { metres: valeur, sure: true };
+  return { metres: valeur >= 50 ? valeur : valeur * 1000, sure: false };
+};
+
+const formaterDistance = ({ metres, sure }: { metres: number; sure: boolean }) =>
+  `${sure ? "" : "≈ "}${metres < 1000 ? `${Math.round(metres)} m` : `${(metres / 1000).toLocaleString("fr-FR", { maximumFractionDigits: 1 })} km`}`;
+
+/** Le délai estimé, en secondes, que seule la recherche actuelle écrit. */
+const formaterDelai = (a: Attribution) => {
+  const secondes = Number(a.duree);
+  return a.unite === "m" && Number.isFinite(secondes) && secondes > 0 ? `≈ ${Math.max(1, Math.round(secondes / 60))} min` : null;
+};
 
 interface Course {
   id: number;
@@ -97,7 +126,7 @@ const CourseDetailsModal: React.FC<CourseDetailsModalProps> = ({ selectedCourse,
                         <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase">Mise à jour</th>
                         <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase text-center">Statut</th>
                         <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase">Position</th>
-                        <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase">Statut du chauffeur</th>
+                        <th className="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase">Attribution</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -157,8 +186,25 @@ const CourseDetailsModal: React.FC<CourseDetailsModalProps> = ({ selectedCourse,
                                {attribution.chauffeurs?.vehicules?.[0]?.lat?.toFixed(4)} / {attribution.chauffeurs?.vehicules?.[0]?.lng?.toFixed(4)}
                              </div>
                           </td>
-                          <td>
-                              {attribution.chauffeurs?.statut || "N/A"}
+                          <td className="px-4 py-4">
+                            {/* Quand la course lui a été proposée, et à quelle distance du client il était. */}
+                            <div className="text-[11px] leading-tight text-slate-500">
+                              <div className="font-bold text-slate-700 dark:text-slate-300">
+                                {attribution.created_at ? moment(attribution.created_at).format("DD MMM YYYY à HH:mm:ss") : "N/A"}
+                              </div>
+                              {(() => {
+                                const distance = priseEnCharge(attribution);
+                                const delai = formaterDelai(attribution);
+                                return distance ? (
+                                  <div className="flex items-center gap-1 mt-1">
+                                    <span className="material-symbols-outlined text-sm">near_me</span>
+                                    {formaterDistance(distance)} du client{delai ? ` · ${delai}` : ""}
+                                  </div>
+                                ) : (
+                                  <div className="mt-1 opacity-70">Distance non enregistrée</div>
+                                );
+                              })()}
+                            </div>
                           </td>
                         </tr>
                       ))}
