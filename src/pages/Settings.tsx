@@ -71,7 +71,10 @@ const EXPLICATIONS: Record<string, string> = {
  */
 const SOUS_PARTIES: Record<string, { titre: string; cles: RegExp }[]> = {
     boost: [
-        { titre: "Approche longue", cles: /^boost\.approche_/ },
+        { titre: "Plafond", cles: /^boost\.plafond$/ },
+        { titre: "Approche longue : par km", cles: /^boost\.approche_/ },
+        { titre: "Approche longue : par minute", cles: /^boost\.temps_/ },
+        { titre: "Gain minimum du chauffeur", cles: /^boost\.gain_minimum$/ },
         { titre: "Distance d'approche", cles: /^distance\./ },
     ],
     eat: [
