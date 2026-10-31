@@ -33,6 +33,8 @@ interface Attribution {
   unite?: string | null;
   duree?: string | number | null;
   source_distance?: string | null;
+  /** Le boost proposé à ce chauffeur, selon sa distance et son rang. */
+  boost_propose?: number | null;
 }
 
 /**
@@ -208,6 +210,12 @@ const CourseDetailsModal: React.FC<CourseDetailsModalProps> = ({ selectedCourse,
                                   <div className="mt-1 opacity-70">Distance non enregistrée</div>
                                 );
                               })()}
+                              {Number(attribution.boost_propose ?? 0) > 0 && (
+                                <div className="flex items-center gap-1 mt-1 font-bold text-amber-600 dark:text-amber-400">
+                                  <span className="material-symbols-outlined text-sm">bolt</span>
+                                  Boost proposé : +{Number(attribution.boost_propose).toLocaleString("fr-FR")} F
+                                </div>
+                              )}
                             </div>
                           </td>
                         </tr>
