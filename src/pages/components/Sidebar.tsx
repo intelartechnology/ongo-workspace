@@ -54,6 +54,30 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, user, onLogout }) 
             .catch(() => setARelire(0));
     }, [location.pathname]);
 
+    /*
+     * Les demandes de location en attente.
+     *
+     * Relues à chaque page, et chaque minute : une demande qui arrive pendant
+     * qu'on reste sur un écran doit se voir sans avoir à changer de page.
+     */
+    const [locationsEnAttente, setLocationsEnAttente] = useState<number>(0);
+
+    useEffect(() => {
+        const relire = () =>
+            new ApiService()
+                .getData('v3/admin/rentals/pending')
+                .then(({ data }) => setLocationsEnAttente(data?.success ? (data.data?.total ?? 0) : 0))
+                .catch(() => setLocationsEnAttente(0));
+
+        relire();
+        const minuterie = window.setInterval(relire, 60_000);
+
+        return () => window.clearInterval(minuterie);
+    }, [location.pathname]);
+
+    /** Le nombre que porte une entrée, zéro si elle n'en porte pas. */
+    const compte = (item: Entree) => (item.badge === 'reviews' ? aRelire : item.badge === 'rentals' ? locationsEnAttente : 0);
+
     /** Le groupe où se trouve la page ouverte. */
     const groupeCourant = useMemo(
         () => GROUPES.find((g) => g.entrees.some((e) => e.path === location.pathname))?.cle,
@@ -168,7 +192,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, user, onLogout }) 
 
                 {/* La pastille ne s'affiche qu'avec un nombre : « 0 à relire »
                     attirerait l'œil pour rien, tous les jours. */}
-                {item.badge === 'reviews' && aRelire > 0 && pastille(aRelire)}
+                {compte(item) > 0 && pastille(compte(item))}
             </Link>
         );
     };
@@ -335,6 +359,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, user, onLogout }) 
 
                     {GROUPES.map((groupe) => {
                         const deplie = ouverts.includes(groupe.cle);
+                        // Replié, le groupe reprend les nombres de ses entrées :
+                        // sinon une demande en attente resterait cachée dessous.
+                        const enAttente = deplie ? 0 : groupe.entrees.reduce((total, e) => total + compte(e), 0);
 
                         return (
                             <div key={groupe.cle}>
@@ -352,8 +379,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen, user, onLogout }) 
                                 >
                                     <groupe.icon className="size-[19px] shrink-0" strokeWidth={1.75} />
                                     <span className="truncate">{groupe.titre}</span>
+                                    {enAttente > 0 && pastille(enAttente)}
                                     <ChevronUp
-                                        className={`size-4 ml-auto transition-transform ${deplie ? '' : 'rotate-180'}`}
+                                        className={`size-4 ${enAttente > 0 ? '' : 'ml-auto'} transition-transform ${deplie ? '' : 'rotate-180'}`}
                                         strokeWidth={2}
                                     />
                                 </button>

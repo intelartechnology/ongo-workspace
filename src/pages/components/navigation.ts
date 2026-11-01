@@ -44,6 +44,7 @@ import {
     UsersRound,
     UtensilsCrossed,
     Wallet,
+    Zap,
     type LucideIcon,
 } from 'lucide-react';
 
@@ -51,7 +52,7 @@ export interface Entree {
     icon: LucideIcon;
     label: string;
     path: string;
-    badge?: 'reviews';
+    badge?: 'reviews' | 'rentals';
 }
 
 export interface Groupe {
@@ -94,6 +95,8 @@ export const GROUPES: Groupe[] = [
             { icon: UserSearch, label: 'Demandes', path: '/requests' },
             { icon: Gift, label: 'Bonus chauffeurs', path: '/driver-bonuses' },
             { icon: Rocket, label: 'Boosts', path: '/boosts' },
+            // Le prix qui monte quand les chauffeurs manquent : creneaux et zones.
+            { icon: Zap, label: 'Majoration des prix', path: '/surge' },
             { icon: ClipboardCheck, label: 'À régulariser', path: '/courses/a-regulariser' },
         ],
     },
@@ -163,7 +166,7 @@ export const GROUPES: Groupe[] = [
         titre: 'Location',
         icon: KeyRound,
         entrees: [
-            { icon: CalendarDays, label: 'Réservations', path: '/rentals' },
+            { icon: CalendarDays, label: 'Réservations', path: '/rentals', badge: 'rentals' },
             { icon: CarFront, label: 'Véhicules', path: '/rental-vehicles' },
             { icon: Shapes, label: 'Catégories', path: '/rental-categories' },
             { icon: Store, label: 'Agences', path: '/rental-agencies' },

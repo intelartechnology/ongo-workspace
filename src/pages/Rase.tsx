@@ -600,8 +600,71 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
                         </div>
 
                         {/* Data Table */}
-                        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-                            <div className="overflow-x-auto custom-scrollbar">
+                        {/* `overflow-hidden` sur grand écran seulement : en cartes, il
+                            couperait le menu Action de la dernière course. */}
+                        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 lg:overflow-hidden">
+                            {/* Sur petit écran : une carte par course, en pile, comme
+                                « Dernières courses » du tableau de bord. Onze colonnes
+                                ne tiennent pas, et les faire défiler de côté empêche
+                                d'en lire une seule. */}
+                            <div className="divide-y divide-slate-100 dark:divide-slate-800 lg:hidden">
+                                {loading ? (
+                                    <Loading />
+                                ) : courses.length > 0 ? (
+                                    courses.map((course: any) => (
+                                        <div key={course.id} className="space-y-3 px-5 py-4">
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div className="min-w-0">
+                                                    <p className="truncate text-sm font-semibold text-slate-900 dark:text-white">
+                                                        {course.client ? `${course.client.prenom} ${course.client.nom}` : "Inconnu"}
+                                                    </p>
+                                                    <p className="truncate font-mono text-[11px] text-slate-500">
+                                                        #{course.id} · <span className="font-bold text-primary">{course.code}</span> · {course.client?.telephone || "N/A"}
+                                                    </p>
+                                                </div>
+                                                <div className="flex shrink-0 items-start gap-2">
+                                                    <div className="flex flex-col items-end gap-1">
+                                                        {getStatusBadge(course.statut)}
+                                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${course.is_paid ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
+                                                            {course.transaction_type || "CASH"}
+                                                        </span>
+                                                    </div>
+                                                    <ActionDropdown
+                                                        course={course}
+                                                        openDetails={openDetails}
+                                                        openMap={openMap}
+                                                        openReattributionModal={openReattributionModal}
+                                                        onCloture={(id: number, nouveau: string) =>
+                                                            setCourses((liste) => liste.map((c) => (c.id === id ? { ...c, statut: nouveau } : c)))
+                                                        }
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <Trajet depart={course.lieu_depart} arrivee={course.lieu_arrive} largeur="" />
+
+                                            <div className="flex items-center justify-between gap-3 border-t border-slate-100 pt-3 text-[13px] dark:border-slate-800">
+                                                <span className="min-w-0 truncate text-slate-500">
+                                                    {typeDeCourse(course)} · {course.categorie_vehicule?.libelle || "N/A"} · {course.date_depart} {course.heure_depart}
+                                                </span>
+                                                <span className="shrink-0 text-right font-bold text-slate-900 dark:text-white">
+                                                    {course.montant} FCFA
+                                                    {(course.boost_amount ?? 0) > 0 && (
+                                                        <span className="block text-[10px] font-bold text-green-700 dark:text-amber-400">
+                                                            Boost +{course.boost_amount} Frs
+                                                        </span>
+                                                    )}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p className="px-5 py-10 text-center text-sm text-slate-500">Aucune course trouvée</p>
+                                )}
+                            </div>
+
+                            {/* Sur grand écran : le tableau. */}
+                            <div className="hidden lg:block overflow-x-auto custom-scrollbar">
                                 {loading ? (
                                     <Loading />
                                 ) : (
@@ -686,11 +749,11 @@ export default function Rase({ onLogout = () => { }, theme = 'light', toggleThem
 
                             {/* Pagination */}
                             {pagination && pagination.length > 0 && (
-                                <div className="p-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                                <div className="p-4 border-t border-slate-200 dark:border-slate-800 flex flex-col items-center justify-between gap-3 sm:flex-row">
                                     <p className="text-sm text-slate-500">
                                         Affichage de {meta?.from || 0} à {meta?.to || 0} sur {meta?.total || 0} courses
                                     </p>
-                                    <div className="flex items-center gap-2 overflow-x-auto max-w-[500px]">
+                                    <div className="flex items-center gap-2 overflow-x-auto max-w-full sm:max-w-[500px]">
                                         {pagination.map((item: any, index: number) => {
                                             // Handling previous/next buttons labels
                                             let label = item.label;

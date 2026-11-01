@@ -24,6 +24,7 @@ import CarpoolHistory from './pages/CarpoolHistory';
 import CarpoolRefunds from './pages/CarpoolRefunds';
 import DriverBonuses from './pages/DriverBonuses';
 import Boosts from './pages/Boosts';
+import Surge from './pages/Surge';
 import Transactions from './pages/Transactions';
 import Moderation from './pages/Moderation';
 import Settings from './pages/Settings';
@@ -565,6 +566,14 @@ function App() {
           element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>
               <Boosts onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/surge"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <Surge onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
             </ProtectedRoute>
           }
         />

@@ -48,6 +48,7 @@ const TITRES: Record<string, string> = {
     commission: "Partage des recettes",
     courses: "Attribution des courses",
     boost: "Boost des chauffeurs",
+    surge: "Majoration des prix",
     eat: "Ongo Eat",
     transport: "Transport",
     general: "Général",
@@ -60,6 +61,7 @@ const EXPLICATIONS: Record<string, string> = {
     transport: "Les frais de service du bus et du train, fixes et non remboursables.",
     courses: "Qui reçoit une course : jusqu'où on cherche un chauffeur, et lesquels sont tenus pour joignables.",
     boost: "La prime qu'Ongo ajoute à une course difficile à prendre, payée par Ongo et sans commission. Chaque part s'ajoute aux autres ; le total reste plafonné.",
+    surge: "Le prix que paie le client monte quand les chauffeurs manquent. Les créneaux et les zones se posent dans « Courses et flotte › Majoration des prix » ; les coefficients se multiplient, dans la limite du plafond. 120 % = ×1,2.",
 };
 
 /**
@@ -76,6 +78,12 @@ const SOUS_PARTIES: Record<string, { titre: string; cles: RegExp }[]> = {
         { titre: "Approche longue : par minute", cles: /^boost\.temps_/ },
         { titre: "Gain minimum du chauffeur", cles: /^boost\.gain_minimum$/ },
         { titre: "Distance d'approche", cles: /^distance\./ },
+    ],
+    surge: [
+        { titre: "Interrupteur", cles: /^surge\.actif$/ },
+        { titre: "Limites", cles: /^surge\.(plafond|plancher)_pct$/ },
+        { titre: "Pluie", cles: /^surge\.pluie_/ },
+        { titre: "Livraisons et boost", cles: /^surge\.(livraisons|deduire_du_boost)$/ },
     ],
     eat: [
         { titre: "Commandes et zone de service", cles: /^eat\.(acceptance_delay_minutes|search_radius_km)$/ },
