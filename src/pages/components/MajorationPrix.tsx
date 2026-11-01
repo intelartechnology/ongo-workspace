@@ -3,6 +3,7 @@ import Swal from "sweetalert2";
 import ApiService from "../../services/ApiService";
 import Loading from "../../components/Loading";
 import BlocReglages from "./BlocReglages";
+import FraisApproche from "./FraisApproche";
 import { useReglages } from "./useReglages";
 
 /**
@@ -782,11 +783,12 @@ export default function MajorationPrix() {
                             <h2 className="text-lg font-bold text-slate-900 dark:text-white">Frais d'approche</h2>
                             <p className="text-sm text-slate-500">
                                 Le trajet du chauffeur le plus proche jusqu'au client, au-delà de la part offerte, au prix du km et de la minute de la
-                                catégorie. Ajoutés au prix après la majoration, sans être majorés. Figés à l'estimation : si ce chauffeur refuse, le client
-                                garde son prix.
+                                catégorie. La part offerte (km et minutes) et le plafond se règlent par catégorie, ci-dessous. Ajoutés au prix après la
+                                majoration, sans être majorés. Figés à l'estimation : si ce chauffeur refuse, le client garde son prix.
                             </p>
                         </div>
                         <BlocReglages reglages={reglages} cles={/^surge\.approche_/} />
+                        <FraisApproche />
                     </section>
 
                     {/* Ce qui touche aux livraisons et au boost : rarement changé, en bas. */}
