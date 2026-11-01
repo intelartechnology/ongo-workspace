@@ -23,6 +23,21 @@ interface Creneau {
     heure_fin: string;
     coefficient_pct: number;
     actif: boolean | number;
+    /** `auto` : appris de l'historique, refait chaque lundi. */
+    source?: "manuel" | "auto";
+    commandes?: number | null;
+    taux_echec_pct?: number | null;
+}
+
+/** Une ville où la pluie se mesure, avec sa dernière mesure. */
+interface Ville {
+    id: number;
+    nom: string;
+    lat: number;
+    lng: number;
+    rayon_km: number;
+    actif: boolean | number;
+    derniere: { condition: string; precipitation_mm: number; pleut: boolean; mesure_at: string; fraiche: boolean } | null;
 }
 
 interface Zone {
@@ -59,7 +74,19 @@ interface Estimation {
 }
 
 interface EtatDuSurge {
-    etat: { actif: boolean; pluie: boolean; pluie_pct: number; plafond_pct: number; plancher_pct: number };
+    etat: {
+        actif: boolean;
+        pluie_pct: number;
+        plafond_pct: number;
+        plancher_pct: number;
+        pluie_auto: boolean;
+        meteo_cle: boolean;
+        tension: boolean;
+        echecs: boolean;
+        apprentissage: boolean;
+    };
+    villes: Ville[];
+    appels_par_ville: number;
     creneaux: Creneau[];
     zones: Zone[];
     categories: Categorie[];
@@ -71,6 +98,8 @@ interface LigneApercu {
     libelle: string;
     pct: number;
     raisons: Raison[];
+    /** Ce que la demande a compté autour du point, maintenant. */
+    mesure?: { clients: number; chauffeurs: number; echecs: number };
 }
 
 interface SurgeProps {
@@ -108,6 +137,19 @@ const etiquette = "text-xs font-semibold text-slate-500";
 const carte = "rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900";
 
 const creneauVide = { libelle: "", jours: [1, 2, 3, 4, 5], heure_debut: "17:00", heure_fin: "20:00", coefficient_pct: 120 };
+const villeVide = { nom: "", lat: "", lng: "", rayon_km: 15 };
+
+/** Les types de temps de Google, en français, pour l'écran. */
+const TEMPS: Record<string, string> = {
+    CLEAR: "Dégagé", MOSTLY_CLEAR: "Plutôt dégagé", PARTLY_CLOUDY: "Partiellement nuageux", MOSTLY_CLOUDY: "Plutôt nuageux",
+    CLOUDY: "Couvert", WINDY: "Venteux", CHANCE_OF_SHOWERS: "Averses possibles", LIGHT_RAIN_SHOWERS: "Averses légères",
+    SCATTERED_SHOWERS: "Averses éparses", LIGHT_RAIN: "Pluie légère", LIGHT_TO_MODERATE_RAIN: "Pluie légère à modérée",
+    RAIN: "Pluie", RAIN_SHOWERS: "Averses", WIND_AND_RAIN: "Vent et pluie", MODERATE_TO_HEAVY_RAIN: "Pluie modérée à forte",
+    HEAVY_RAIN: "Forte pluie", HEAVY_RAIN_SHOWERS: "Fortes averses", RAIN_PERIODICALLY_HEAVY: "Pluie parfois forte",
+    THUNDERSTORM: "Orage", THUNDERSHOWER: "Averse orageuse", LIGHT_THUNDERSTORM_RAIN: "Pluie orageuse légère",
+    SCATTERED_THUNDERSTORMS: "Orages épars", HEAVY_THUNDERSTORM: "Fort orage", HAIL: "Grêle", HAIL_SHOWERS: "Averses de grêle",
+};
+
 const zoneVide = { libelle: "", lat: String(CENTRE.lat), lng: String(CENTRE.lng), rayon_m: 1000, debut: "", fin: "", coefficient_pct: 130, categorie_id: "" };
 
 /** Le message d'une erreur Laravel : la validation, sinon le texte brut. */
@@ -122,6 +164,7 @@ export default function Surge({ onLogout, theme, toggleTheme }: SurgeProps) {
     const [chargement, setChargement] = useState(true);
     const [creneau, setCreneau] = useState({ ...creneauVide });
     const [zone, setZone] = useState({ ...zoneVide });
+    const [ville, setVille] = useState({ ...villeVide });
     const [apercu, setApercu] = useState<{ actif: boolean; a: string; categories: LigneApercu[] } | null>(null);
     const [pointApercu, setPointApercu] = useState({ lat: String(CENTRE.lat), lng: String(CENTRE.lng), a: "" });
     const navigate = useNavigate();
@@ -202,6 +245,77 @@ export default function Surge({ onLogout, theme, toggleTheme }: SurgeProps) {
         charger();
     };
 
+    const apprendre = async () => {
+        try {
+            const { data } = await api.postData("v3/admin/surge/apprendre", {});
+            const b = data.data;
+            Swal.fire({
+                icon: "success",
+                title: "Historique analysé",
+                text: `${b.creneaux} créneau(x) appris : ${b.crees} nouveau(x), ${b.gardes} gardé(s), ${b.supprimes} retiré(s).`,
+            });
+            charger();
+        } catch (erreur) {
+            Swal.fire({ icon: "warning", title: "Analyse impossible", text: messageDErreur(erreur) });
+        }
+    };
+
+    const mesurerMeteo = async () => {
+        try {
+            const { data } = await api.postData("v3/admin/surge/meteo", {});
+            if (!data.success) Swal.fire({ icon: "warning", title: "Météo indisponible", text: data.message });
+            charger();
+        } catch (erreur) {
+            Swal.fire({ icon: "warning", title: "Météo indisponible", text: messageDErreur(erreur) });
+        }
+    };
+
+    const ajouterVille = async () => {
+        try {
+            await api.postData("v3/admin/surge/villes", { ...ville, lat: Number(ville.lat), lng: Number(ville.lng) });
+            setVille({ ...villeVide });
+            charger();
+        } catch (erreur) {
+            Swal.fire({ icon: "warning", title: "Ville refusée", text: messageDErreur(erreur) });
+        }
+    };
+
+    const basculerVille = async (v: Ville) => {
+        try {
+            await api.updateData(`v3/admin/surge/villes/${v.id}`, { nom: v.nom, lat: v.lat, lng: v.lng, rayon_km: v.rayon_km, actif: !v.actif });
+            charger();
+        } catch (erreur) {
+            Swal.fire({ icon: "warning", title: "Modification refusée", text: messageDErreur(erreur) });
+        }
+    };
+
+    const supprimerVille = async (v: Ville) => {
+        const choix = await Swal.fire({
+            icon: "question",
+            title: `Ne plus mesurer la pluie à ${v.nom} ?`,
+            showCancelButton: true,
+            confirmButtonText: "Supprimer",
+            cancelButtonText: "Annuler",
+        });
+        if (!choix.isConfirmed) return;
+
+        await api.deleteData(`v3/admin/surge/villes/${v.id}`);
+        charger();
+    };
+
+    /** Un facteur automatique : allumé ou non, en une pastille. */
+    const facteur = (nom: string, allume: boolean) => (
+        <span
+            key={nom}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                allume ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" : "bg-slate-100 text-slate-500 dark:bg-slate-800"
+            }`}
+        >
+            <span className={`size-1.5 rounded-full ${allume ? "bg-emerald-500" : "bg-slate-400"}`} />
+            {nom}
+        </span>
+    );
+
     const calculerApercu = async () => {
         try {
             const { data } = await api.getData("v3/admin/surge/apercu", {
@@ -268,8 +382,8 @@ export default function Surge({ onLogout, theme, toggleTheme }: SurgeProps) {
                                     {etat.etat.actif ? "Active" : "Coupée — aucun prix n'est majoré"}
                                 </p>
                                 <p className="text-sm text-slate-500 mt-0.5">
-                                    Plafond {coefficient(etat.etat.plafond_pct)} · plancher {coefficient(etat.etat.plancher_pct)} · pluie{" "}
-                                    {etat.etat.pluie ? `allumée (${coefficient(etat.etat.pluie_pct)})` : "éteinte"}
+                                    Plafond {coefficient(etat.etat.plafond_pct)} · plancher {coefficient(etat.etat.plancher_pct)} · pluie par la météo{" "}
+                                    {etat.etat.pluie_auto ? `activée (${coefficient(etat.etat.pluie_pct)})` : "coupée"}
                                 </p>
                             </div>
                             <button onClick={() => navigate("/settings?onglet=surge")} className="text-sm text-primary underline">
@@ -277,13 +391,137 @@ export default function Surge({ onLogout, theme, toggleTheme }: SurgeProps) {
                             </button>
                         </div>
 
+                        {/* Les facteurs automatiques. */}
+                        <div className={`${carte} p-4 space-y-3`}>
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                                <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Facteurs automatiques</p>
+                                <button onClick={() => navigate("/settings?onglet=surge")} className="text-sm text-primary underline">
+                                    Régler
+                                </button>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                {facteur("Pluie par la météo", etat.etat.pluie_auto && etat.etat.meteo_cle)}
+                                {facteur("Manque de chauffeurs", etat.etat.tension)}
+                                {facteur("Commandes sans chauffeur", etat.etat.echecs)}
+                                {facteur("Créneaux appris (lundi 3 h 30)", etat.etat.apprentissage)}
+                            </div>
+                        </div>
+
                         {/* Les créneaux. */}
+                        {/* La pluie, ville par ville : Google Weather, une mesure toutes les dix minutes. */}
                         <section className="space-y-3">
                             <div>
-                                <h2 className="text-lg font-bold text-slate-900 dark:text-white">Créneaux horaires</h2>
+                                <div className="flex flex-wrap items-center justify-between gap-3">
+                                    <h2 className="text-lg font-bold text-slate-900 dark:text-white">Pluie par ville</h2>
+                                    <button onClick={mesurerMeteo} className="px-3 py-1.5 bg-primary/10 text-primary font-bold rounded-lg text-sm">
+                                        Mesurer maintenant
+                                    </button>
+                                </div>
+                                <p className="text-sm text-slate-500">
+                                    Google Weather, toutes les 10 minutes, dans chaque ville active. Un départ appartient à la ville la plus proche dont le
+                                    rayon le contient ; hors de toute ville, la pluie ne joue pas. Pour ouvrir une ville, ajoutez-la ici.
+                                </p>
+                                {(() => {
+                                    const appels = etat.villes.filter((v) => v.actif).length * etat.appels_par_ville;
+                                    const payants = Math.max(0, appels - 10000);
+                                    return (
+                                        <p className="text-[13px] text-slate-500 mt-1">
+                                            Environ {appels.toLocaleString("fr-FR")} appels par mois
+                                            {payants === 0
+                                                ? " : dans les 10 000 gratuits."
+                                                : ` : ${payants.toLocaleString("fr-FR")} au-delà des 10 000 gratuits, soit environ ${((payants / 1000) * 0.15).toLocaleString("fr-FR", { maximumFractionDigits: 2 })} $.`}
+                                        </p>
+                                    );
+                                })()}
+                                {!etat.etat.meteo_cle && (
+                                    <p className="text-[13px] text-amber-600 mt-1">La clé GOOGLE_WEATHER_KEY n'est pas posée sur le serveur : aucune mesure.</p>
+                                )}
+                                {etat.etat.meteo_cle && !etat.etat.pluie_auto && (
+                                    <p className="text-[13px] text-amber-600 mt-1">« Pluie par la météo » est coupée dans les réglages : la pluie ne majore pas.</p>
+                                )}
+                            </div>
+
+                            <div className={`${carte} divide-y divide-slate-100 dark:divide-slate-800`}>
+                                {etat.villes.length === 0 && <p className="px-5 py-8 text-center text-sm text-slate-500">Aucune ville</p>}
+                                {etat.villes.map((v) => (
+                                    <div key={v.id} className={`px-5 py-4 flex flex-wrap items-center justify-between gap-3 ${v.actif ? "" : "opacity-50"}`}>
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                                                {v.nom}
+                                                {v.derniere && v.derniere.fraiche && (
+                                                    <span
+                                                        className={`ml-2 align-middle px-2 py-0.5 rounded-full text-[11px] font-bold ${
+                                                            v.derniere.pleut
+                                                                ? "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400"
+                                                                : "bg-slate-100 text-slate-500 dark:bg-slate-800"
+                                                        }`}
+                                                    >
+                                                        {v.derniere.pleut ? "Il pleut" : "Sec"}
+                                                    </span>
+                                                )}
+                                            </p>
+                                            <p className="text-[13px] text-slate-500">
+                                                {v.rayon_km} km autour de {Number(v.lat).toFixed(4)}, {Number(v.lng).toFixed(4)} ·{" "}
+                                                {v.derniere
+                                                    ? `${TEMPS[v.derniere.condition] ?? v.derniere.condition}, ${Number(v.derniere.precipitation_mm).toLocaleString("fr-FR")} mm à ${new Date(
+                                                          v.derniere.mesure_at,
+                                                      ).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}${v.derniere.fraiche ? "" : " (trop ancienne)"}`
+                                                    : "aucune mesure"}
+                                                {!v.actif && " · non mesurée"}
+                                            </p>
+                                        </div>
+                                        <div className="flex items-center gap-3 text-sm">
+                                            <button onClick={() => basculerVille(v)} className="text-primary underline">
+                                                {v.actif ? "Ne plus mesurer" : "Mesurer"}
+                                            </button>
+                                            <button onClick={() => supprimerVille(v)} className="text-red-600 underline">
+                                                Supprimer
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className={`${carte} p-5 space-y-4`}>
+                                <p className="text-sm font-bold text-slate-900 dark:text-white">Ajouter une ville</p>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                                    <label className={etiquette}>
+                                        Nom
+                                        <input value={ville.nom} onChange={(e) => setVille({ ...ville, nom: e.target.value })} placeholder="Bafoussam" className={champ} />
+                                    </label>
+                                    <label className={etiquette}>
+                                        Latitude du centre
+                                        <input value={ville.lat} onChange={(e) => setVille({ ...ville, lat: e.target.value })} placeholder="5.4781" className={champ} />
+                                    </label>
+                                    <label className={etiquette}>
+                                        Longitude du centre
+                                        <input value={ville.lng} onChange={(e) => setVille({ ...ville, lng: e.target.value })} placeholder="10.4176" className={champ} />
+                                    </label>
+                                    <label className={etiquette}>
+                                        Rayon (km)
+                                        <input type="number" min={1} max={200} value={ville.rayon_km} onChange={(e) => setVille({ ...ville, rayon_km: Number(e.target.value) })} className={champ} />
+                                    </label>
+                                    <div className="flex items-end">
+                                        <button onClick={ajouterVille} className="w-full py-2 bg-primary text-white font-bold rounded-lg text-sm">
+                                            Ajouter
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section className="space-y-3">
+                            <div>
+                                <div className="flex flex-wrap items-center justify-between gap-3">
+                                    <h2 className="text-lg font-bold text-slate-900 dark:text-white">Créneaux horaires</h2>
+                                    <button onClick={apprendre} className="px-3 py-1.5 bg-primary/10 text-primary font-bold rounded-lg text-sm">
+                                        Analyser l'historique maintenant
+                                    </button>
+                                </div>
                                 <p className="text-sm text-slate-500">
                                     Un créneau majore toutes les catégories. Deux créneaux qui se chevauchent ne se cumulent pas : le plus fort l'emporte.
-                                    Un créneau qui passe minuit (22:00 – 02:00) appartient au jour où il commence.
+                                    Un créneau qui passe minuit (22:00 – 02:00) appartient au jour où il commence. Les créneaux « Appris » viennent des
+                                    heures où les commandes restent sans chauffeur ; chaque analyse les refait.
                                 </p>
                             </div>
 
@@ -294,10 +532,16 @@ export default function Surge({ onLogout, theme, toggleTheme }: SurgeProps) {
                                         <div className="min-w-0">
                                             <p className="text-sm font-semibold text-slate-900 dark:text-white">
                                                 {c.libelle} <span className="ml-1 font-bold text-amber-600 dark:text-amber-400">{coefficient(c.coefficient_pct)}</span>
+                                                {c.source === "auto" && (
+                                                    <span className="ml-2 align-middle px-2 py-0.5 rounded-full text-[11px] font-bold bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400">
+                                                        Appris
+                                                    </span>
+                                                )}
                                             </p>
                                             <p className="text-[13px] text-slate-500">
                                                 {joursLisibles(c.jours)} · {c.heure_debut.slice(0, 5)} – {c.heure_fin.slice(0, 5)}
-                                                {!c.actif && " · désactivé"}
+                                                {c.source === "auto" && c.commandes != null && ` · ${c.commandes} commandes, ${c.taux_echec_pct} % sans chauffeur`}
+                                                {!c.actif && (c.source === "auto" ? " · proposé, à activer" : " · désactivé")}
                                             </p>
                                         </div>
                                         {actionsDeLigne("creneaux", c)}
@@ -458,6 +702,7 @@ export default function Surge({ onLogout, theme, toggleTheme }: SurgeProps) {
                                 <h2 className="text-lg font-bold text-slate-900 dark:text-white">Aperçu</h2>
                                 <p className="text-sm text-slate-500">
                                     Le coefficient qu'aurait chaque catégorie à un point et à un instant, même majoration coupée : pour vérifier avant d'allumer.
+                                    L'instant ne vaut que pour les créneaux et les zones : la pluie et la demande se mesurent maintenant.
                                 </p>
                             </div>
                             <div className={`${carte} p-5 space-y-4`}>
@@ -494,6 +739,11 @@ export default function Surge({ onLogout, theme, toggleTheme }: SurgeProps) {
                                                     {l.raisons.length > 0 && (
                                                         <span className="block text-[12px] text-slate-500">
                                                             {l.raisons.map((r) => `${r.libelle} ${coefficient(r.pct)}`).join(" · ")}
+                                                        </span>
+                                                    )}
+                                                    {l.mesure && (
+                                                        <span className="block text-[12px] text-slate-400">
+                                                            Maintenant : {l.mesure.clients} client(s), {l.mesure.chauffeurs} chauffeur(s) libre(s), {l.mesure.echecs} échec(s)
                                                         </span>
                                                     )}
                                                 </span>

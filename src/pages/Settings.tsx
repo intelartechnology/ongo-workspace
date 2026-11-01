@@ -83,6 +83,9 @@ const SOUS_PARTIES: Record<string, { titre: string; cles: RegExp }[]> = {
         { titre: "Interrupteur", cles: /^surge\.actif$/ },
         { titre: "Limites", cles: /^surge\.(plafond|plancher)_pct$/ },
         { titre: "Pluie", cles: /^surge\.pluie_/ },
+        { titre: "Manque de chauffeurs (automatique)", cles: /^surge\.tension_/ },
+        { titre: "Commandes sans chauffeur (automatique)", cles: /^surge\.echecs_/ },
+        { titre: "Créneaux appris de l'historique", cles: /^surge\.apprentissage/ },
         { titre: "Livraisons et boost", cles: /^surge\.(livraisons|deduire_du_boost)$/ },
     ],
     eat: [
