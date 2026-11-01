@@ -8,6 +8,7 @@ import MainLayout from "./MainLayout";
 import ApiService from "../services/ApiService";
 import Loading from "../components/Loading";
 import TarifsCourses from "./components/TarifsCourses";
+import MajorationPrix from "./components/MajorationPrix";
 
 /**
  * Les réglages de la plateforme.
@@ -48,7 +49,6 @@ const TITRES: Record<string, string> = {
     commission: "Partage des recettes",
     courses: "Attribution des courses",
     boost: "Boost des chauffeurs",
-    surge: "Majoration des prix",
     eat: "Ongo Eat",
     transport: "Transport",
     general: "Général",
@@ -61,7 +61,6 @@ const EXPLICATIONS: Record<string, string> = {
     transport: "Les frais de service du bus et du train, fixes et non remboursables.",
     courses: "Qui reçoit une course : jusqu'où on cherche un chauffeur, et lesquels sont tenus pour joignables.",
     boost: "La prime qu'Ongo ajoute à une course difficile à prendre, payée par Ongo et sans commission. Chaque part s'ajoute aux autres ; le total reste plafonné.",
-    surge: "Le prix que paie le client monte quand les chauffeurs manquent. Les créneaux et les zones se posent dans « Courses et flotte › Majoration des prix » ; les coefficients se multiplient, dans la limite du plafond. 120 % = ×1,2.",
 };
 
 /**
@@ -78,15 +77,6 @@ const SOUS_PARTIES: Record<string, { titre: string; cles: RegExp }[]> = {
         { titre: "Approche longue : par minute", cles: /^boost\.temps_/ },
         { titre: "Gain minimum du chauffeur", cles: /^boost\.gain_minimum$/ },
         { titre: "Distance d'approche", cles: /^distance\./ },
-    ],
-    surge: [
-        { titre: "Interrupteur", cles: /^surge\.actif$/ },
-        { titre: "Limites", cles: /^surge\.(plafond|plancher)_pct$/ },
-        { titre: "Pluie", cles: /^surge\.pluie_/ },
-        { titre: "Manque de chauffeurs (automatique)", cles: /^surge\.tension_/ },
-        { titre: "Commandes sans chauffeur (automatique)", cles: /^surge\.echecs_/ },
-        { titre: "Créneaux appris de l'historique", cles: /^surge\.apprentissage/ },
-        { titre: "Livraisons et boost", cles: /^surge\.(livraisons|deduire_du_boost)$/ },
     ],
     eat: [
         { titre: "Commandes et zone de service", cles: /^eat\.(acceptance_delay_minutes|search_radius_km)$/ },
@@ -114,6 +104,27 @@ const sousParties = (groupe: string, lignes: Reglage[]): { titre: string | null;
  */
 const COURSES = "courses";
 
+/**
+ * Les sous-onglets de « Courses » : tout ce qui règle une course, du prix
+ * payé par le client à ce que gagne le chauffeur.
+ *
+ * Le boost et la majoration étaient chacun un onglet à part — et la
+ * majoration avait en plus sa propre page. Ils parlent tous de la même
+ * course : ils sont rangés ensemble.
+ */
+const SOUS_COURSES: { cle: string; titre: string; groupe?: string }[] = [
+    { cle: "tarifs", titre: "Tarifs" },
+    { cle: "attribution", titre: "Attribution", groupe: "courses" },
+    { cle: "boost", titre: "Boost", groupe: "boost" },
+    { cle: "majoration", titre: "Majoration des prix" },
+];
+
+/**
+ * Les groupes du serveur rangés sous « Courses » plutôt qu'en onglet. Un
+ * ancien lien (`?onglet=boost`) ouvre leur sous-onglet.
+ */
+const RANGES_SOUS_COURSES: Record<string, string> = { boost: "boost", surge: "majoration" };
+
 export default function Settings({ onLogout, theme, toggleTheme }: SettingsProps) {
     const [groupes, setGroupes] = useState<Record<string, Reglage[]>>({});
     const [brouillon, setBrouillon] = useState<Record<string, string>>({});
@@ -128,9 +139,18 @@ export default function Settings({ onLogout, theme, toggleTheme }: SettingsProps
     // L'onglet est dans l'adresse : une page rechargée ou un lien envoyé
     // ouvre le bon. Un onglet inconnu retombe sur les courses.
     const [parametres, setParametres] = useSearchParams();
-    const demande = parametres.get("onglet") ?? COURSES;
+    const brut = parametres.get("onglet") ?? COURSES;
+    const demande = RANGES_SOUS_COURSES[brut] ? COURSES : brut;
     const onglet = demande === COURSES || groupes[demande] || chargement ? demande : COURSES;
     const choisir = (cle: string) => setParametres(cle === COURSES ? {} : { onglet: cle }, { replace: true });
+
+    // Le sous-onglet de « Courses », lui aussi dans l'adresse.
+    const sousDemande = RANGES_SOUS_COURSES[brut] ?? parametres.get("sous");
+    const sous = SOUS_COURSES.find((s) => s.cle === sousDemande) ?? SOUS_COURSES[0];
+    const choisirSous = (cle: string) => setParametres(cle === SOUS_COURSES[0].cle ? {} : { onglet: COURSES, sous: cle }, { replace: true });
+
+    // Le groupe de réglages affiché : celui de l'onglet, ou du sous-onglet.
+    const groupe = onglet === COURSES ? sous.groupe : onglet;
 
     const charger = async () => {
         setChargement(true);
@@ -139,7 +159,10 @@ export default function Settings({ onLogout, theme, toggleTheme }: SettingsProps
             const { data } = await api.getData("v3/admin/settings");
 
             if (data.success) {
-                const recus: Record<string, Reglage[]> = data.data ?? {};
+                // La majoration lit ses réglages elle-même, à côté de ses listes.
+                const recus: Record<string, Reglage[]> = Object.fromEntries(
+                    Object.entries((data.data ?? {}) as Record<string, Reglage[]>).filter(([g]) => g !== "surge"),
+                );
                 setGroupes(recus);
 
                 // Le brouillon part de ce que dit le serveur : tant qu'on n'a
@@ -226,7 +249,7 @@ export default function Settings({ onLogout, theme, toggleTheme }: SettingsProps
                     réglage qui pèse le plus sur chaque course. Les autres suivent les
                     groupes du serveur : un groupe nouveau fait un onglet de plus. */}
                 <nav className="mb-6 flex gap-1 overflow-x-auto border-b border-slate-200 dark:border-slate-800" aria-label="Domaines de réglages">
-                    {[COURSES, ...Object.keys(groupes).filter((g) => g !== COURSES)].map((cle) => {
+                    {[COURSES, ...Object.keys(groupes).filter((g) => g !== COURSES && !RANGES_SOUS_COURSES[g])].map((cle) => {
                         const actif = cle === onglet;
                         const nombre = cle === COURSES ? undefined : groupes[cle]?.length;
                         return (
@@ -252,23 +275,48 @@ export default function Settings({ onLogout, theme, toggleTheme }: SettingsProps
                     })}
                 </nav>
 
-                {onglet === COURSES && <TarifsCourses />}
+                {/* Les sous-onglets de « Courses ». */}
+                {onglet === COURSES && (
+                    <nav className="mb-6 flex flex-wrap gap-2" aria-label="Réglages des courses">
+                        {SOUS_COURSES.map((s) => {
+                            const actif = s.cle === sous.cle;
+                            return (
+                                <button
+                                    key={s.cle}
+                                    type="button"
+                                    onClick={() => choisirSous(s.cle)}
+                                    aria-current={actif ? "page" : undefined}
+                                    className={`rounded-full px-4 py-1.5 text-sm transition-colors ${
+                                        actif
+                                            ? "bg-primary text-white font-semibold"
+                                            : "bg-slate-100 text-slate-600 hover:text-slate-900 dark:bg-slate-800 dark:text-slate-300 dark:hover:text-white"
+                                    }`}
+                                >
+                                    {s.titre}
+                                </button>
+                            );
+                        })}
+                    </nav>
+                )}
+
+                {onglet === COURSES && sous.cle === "tarifs" && <TarifsCourses />}
+                {onglet === COURSES && sous.cle === "majoration" && <MajorationPrix />}
 
                 {chargement ? (
                     <Loading />
                 ) : (
-                    groupes[onglet] && (
-                        <section key={onglet} className="mb-10">
+                    groupe && groupes[groupe] && (
+                        <section key={groupe} className="mb-10">
                             <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-                                {TITRES[onglet] ?? onglet}
+                                {TITRES[groupe] ?? groupe}
                             </h2>
 
-                            {EXPLICATIONS[onglet] && (
-                                <p className="text-sm text-slate-500 mt-1 mb-4 max-w-2xl">{EXPLICATIONS[onglet]}</p>
+                            {EXPLICATIONS[groupe] && (
+                                <p className="text-sm text-slate-500 mt-1 mb-4 max-w-2xl">{EXPLICATIONS[groupe]}</p>
                             )}
 
                             <div className="flex flex-col gap-6">
-                                {sousParties(onglet, groupes[onglet]).map((partie) => (
+                                {sousParties(groupe, groupes[groupe]).map((partie) => (
                                     <div key={partie.titre ?? "tout"}>
                                         {partie.titre && (
                                             <h3 className="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-500">{partie.titre}</h3>

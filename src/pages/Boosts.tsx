@@ -161,7 +161,7 @@ export default function Boosts({ onLogout, theme, toggleTheme }: BoostsProps) {
                                         <p className="text-lg font-bold text-slate-900 dark:text-white mt-1">
                                             {g.utilises.toLocaleString("fr-FR")} / {g.plafond.toLocaleString("fr-FR")}
                                         </p>
-                                        <button onClick={() => navigate("/settings?onglet=boost")} className="text-sm text-primary underline mt-0.5">
+                                        <button onClick={() => navigate("/settings?onglet=courses&sous=boost")} className="text-sm text-primary underline mt-0.5">
                                             Activer ou désactiver
                                         </button>
                                     </div>
