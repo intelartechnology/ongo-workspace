@@ -24,8 +24,6 @@ interface Categorie {
     id: number;
     libelle: string;
     is_delivery: boolean | number;
-    km_price: number | string | null;
-    minute_price: number | string | null;
     // Absents tant que le serveur n'a pas la migration des frais d'approche.
     approche_km_offerts?: number | string | null;
     approche_minutes_offertes?: number | string | null;
