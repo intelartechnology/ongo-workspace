@@ -72,7 +72,7 @@ interface Estimation {
     lieu_depart: string | null;
     lieu_arrive: string | null;
     created_at: string;
-    majorations: Record<string, { pct: number; base: number; raisons: Raison[] }>;
+    majorations: Record<string, { pct: number; base: number; raisons: Raison[]; approche?: number }>;
 }
 
 interface EtatDuSurge {
@@ -102,6 +102,8 @@ interface LigneApercu {
     raisons: Raison[];
     /** Ce que la demande a compté autour du point, maintenant. */
     mesure?: { clients: number; chauffeurs: number; echecs: number };
+    /** Les frais d'approche du chauffeur le plus proche ; `null` sans chauffeur dans le rayon. */
+    approche?: { montant: number; metres: number; minutes: number } | null;
 }
 
 const JOURS = [
@@ -757,12 +759,34 @@ export default function MajorationPrix() {
                                                         Maintenant : {l.mesure.clients} client(s), {l.mesure.chauffeurs} chauffeur(s) libre(s), {l.mesure.echecs} échec(s)
                                                     </span>
                                                 )}
+                                                {l.approche !== undefined && (
+                                                    <span className="block text-[12px] text-slate-400">
+                                                        {l.approche === null
+                                                            ? "Approche : aucun chauffeur dans le rayon de recherche"
+                                                            : `Approche : ${(l.approche.metres / 1000).toLocaleString("fr-FR", { maximumFractionDigits: 1 })} km, ${l.approche.minutes} min → ${
+                                                                  l.approche.montant > 0 ? `+${l.approche.montant.toLocaleString("fr-FR")} F` : "offerte"
+                                                              }`}
+                                                    </span>
+                                                )}
                                             </span>
                                         </div>
                                     ))}
                                 </div>
                             )}
                         </div>
+                    </section>
+
+                    {/* Les frais d'approche : le client paie le trajet du chauffeur jusqu'à lui. */}
+                    <section className="space-y-3">
+                        <div>
+                            <h2 className="text-lg font-bold text-slate-900 dark:text-white">Frais d'approche</h2>
+                            <p className="text-sm text-slate-500">
+                                Le trajet du chauffeur le plus proche jusqu'au client, au-delà de la part offerte, au prix du km et de la minute de la
+                                catégorie. Ajoutés au prix après la majoration, sans être majorés. Figés à l'estimation : si ce chauffeur refuse, le client
+                                garde son prix.
+                            </p>
+                        </div>
+                        <BlocReglages reglages={reglages} cles={/^surge\.approche_/} />
                     </section>
 
                     {/* Ce qui touche aux livraisons et au boost : rarement changé, en bas. */}
@@ -788,7 +812,12 @@ export default function MajorationPrix() {
                                     </div>
                                     <p className="text-[13px] text-slate-500">
                                         {Object.entries(e.majorations)
-                                            .map(([id, m]) => `${nomCategorie(Number(id))} ${coefficient(m.pct)} (${m.raisons.map((r) => r.libelle).join(", ")})`)
+                                            .map(
+                                                ([id, m]) =>
+                                                    `${nomCategorie(Number(id))} ${coefficient(m.pct)}` +
+                                                    (m.raisons.length > 0 ? ` (${m.raisons.map((r) => r.libelle).join(", ")})` : "") +
+                                                    (m.approche ? ` + ${m.approche.toLocaleString("fr-FR")} F d'approche` : ""),
+                                            )
                                             .join(" · ")}
                                     </p>
                                 </div>
