@@ -49,6 +49,7 @@ const TITRES: Record<string, string> = {
     commission: "Partage des recettes",
     courses: "Attribution des courses",
     boost: "Boost des chauffeurs",
+    tarifs: "Calcul des prix",
     eat: "Ongo Eat",
     transport: "Transport",
     general: "Général",
@@ -77,6 +78,7 @@ const SOUS_PARTIES: Record<string, { titre: string; cles: RegExp }[]> = {
         { titre: "Approche longue : par minute", cles: /^boost\.temps_/ },
         { titre: "Gain minimum du chauffeur", cles: /^boost\.gain_minimum$/ },
         { titre: "Distance d'approche", cles: /^distance\./ },
+        { titre: "Temps de trajet avec trafic", cles: /^trafic\./ },
     ],
     eat: [
         { titre: "Commandes et zone de service", cles: /^eat\.(acceptance_delay_minutes|search_radius_km)$/ },
