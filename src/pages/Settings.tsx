@@ -9,6 +9,7 @@ import ApiService from "../services/ApiService";
 import Loading from "../components/Loading";
 import TarifsCourses from "./components/TarifsCourses";
 import MajorationPrix from "./components/MajorationPrix";
+import TraficGoogle from "./components/TraficGoogle";
 
 /**
  * Les réglages de la plateforme.
@@ -78,7 +79,6 @@ const SOUS_PARTIES: Record<string, { titre: string; cles: RegExp }[]> = {
         { titre: "Approche longue : par minute", cles: /^boost\.temps_/ },
         { titre: "Gain minimum du chauffeur", cles: /^boost\.gain_minimum$/ },
         { titre: "Distance d'approche", cles: /^distance\./ },
-        { titre: "Temps de trajet avec trafic", cles: /^trafic\./ },
     ],
     eat: [
         { titre: "Commandes et zone de service", cles: /^eat\.(acceptance_delay_minutes|search_radius_km)$/ },
@@ -119,6 +119,7 @@ const SOUS_COURSES: { cle: string; titre: string; groupe?: string }[] = [
     { cle: "attribution", titre: "Attribution", groupe: "courses" },
     { cle: "boost", titre: "Boost", groupe: "boost" },
     { cle: "majoration", titre: "Majoration des prix" },
+    { cle: "trafic", titre: "Trafic" },
 ];
 
 /**
@@ -303,6 +304,7 @@ export default function Settings({ onLogout, theme, toggleTheme }: SettingsProps
 
                 {onglet === COURSES && sous.cle === "tarifs" && <TarifsCourses />}
                 {onglet === COURSES && sous.cle === "majoration" && <MajorationPrix />}
+                {onglet === COURSES && sous.cle === "trafic" && <TraficGoogle />}
 
                 {chargement ? (
                     <Loading />
@@ -318,7 +320,7 @@ export default function Settings({ onLogout, theme, toggleTheme }: SettingsProps
                             )}
 
                             <div className="flex flex-col gap-6">
-                                {sousParties(groupe, groupes[groupe]).map((partie) => (
+                                {sousParties(groupe, groupes[groupe].filter((l) => !l.cle.startsWith("trafic."))).map((partie) => (
                                     <div key={partie.titre ?? "tout"}>
                                         {partie.titre && (
                                             <h3 className="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-500">{partie.titre}</h3>
