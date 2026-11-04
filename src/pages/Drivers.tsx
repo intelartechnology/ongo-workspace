@@ -262,9 +262,19 @@ export default function Drivers({ onLogout = () => {}, theme = 'light', toggleTh
                                             const vehicule = item.vehicules?.[0] ?? {};
                                             const e = etatDe(vehicule);
                                             const solde = Number(item.balance ?? 0);
+                                            // Vide, ou 0, 0 : comme la fiche du chauffeur.
+                                            const sansPosition = vehicule.lat == null || vehicule.lng == null || (Number(vehicule.lat) === 0 && Number(vehicule.lng) === 0);
 
                                             return (
-                                                <tr key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors group">
+                                                <tr
+                                                    key={item.id}
+                                                    className={cx(
+                                                        "transition-colors group",
+                                                        sansPosition
+                                                            ? "bg-rose-50/50 hover:bg-rose-50 dark:bg-rose-950/15 dark:hover:bg-rose-950/25"
+                                                            : "hover:bg-slate-50/50 dark:hover:bg-slate-800/30",
+                                                    )}
+                                                >
                                                     <td className="px-6 py-4 text-sm font-semibold text-slate-600 dark:text-slate-400">{item.id}</td>
                                                     <td className="px-6 py-4">
                                                         <div className="flex items-center gap-3">
