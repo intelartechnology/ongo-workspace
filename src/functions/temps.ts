@@ -10,3 +10,11 @@ export const ilYA = (valeur: string | null) => {
     if (jours < 30) return `il y a ${jours} j`;
     return `le ${new Date(valeur.replace(" ", "T")).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}`;
 };
+
+/** Une durée en secondes : « 32 h 15 », « 45 min », « 0 min ». */
+export const duree = (secondes: number) => {
+    const minutes = Math.floor(Math.max(0, secondes) / 60);
+    const heures = Math.floor(minutes / 60);
+    if (heures === 0) return `${minutes} min`;
+    return `${heures} h ${String(minutes % 60).padStart(2, "0")}`;
+};

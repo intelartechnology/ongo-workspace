@@ -50,6 +50,7 @@ const TITRES: Record<string, string> = {
     commission: "Partage des recettes",
     courses: "Attribution des courses",
     boost: "Boost des chauffeurs",
+    priorite: "Priorité des chauffeurs",
     tarifs: "Calcul des prix",
     eat: "Ongo Eat",
     transport: "Transport",
@@ -63,6 +64,8 @@ const EXPLICATIONS: Record<string, string> = {
     transport: "Les frais de service du bus et du train, fixes et non remboursables.",
     courses: "Qui reçoit une course : jusqu'où on cherche un chauffeur, et lesquels sont tenus pour joignables.",
     boost: "La prime qu'Ongo ajoute à une course difficile à prendre, payée par Ongo et sans commission. Chaque part s'ajoute aux autres ; le total reste plafonné.",
+    priorite:
+        "Ce que gagne ou perd la priorité d'un chauffeur, entre 0 et 130. Une course terminée en rapporte, davantage quand il est allé chercher son client loin ; la note du client en ajoute ou en retire.",
 };
 
 /**
@@ -73,6 +76,10 @@ const EXPLICATIONS: Record<string, string> = {
  * pour qu'un réglage nouveau reste visible sans toucher à ce fichier.
  */
 const SOUS_PARTIES: Record<string, { titre: string; cles: RegExp }[]> = {
+    priorite: [
+        { titre: "Par course terminée", cles: /^priorite\.(course|approche_)/ },
+        { titre: "Note du client", cles: /^priorite\.note_/ },
+    ],
     boost: [
         { titre: "Plafond", cles: /^boost\.plafond$/ },
         { titre: "Approche longue : par km", cles: /^boost\.approche_/ },

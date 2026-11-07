@@ -9,6 +9,7 @@ import { SearchBar } from "../components/ui";
 import { Avatar } from "../components/ui";
 import { notifier } from "../services/notifier";
 import DriverStats from "./components/DriverStats";
+import DriverService from "./components/DriverService";
 import Trajet from "./components/Trajet";
 import Swal from "sweetalert2";
 import { toast } from "react-toastify";
@@ -229,6 +230,7 @@ export default function DriverDetail({ onLogout = () => {}, theme = 'light', tog
                     <div className="border-b border-primary/10 flex px-6 overflow-x-auto">
                         {([
                             ['stats', 'Statistiques'],
+                            ['service', 'Service'],
                             ['courses', 'Courses'],
                             ['transactions', 'Transactions'],
                             ['balance', 'Balance'],
@@ -269,6 +271,8 @@ export default function DriverDetail({ onLogout = () => {}, theme = 'light', tog
                         )}
 
                         {activeTab === 'stats' && id && <DriverStats driverId={id} theme={theme} />}
+
+                        {activeTab === 'service' && id && <DriverService driverId={id} />}
 
                         {activeTab === 'courses' && (
                             <div className="space-y-6">

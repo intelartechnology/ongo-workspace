@@ -3,6 +3,7 @@ import ApiService from "../services/ApiService";
 import Swal from "sweetalert2";
 import { toast } from "react-toastify";
 import Helpers from "../functions/helpers";
+import { duree } from "../functions/temps";
 import Loading from "../components/Loading";
 import MainLayout from "./MainLayout";
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -46,6 +47,7 @@ const TRIS = [
     ["actifs", "Les plus actifs"],
     ["ca", "Chiffre d'affaires"],
     ["acceptation", "Taux d'acceptation"],
+    ["service", "Temps en service"],
     ["solde", "Solde le plus négatif"],
     ["recents", "Nouveaux inscrits"],
 ] as const;
@@ -251,6 +253,7 @@ export default function Drivers({ onLogout = () => {}, theme = 'light', toggleTh
                                         <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Courses {jours} j</th>
                                         <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">CA {jours} j</th>
                                         <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Acceptation</th>
+                                        <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">En service {jours} j</th>
                                         <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Solde</th>
                                         <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider">Dernière activité</th>
                                         <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Action</th>
@@ -314,6 +317,7 @@ export default function Drivers({ onLogout = () => {}, theme = 'light', toggleTh
                                                     <td className="px-6 py-4 text-sm text-right tabular-nums text-slate-700 dark:text-slate-300">
                                                         {item.taux_acceptation === null || item.taux_acceptation === undefined ? "—" : `${item.taux_acceptation} %`}
                                                     </td>
+                                                    <td className="px-6 py-4 text-sm text-right tabular-nums text-slate-700 dark:text-slate-300 whitespace-nowrap">{duree(item.service_periode ?? 0)}</td>
                                                     <td className={cx("px-6 py-4 text-sm text-right tabular-nums font-bold whitespace-nowrap", solde < 0 ? "text-rose-700 dark:text-rose-400" : "text-slate-800 dark:text-white")}>
                                                         {francs(solde)}
                                                     </td>
@@ -349,7 +353,7 @@ export default function Drivers({ onLogout = () => {}, theme = 'light', toggleTh
                                         })
                                     ) : (
                                         <tr>
-                                            <td colSpan={12} className="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
+                                            <td colSpan={13} className="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
                                                 <div className="flex flex-col items-center gap-3">
                                                     <span className="material-symbols-outlined text-4xl text-slate-300">search_off</span>
                                                     <p>Aucun chauffeur trouvé</p>
