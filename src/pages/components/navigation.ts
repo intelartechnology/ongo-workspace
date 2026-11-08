@@ -13,6 +13,7 @@ import {
     GalleryHorizontal,
     Gift,
     Rocket,
+    Trophy,
     Gavel,
     Globe,
     HandCoins,
@@ -95,6 +96,7 @@ export const GROUPES: Groupe[] = [
             { icon: UserSearch, label: 'Demandes', path: '/requests' },
             { icon: Gift, label: 'Bonus chauffeurs', path: '/driver-bonuses' },
             { icon: Rocket, label: 'Boosts', path: '/boosts' },
+            { icon: Trophy, label: 'Concours', path: '/competitions' },
             // Le prix qui monte quand les chauffeurs manquent : creneaux et zones.
             { icon: Zap, label: 'Majoration des prix', path: '/surge' },
             { icon: ClipboardCheck, label: 'À régulariser', path: '/courses/a-regulariser' },
